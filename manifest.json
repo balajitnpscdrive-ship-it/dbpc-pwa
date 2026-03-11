@@ -1,0 +1,20 @@
+{
+  "name": "DBPC GOATS Master Hub",
+  "short_name": "DBPC GOATS",
+  "start_url": "YOUR_APPS_SCRIPT_URL_HERE",
+  "display": "standalone",
+  "background_color": "#0f0c29",
+  "theme_color": "#fdbb2d",
+  "icons": [
+    {
+      "src": "https://drive.google.com/thumbnail?id=18pAKHffTYVmymmTmWgJS0S4sAE5XlMfQ&sz=w192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://drive.google.com/thumbnail?id=18pAKHffTYVmymmTmWgJS0S4sAE5XlMfQ&sz=w512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
