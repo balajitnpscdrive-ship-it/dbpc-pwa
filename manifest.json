@@ -1,7 +1,7 @@
 {
-  "name": "DBPC GOATS Master Hub",
-  "short_name": "DBPC GOATS",
-  "start_url": "YOUR_APPS_SCRIPT_URL_HERE",
+  "name": "DBPC GOATS Hub",
+  "short_name": "GOATS",
+  "start_url": "https://script.google.com/macros/s/AKfycbx5rJf6R-RNxvNRmryUY8-Fz0TmhF7IQEzT90t4783Q-LzesS6f24zlP9M5D6DCn0x4XQ/exec",
   "display": "standalone",
   "background_color": "#0f0c29",
   "theme_color": "#fdbb2d",
