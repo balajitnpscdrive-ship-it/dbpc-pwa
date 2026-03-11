@@ -1,20 +1,16 @@
 {
-  "name": "DBPC GOATS Hub",
-  "short_name": "GOATS",
-  "start_url": "https://script.google.com/macros/s/AKfycbx5rJf6R-RNxvNRmryUY8-Fz0TmhF7IQEzT90t4783Q-LzesS6f24zlP9M5D6DCn0x4XQ/exec",
+  "name": "My GAS App",
+  "short_name": "GAS App",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0f0c29",
-  "theme_color": "#fdbb2d",
+  "background_color": "#ffffff",
+  "theme_color": "#4285f4",
   "icons": [
     {
-      "src": "https://drive.google.com/thumbnail?id=18pAKHffTYVmymmTmWgJS0S4sAE5XlMfQ&sz=w192",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://drive.google.com/thumbnail?id=18pAKHffTYVmymmTmWgJS0S4sAE5XlMfQ&sz=w512",
+      "src": "https://cdn-icons-png.flaticon.com/512/2991/2991148.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
