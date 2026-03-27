@@ -2,23 +2,207 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#4285f4">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DBPC | Unified Award Hub</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon.png">
-  <title>GAS Web App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;900&family=Great+Vibes&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style id="dynamic-css">
+    :root { 
+      --db-blue: #003366; --gold: #D4AF37; --gold-light: #F9E29C; 
+    }
+  </style>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #fff; }
-    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    /* GLOBAL STYLES */
+    body { font-family: 'Outfit', sans-serif; margin: 0; background: #0a0e14; color: white; display: flex; height: 100vh; overflow: hidden; }
+    #sidebar { width: 80px; background: #000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 2px solid var(--db-blue); transition: 0.3s; z-index: 1000; }
+    #sidebar:hover { width: 220px; }
+    .nav-item { width: 100%; padding: 15px 0; text-align: center; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .nav-item:hover { background: rgba(0,51,102,0.5); }
+    .nav-item.active { border-left: 4px solid var(--gold); background: rgba(0,51,102,0.8); }
+    .nav-icon { font-size: 1.5rem; }
+    .nav-label { display: none; margin-left:15px; font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; white-space: nowrap; }
+    #sidebar:hover .nav-label { display: block; }
+    #sidebar:hover .nav-item { justify-content: flex-start; padding-left: 20px; }
+    main { flex: 1; overflow-y: auto; background: linear-gradient(135deg, #0a0e14 0%, #001a33 100%); position: relative; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .module-page { display: none; padding: 40px; min-height: 100%; box-sizing: border-box; }
+    .module-page.active { display: block; animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); margin-bottom: 25px; }
+    .gold-title { font-family: 'Cinzel'; background: linear-gradient(45deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; margin: 0; }
+    .btn { padding: 15px 25px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-primary { background: var(--db-blue); color: white; border: 1px solid var(--gold); }
+    .btn-gold { background: var(--gold); color: black; }
+    input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--db-blue); color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: 'Outfit'; }
+    .house-row { display: flex; align-items: center; margin-bottom: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px 20px; border: 1px solid transparent; }
+    .house-row.rank-0 { border-color: var(--gold); transform: scale(1.02); }
+    .house-pts { font-size: 2rem; font-weight: 900; margin-left: auto; font-family: 'Cinzel'; }
+    .house-name { font-size: 1.2rem; font-weight: 900; margin-left: 15px; font-family: 'Cinzel'; }
+    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: #000; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    .spinner { width: 50px; height: 50px; border: 4px solid var(--db-blue); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sticker-grid { background: white; width: 210mm; margin: 20px auto; padding: 10mm; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5mm; box-sizing: border-box; }
+    .sticker { border: 2.5px solid #333; padding: 10px 5px; text-align: center; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 5px; height: 42mm; box-sizing: border-box; color: black; }
+    .qr-box canvas { width: 85px !important; height: 85px !important; }
+    .sticker-name { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-top: 5px; }
+    .sticker-info { font-size: 7px; color: #444; margin-top: 3px; }
+    @media print {
+      #sidebar, #loading, .btn-group, .admin-controls, #config-overlay { display: none !important; }
+      body, main { background: white !important; color: black !important; display: block; overflow: visible; height: auto; }
+      .module-page { padding: 0 !important; display: block !important; }
+      #print-zone { display: block !important; }
+    }
   </style>
 </head>
 <body>
-  <iframe src="https://script.google.com/macros/s/AKfycbzCMUWtTfcnETfXx8ZT5-Xt1HEwAeAxwA0MbpJlVJFbdqzLci8yLNR3sBSZe5xmidmrzA/exec"></iframe>
+  <div id="loading"><div class="spinner"></div><h2 class="gold-title" style="margin-top:20px;">INITIALIZING HUB</h2></div>
+  <div id="config-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+     <div class="card" style="max-width:500px;">
+        <h1 class="gold-title">CONFIGURATION REQUIRED</h1>
+        <p>Enter your <b>Google Apps Script Web App URL</b> to connect this PWA to your backend.</p>
+        <input type="text" id="config-gas-url" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn btn-gold" onclick="saveConfig()">CONNECT HUB</button>
+        <p style="font-size:0.8rem; margin-top:10px; opacity:0.6;">Only required once per device.</p>
+     </div>
+  </div>
+  <nav id="sidebar">
+    <div class="nav-item active" onclick="switchModule('tv')" id="nav-tv"><span class="nav-icon">📺</span><span class="nav-label">LIVE SCOREBOARD</span></div>
+    <div class="nav-item" onclick="switchModule('teacher')" id="nav-teacher"><span class="nav-icon">👨‍🏫</span><span class="nav-label">TEACHER PORTAL</span></div>
+    <div class="nav-item" onclick="switchModule('certs')" id="nav-certs"><span class="nav-icon">🎓</span><span class="nav-label">CERTIFICATE HUB</span></div>
+    <div class="nav-item" onclick="switchModule('analysis')" id="nav-analysis"><span class="nav-icon">📊</span><span class="nav-label">ANALYSIS HUB</span></div>
+    <div class="nav-item" onclick="switchModule('qr')" id="nav-qr"><span class="nav-icon">🏁</span><span class="nav-label">QR GENERATOR</span></div>
+    <div style="margin-top:auto"></div>
+    <div class="nav-item" onclick="switchModule('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">SETTINGS</span></div>
+  </nav>
+  <main>
+    <section id="module-tv" class="module-page active">
+      <div style="text-align:center; margin-bottom:20px;"><h1 class="gold-title" style="font-size:3rem;">DBPC HUB PORTAL</h1></div>
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+        <div class="card"><h2 class="gold-title">🏆 WEEKLY STANDINGS</h2><div id="tv-weekly-list"></div></div>
+        <div>
+           <div class="card" style="text-align:center;"><h3>ANNUAL LEADERS</h3><div id="tv-annual-list" style="margin-top:10px; font-weight:900;"></div></div>
+           <div class="card" style="text-align:center; background:linear-gradient(135deg, var(--db-blue), #000);"><h3>ACTIVE DEPT</h3><h1 id="tv-active-dept" style="margin:10px 0; font-size:2rem;">-</h1></div>
+        </div>
+      </div>
+    </section>
+    <section id="module-teacher" class="module-page">
+      <div id="teacher-login" style="max-width:350px; margin: 50px auto;"><div class="card" style="text-align:center;"><h2 class="gold-title">TEACHER LOGIN</h2><input type="text" id="login-user" placeholder="Username"><input type="password" id="login-pass" placeholder="Password"><button class="btn btn-gold" style="width:100%;" onclick="login()">LOGIN</button></div></div>
+      <div id="teacher-ui" style="display:none; max-width:500px; margin:0 auto;"><div class="card"><h2 class="gold-title">AWARD POINTS</h2><input type="text" id="p-name" placeholder="Student Name"><select id="p-house"></select><input type="text" id="p-cat" placeholder="Category"><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button class="btn btn-primary" onclick="submitPoints('Positive')">👍 +10 PTS</button><button class="btn" style="background:#800" onclick="submitPoints('Negative')">👎 -5 PTS</button></div></div></div>
+    </section>
+    <section id="module-certs" class="module-page">
+      <div class="card" style="text-align:center;"><h1 class="gold-title">MERIT RECOGNITION</h1><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;"><button class="btn btn-gold" onclick="genAnalysis('weekly', 'poster')">📄 Weekly Poster</button><button class="btn btn-primary" onclick="genAnalysis('weekly', 'certs')">🎓 Weekly Certs</button><button class="btn btn-gold" onclick="genAnalysis('annual', 'poster')">🏆 Annual Poster</button><button class="btn btn-primary" onclick="genAnalysis('annual', 'certs')">🎖️ Annual Certs</button></div></div>
+    </section>
+    <section id="module-analysis" class="module-page"><div class="card"><h1 class="gold-title">DEEP ANALYSIS REPORTS</h1><div id="analysis-preview">Ready for Export</div></div></section>
+    <section id="module-qr" class="module-page"><div class="card admin-controls"><h1 class="gold-title">QR GENERATOR</h1><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;"><button class="btn btn-gold" onclick="loadQR()">🔄 GENERATE ALL</button><button class="btn btn-primary" onclick="window.print()">🖨️ PRINT SHEET</button></div></div><div id="qr-container" class="sticker-grid"></div></section>
+    <section id="module-settings" class="module-page">
+      <div class="card"><h2 class="gold-title">SYSTEM SETTINGS</h2><div style="margin-top:15px;"><label>Background (MP3)</label><input type="file" id="audio-file" accept="audio/*"><button class="btn btn-primary" onclick="uploadAudio()">UPLOAD</button></div><button class="btn" style="margin-top:20px; background:#444" onclick="localStorage.removeItem('DBPC_GAS_URL'); location.reload();">🔧 Reset Backend Link</button></div>
+    </section>
+    <div id="print-zone" style="display:none;"></div>
+  </main>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
+    let GAS_URL = localStorage.getItem('DBPC_GAS_URL') || "";
+    let state = { assets: null, user: null };
+    window.onload = () => { if (!GAS_URL) document.getElementById('config-overlay').style.display="flex"; else init(); };
+    function saveConfig() {
+      const url = document.getElementById('config-gas-url').value.trim();
+      if (url.includes('google.com')) { localStorage.setItem('DBPC_GAS_URL', url); location.reload(); }
+      else alert("Invalid URL");
+    }
+    async function api(action, data = {}) {
+      try { const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action, ...data }) }); return await res.json(); }
+      catch(e) { console.error(e); return { success:false }; }
+    }
+    async function init() {
+      document.getElementById('loading').style.display="flex";
+      const res = await api('getAssets');
+      state.assets = res;
+      applyDynamicCSS(res.houseConfig);
+      document.getElementById('loading').style.display="none";
+      startTVPolling();
+    }
+    function applyDynamicCSS(config) {
+      if(!config) return;
+      let css = ':root { --db-blue: #003366; --gold: #D4AF37; --gold-light: #F9E29C; ';
+      config.forEach(h => { css += `--h-${h.name.toLowerCase().replace(/\s+/g,'-')}: ${h.color}; `; });
+      document.getElementById('dynamic-css').innerText = css + ' }';
+      const hSel = document.getElementById('p-house');
+      if(hSel) hSel.innerHTML = config.map(h => `<option value="${h.name}">${h.name} HOUSE</option>`).join('');
+    }
+    function switchModule(id) {
+      document.querySelectorAll('.module-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('module-' + id).classList.add('active');
+      const navItem = document.getElementById('nav-' + id);
+      if(navItem) navItem.classList.add('active');
+    }
+    async function startTVPolling() { setInterval(async () => { const d = await api('getTVData'); updateTVUI(d); }, 15000); updateTVUI(await api('getTVData')); }
+    function updateTVUI(d) {
+      if(!d || !d.weeklyHouses) return;
+      const getH = (n) => `var(--h-${n.toLowerCase().replace(/\s+/g,'-')})`;
+      document.getElementById('tv-weekly-list').innerHTML = d.weeklyHouses.map((h, i) => `
+        <div class="house-row rank-${i}">
+          <div style="background:${getH(h[0])}; width:15px; height:15px; border-radius:5px;"></div>
+          <div class="house-name" style="color:${getH(h[0])}">${h[0]}</div>
+          <div class="house-pts">${h[1]}</div>
+        </div>
+      `).join('');
+      document.getElementById('tv-annual-list').innerHTML = d.yearlyHouses.map(h => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; opacity:0.8; font-size:0.9rem;"><span>${h[0]}</span><span>${h[1]}</span></div>`).join('');
+      document.getElementById('tv-active-dept').innerText = d.activeDept;
+    }
+    async function login() {
+      const res = await api('authenticate', { user:document.getElementById('login-user').value, pass:document.getElementById('login-pass').value });
+      if(res.success) { state.user = { ...res, user:document.getElementById('login-user').value }; document.getElementById('teacher-login').style.display="none"; document.getElementById('teacher-ui').style.display="block"; }
+      else alert("Invalid Login");
+    }
+    async function submitPoints(type) {
+      const res = await api('submitPoint', { data: { studentName: document.getElementById('p-name').value, house: document.getElementById('p-house').value, category: document.getElementById('p-cat').value, type, dept: state.user.dept, teacherName: state.user.user } });
+      if(res.success) alert("Points Recorded!");
+    }
+    async function loadQR() {
+      document.getElementById('loading').style.display="flex";
+      const students = await api('getStudentData');
+      const container = document.getElementById('qr-container'); container.innerHTML = "";
+      students.forEach((s, i) => {
+        const [name, dept, house] = s;
+        const sticker = document.createElement('div'); sticker.className = 'sticker';
+        const qrId = 'qr-' + i;
+        sticker.innerHTML = `<div id="${qrId}"></div><div class="sticker-name">${name}</div><div class="sticker-info">${dept} • ${house.toUpperCase()}</div>`;
+        container.appendChild(sticker);
+        new QRCode(document.getElementById(qrId), { text: `${name}|${dept}|${house}`, width:85, height:85 });
       });
+      document.getElementById('loading').style.display="none";
+    }
+    async function genAnalysis(period, type) {
+      document.getElementById('loading').style.display="flex";
+      const d = await api('getAnalysisData', { isAnnual: period === 'annual' });
+      let names = []; d.deptStats.forEach(dept => { (period === 'annual' ? dept.allStudents : dept.students).forEach(s => names.push(s.name)); });
+      const photoMap = await api('getStudentPhotos', { names });
+      document.getElementById('print-zone').innerHTML = (type === 'poster') ? drawPoster(d, photoMap) : drawCerts(d, period === 'annual', photoMap);
+      document.getElementById('loading').style.display="none";
+      setTimeout(() => window.print(), 800);
+    }
+    function drawPoster(d, photos) {
+       const getH = (n) => `var(--h-${n.toLowerCase().replace(/\s+/g,'-')})`;
+       return `<div style="width:297mm; min-height:420mm; padding:20mm; background:white; color:black; font-family:'Outfit'; text-align:center;">
+          <h1 style="font-family:'Cinzel'; font-size:4rem; margin:0;">${d.periodLabel} PERFORMANCE</h1>
+          <div style="display:flex; justify-content:space-around; margin:40px 0;">${d.houseRanks.map(h => `<div style="background:${getH(h[0])}; color:white; padding:20px; border-radius:15px; min-width:180px;"><h3>${h[0]}</h3><h1>${h[1]}</h1></div>`).join('')}</div>
+          <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;">${d.deptStats.map(dept => dept.students.map(s => `
+            <div style="border:2px solid #ddd; border-radius:15px; padding:15px; width:170px;">
+              <img src="${photos[s.name]||''}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:2px solid var(--gold);">
+              <h4 style="margin:10px 0 2px 0;">${s.name}</h4><small style="color:var(--gold); font-weight:900;">${dept.dept}</small>
+            </div>`).join('')).join('')}</div></div>`;
+    }
+    function drawCerts(d, isAnnual, photos) {
+      let html = ""; d.deptStats.forEach(dept => { (isAnnual ? dept.allStudents : dept.students).slice(0, isAnnual ? 3 : 1).forEach((s, idx) => {
+        html += `<div style="width:210mm; height:297mm; padding:20mm; background:white; color:black; font-family:'Outfit'; text-align:center; border:20px solid var(--db-blue); box-sizing:border-box;">
+          <h1 style="font-family:'Cinzel';">DON BOSCO MERIT AWARD</h1>
+          <img src="${photos[s.name]||''}" style="width:220px; height:220px; border-radius:50%; object-fit:cover; margin:30px 0; border:5px solid var(--gold);">
+          <p>Presented to</p><h1 style="font-size:3.5rem; font-family:'Playfair Display';">${s.name}</h1>
+          <div style="font-family:'Great Vibes'; font-size:3rem; color:var(--gold);">${isAnnual ? 'Rank #'+(idx+1) : 'Topper of the Week'}</div>
+          <p>${dept.dept.toUpperCase()}</p>
+        </div>`;
+      }); });
+      return html;
     }
   </script>
 </body>
