@@ -2,208 +2,531 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DBPC | Unified Award Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>DB G.O.A.T.S | CHAMPIONSHIP PORTAL</title>
   <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;900&family=Great+Vibes&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <style id="dynamic-css">
-    :root { 
-      --db-blue: #003366; --gold: #D4AF37; --gold-light: #F9E29C; 
-    }
-  </style>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    /* GLOBAL STYLES */
-    body { font-family: 'Outfit', sans-serif; margin: 0; background: #0a0e14; color: white; display: flex; height: 100vh; overflow: hidden; }
-    #sidebar { width: 80px; background: #000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 2px solid var(--db-blue); transition: 0.3s; z-index: 1000; }
-    #sidebar:hover { width: 220px; }
-    .nav-item { width: 100%; padding: 15px 0; text-align: center; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .nav-item:hover { background: rgba(0,51,102,0.5); }
-    .nav-item.active { border-left: 4px solid var(--gold); background: rgba(0,51,102,0.8); }
-    .nav-icon { font-size: 1.5rem; }
-    .nav-label { display: none; margin-left:15px; font-weight: 900; font-size: 0.8rem; letter-spacing: 1px; white-space: nowrap; }
-    #sidebar:hover .nav-label { display: block; }
-    #sidebar:hover .nav-item { justify-content: flex-start; padding-left: 20px; }
-    main { flex: 1; overflow-y: auto; background: linear-gradient(135deg, #0a0e14 0%, #001a33 100%); position: relative; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .module-page { display: none; padding: 40px; min-height: 100%; box-sizing: border-box; }
-    .module-page.active { display: block; animation: fadeIn 0.5s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); margin-bottom: 25px; }
-    .gold-title { font-family: 'Cinzel'; background: linear-gradient(45deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; margin: 0; }
-    .btn { padding: 15px 25px; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-    .btn-primary { background: var(--db-blue); color: white; border: 1px solid var(--gold); }
-    .btn-gold { background: var(--gold); color: black; }
-    input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--db-blue); color: white; padding: 12px; border-radius: 8px; width: 100%; margin-bottom: 15px; box-sizing: border-box; font-family: 'Outfit'; }
-    .house-row { display: flex; align-items: center; margin-bottom: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px 20px; border: 1px solid transparent; }
-    .house-row.rank-0 { border-color: var(--gold); transform: scale(1.02); }
-    .house-pts { font-size: 2rem; font-weight: 900; margin-left: auto; font-family: 'Cinzel'; }
-    .house-name { font-size: 1.2rem; font-weight: 900; margin-left: 15px; font-family: 'Cinzel'; }
-    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: #000; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-    .spinner { width: 50px; height: 50px; border: 4px solid var(--db-blue); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .sticker-grid { background: white; width: 210mm; margin: 20px auto; padding: 10mm; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5mm; box-sizing: border-box; }
-    .sticker { border: 2.5px solid #333; padding: 10px 5px; text-align: center; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 5px; height: 42mm; box-sizing: border-box; color: black; }
-    .qr-box canvas { width: 85px !important; height: 85px !important; }
-    .sticker-name { font-size: 9px; font-weight: bold; text-transform: uppercase; margin-top: 5px; }
-    .sticker-info { font-size: 7px; color: #444; margin-top: 3px; }
-    @media print {
-      #sidebar, #loading, .btn-group, .admin-controls, #config-overlay { display: none !important; }
-      body, main { background: white !important; color: black !important; display: block; overflow: visible; height: auto; }
-      .module-page { padding: 0 !important; display: block !important; }
-      #print-zone { display: block !important; }
-    }
+    :root{--neon:#fbff00;--accent:#00d4ff;--green:#00ff88;--red:#ff416c;--bg:#050508}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:white;min-height:100vh;overflow-x:hidden}
+    
+    .preloader{position:fixed;inset:0;background:#050508;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s ease;backdrop-filter:blur(10px)}
+    .loader-pulse{animation:pulseLogo .8s infinite alternate}
+    @keyframes pulseLogo{from{transform:scale(0.9);opacity:0.6;filter:drop-shadow(0 0 10px rgba(251,255,0,0))}to{transform:scale(1.1);opacity:1;filter:drop-shadow(0 0 20px var(--neon))}}
+    
+    .bg-overlay{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;filter:brightness(0.3) blur(6px);transition:background-image 1s ease}
+    .header{padding:calc(10px + env(safe-area-inset-top)) 14px 12px;display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:8px;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);position:sticky;top:0;z-index:100}
+    .logo-img{width:54px;height:54px;object-fit:contain;border-radius:8px}
+    .founder-img{width:54px;height:54px;border-radius:50%;border:2px solid var(--neon);object-fit:cover;justify-self:end}
+    .header-title{text-align:center}
+    .header-title h1{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:white;line-height:1.2}
+    .header-title p{font-size:8px;color:var(--neon);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;opacity:.9}
+    .header-title small{font-size:7.5px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;display:block}
+    #sync-status{position:fixed;bottom:12px;right:12px;font-size:8px;font-weight:900;text-transform:uppercase;padding:4px 8px;border-radius:20px;background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.08);z-index:200}
+    .status-live{color:var(--green)!important;border-color:rgba(0,255,136,.3)!important}
+    .status-offline{color:var(--red)!important;border-color:rgba(255,65,108,.3)!important}
+    
+    #dept-gate{padding:20px;max-width:900px;margin:auto}
+    .gate-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:20px;text-shadow:0 4px 10px rgba(0,0,0,0.8)}
+    .dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}
+    
+    .dept-card{background:rgba(30,30,40,0.85);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.2);border-radius:16px;padding:22px 12px;text-align:center;cursor:pointer;transition:transform .15s cubic-bezier(.175,.885,.32,1.275),box-shadow .2s;box-shadow:0 8px 30px rgba(0,0,0,0.6);position:relative;overflow:hidden}
+    .dept-card:active{transform:scale(0.93);box-shadow:0 0 20px rgba(251,255,0,.3)}
+    .dept-card b{display:block;font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:1px}
+    .dept-card-bar{height:3px;background:linear-gradient(90deg,var(--neon),var(--accent));border-radius:3px;margin-top:10px;opacity:.8}
+    
+    #login-modal{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;z-index:2000;padding:20px}
+    .modal-box{background:rgba(20,20,25,0.9);border:1px solid rgba(251,255,0,.3);border-radius:24px;padding:32px 24px;width:100%;max-width:360px;text-align:center;animation:slideUp .3s ease;box-shadow:0 0 60px rgba(251,255,0,.08)}
+    @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--neon);letter-spacing:3px;margin-bottom:20px}
+    input,select{width:100%;padding:14px 16px;margin:8px 0;background:rgba(255,255,255,0.04);color:white;border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:16px;font-family:inherit;transition:border-color .2s}
+    input:focus,select:focus{border-color:var(--neon);outline:none;background:rgba(251,255,0,.04)}
+    select option{background:#111}
+    .btn-main{width:100%;padding:15px;border-radius:12px;background:var(--neon);color:black;font-weight:900;border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:18px;transition:transform .1s}
+    .btn-main:active{transform:scale(0.97)}
+    
+    #teacher-view{display:none;max-width:600px;margin:auto;padding-bottom:40px}
+    .scoreboard{padding:16px;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.07)}
+    .sb-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:10px;text-align:center}
+    .score-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+    .score-chip{flex:0 0 auto;min-width:80px;background:rgba(255,255,255,0.04);border-radius:14px;padding:10px 14px;text-align:center;border-top:3px solid #333;position:relative;transition:box-shadow .3s}
+    .score-chip.leader{box-shadow:0 0 20px var(--chip-color,#888)}
+    .chip-name{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.6)}
+    .chip-score{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1.1;color:white}
+    .chip-rank{font-size:14px;position:absolute;top:-8px;right:-4px}
+    
+    .t-panel{margin:16px;background:rgba(10,10,18,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,0.7)}
+    .mode-toggle{display:flex;gap:8px;margin-bottom:16px;background:rgba(255,255,255,0.04);border-radius:14px;padding:4px}
+    .mode-btn{flex:1;padding:12px;border-radius:11px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:rgba(255,255,255,0.3);font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:18px}
+    .mode-btn.active-pos{background:linear-gradient(135deg,#00b09b,#00ff88);color:black;box-shadow:0 4px 20px rgba(0,255,136,.3)}
+    .mode-btn.active-neg{background:linear-gradient(135deg,#ff416c,#ff4b2b);color:white;box-shadow:0 4px 20px rgba(255,65,108,.3)}
+    .house-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .house-btn{padding:28px 10px;border-radius:16px;border:none;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:black;cursor:pointer;position:relative;overflow:hidden;transition:transform .12s cubic-bezier(.175,.885,.32,1.275)}
+    .house-btn:active{transform:scale(0.92)}
+    @keyframes pulseGlow{0%,100%{box-shadow:0 0 12px var(--glow)}50%{box-shadow:0 0 30px var(--glow),0 0 60px var(--glow)}}
+    .scan-area{text-align:center;margin-bottom:14px}
+    #cam-btn{background:linear-gradient(135deg,var(--neon),#e8ff00);border:none;padding:0;width:80px;height:80px;border-radius:50%;font-size:30px;cursor:pointer;transition:transform .15s;box-shadow:0 0 0 0 rgba(251,255,0,.4)}
+    #cam-btn.scanning{animation:scanPulse 1.2s infinite}
+    @keyframes scanPulse{0%{box-shadow:0 0 0 0 rgba(251,255,0,.5)}70%{box-shadow:0 0 0 20px rgba(251,255,0,0)}100%{box-shadow:0 0 0 0 rgba(251,255,0,0)}}
+    #cam-btn:active{transform:scale(0.92)}
+    .scan-hint{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase;margin-top:8px}
+    #reader{border-radius:16px;overflow:hidden;border:2px solid var(--neon);display:none;margin-bottom:14px;box-shadow:0 0 30px rgba(251,255,0,.15)}
+    .manual-row{display:flex;gap:8px;margin-bottom:6px}
+    .manual-row input,.manual-row select{margin:0;flex:1}
+    .btn-sub{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:white;padding:14px;border-radius:12px;font-weight:900;cursor:pointer;width:100%;margin-bottom:14px;letter-spacing:1px}
+    .meta-row{display:flex;gap:8px}
+    .meta-row input,.meta-row select{margin:0;flex:1}
+    .admin-section{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+    .btn-admin{padding:14px;border-radius:12px;background:transparent;font-weight:900;cursor:pointer;font-size:13px;letter-spacing:1px;font-family:inherit}
+    .admin-branding{display:none;margin-top:10px;border-top:1px dashed rgba(255,255,255,.1);padding-top:16px}
+    .upload-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:12px 14px;border-radius:12px;margin-bottom:8px}
+    .upload-box label{font-size:10px;color:var(--accent);display:block;margin-bottom:6px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+    .btn-logout{width:calc(100% - 32px);margin:16px;padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:rgba(255,255,255,0.4);font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:1px}
+    
+    #lb-modal{position:fixed;inset:0;background:rgba(0,0,0,0.97);display:none;flex-direction:column;z-index:3000;overflow-y:auto}
+    .lb-header{padding:16px;background:rgba(0,0,0,0.9);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+    .lb-header h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;flex:1}
+    .lb-back{background:rgba(255,255,255,0.08);border:none;color:white;padding:10px 16px;border-radius:10px;cursor:pointer;font-weight:900;font-size:14px;font-family:inherit}
+    .lb-period-toggle{display:flex;gap:10px;padding:16px 16px 4px 16px;}
+    .period-btn{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);padding:10px;border-radius:12px;cursor:pointer;font-weight:900;font-size:12px;font-family:inherit;transition:all .2s;}
+    .period-btn.active{background:var(--neon);color:black;border-color:var(--neon);box-shadow:0 0 15px rgba(251,255,0,0.2);}
+    .lb-filters{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto;scrollbar-width:none}
+    .lb-filter-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);padding:8px 16px;border-radius:20px;cursor:pointer;white-space:nowrap;font-size:12px;font-weight:700;font-family:inherit}
+    .lb-filter-btn.active{background:var(--neon);color:black;border-color:var(--neon)}
+    .lb-body{padding:20px}
+    .lb-podium{display:flex;gap:10px;margin-bottom:24px;align-items:flex-end;justify-content:center}
+    .lb-podium-item{text-align:center;flex:1;max-width:100px}
+    .lb-podium-bar{border-radius:10px 10px 0 0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-family:'Bebas Neue',sans-serif;font-size:22px;color:rgba(0,0,0,0.7);min-height:40px;box-shadow:inset 0 2px 4px rgba(255,255,255,0.3)}
+    .lb-podium-name{font-size:11px;font-weight:900;text-transform:uppercase;margin-top:6px;color:rgba(255,255,255,.8)}
+    .lb-podium-score{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--neon)}
+    .lb-row{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.04);border-radius:12px;margin-bottom:8px;border-left:4px solid #333}
+    .lb-row-rank{font-family:'Bebas Neue',sans-serif;font-size:22px;color:rgba(255,255,255,.3);width:30px;text-align:center}
+    .lb-row-name{flex:1;font-weight:900;font-size:15px;text-transform:uppercase}
+    .lb-row-pts{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--neon)}
+    .lb-bar-bg{height:4px;background:rgba(255,255,255,0.05);border-radius:4px;margin-top:6px}
+    .lb-bar-fill{height:4px;border-radius:4px;transition:width .6s ease}
+    .lb-empty{text-align:center;padding:40px;color:rgba(255,255,255,.4);font-size:14px}
+    .emoji-pop{position:fixed;top:50%;left:50%;font-size:160px;z-index:9999;pointer-events:none;animation:popScale .9s ease-out forwards}
+    @keyframes popScale{0%{transform:translate(-50%,-50%) scale(0.3);opacity:0}25%{transform:translate(-50%,-50%) scale(1.1);opacity:1}100%{transform:translate(-50%,-90%) scale(1.3);opacity:0}}
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.95);border:1px solid rgba(255,255,255,0.2);color:white;padding:12px 24px;border-radius:50px;display:none;z-index:5000;font-weight:600;font-size:14px;backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,0.8)}
+    
+    #install-btn{display:none;width:92%;max-width:400px;margin:20px auto;background:#00ff88;color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;padding:16px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 0 20px rgba(0,255,136,0.3);text-align:center}
   </style>
 </head>
-<body>
-  <div id="loading"><div class="spinner"></div><h2 class="gold-title" style="margin-top:20px;">INITIALIZING HUB</h2></div>
-  <div id="config-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
-     <div class="card" style="max-width:500px;">
-        <h1 class="gold-title">CONFIGURATION REQUIRED</h1>
-        <p>Enter your <b>Google Apps Script Web App URL</b> to connect this PWA to your backend.</p>
-        <input type="text" id="config-gas-url" placeholder="https://script.google.com/macros/s/.../exec">
-        <button class="btn btn-gold" onclick="saveConfig()">CONNECT HUB</button>
-        <p style="font-size:0.8rem; margin-top:10px; opacity:0.6;">Only required once per device.</p>
-     </div>
+<body onload="boot()">
+  
+  <div class="preloader" id="preloader">
+    <div class="loader-pulse" style="font-size:60px;margin-bottom:10px;">⚡</div>
+    <div style="font-family:'Bebas Neue',sans-serif; letter-spacing:4px; color:var(--neon); font-size:24px;">G.O.A.T.S UPLINK</div>
+    <div style="font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:2px; margin-top:5px;">SECURE CONNECTION ESTABLISHING...</div>
   </div>
-  <nav id="sidebar">
-    <div class="nav-item active" onclick="switchModule('tv')" id="nav-tv"><span class="nav-icon">📺</span><span class="nav-label">LIVE SCOREBOARD</span></div>
-    <div class="nav-item" onclick="switchModule('teacher')" id="nav-teacher"><span class="nav-icon">👨‍🏫</span><span class="nav-label">TEACHER PORTAL</span></div>
-    <div class="nav-item" onclick="switchModule('certs')" id="nav-certs"><span class="nav-icon">🎓</span><span class="nav-label">CERTIFICATE HUB</span></div>
-    <div class="nav-item" onclick="switchModule('analysis')" id="nav-analysis"><span class="nav-icon">📊</span><span class="nav-label">ANALYSIS HUB</span></div>
-    <div class="nav-item" onclick="switchModule('qr')" id="nav-qr"><span class="nav-icon">🏁</span><span class="nav-label">QR GENERATOR</span></div>
-    <div style="margin-top:auto"></div>
-    <div class="nav-item" onclick="switchModule('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">SETTINGS</span></div>
-  </nav>
-  <main>
-    <section id="module-tv" class="module-page active">
-      <div style="text-align:center; margin-bottom:20px;"><h1 class="gold-title" style="font-size:3rem;">DBPC HUB PORTAL</h1></div>
-      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
-        <div class="card"><h2 class="gold-title">🏆 WEEKLY STANDINGS</h2><div id="tv-weekly-list"></div></div>
-        <div>
-           <div class="card" style="text-align:center;"><h3>ANNUAL LEADERS</h3><div id="tv-annual-list" style="margin-top:10px; font-weight:900;"></div></div>
-           <div class="card" style="text-align:center; background:linear-gradient(135deg, var(--db-blue), #000);"><h3>ACTIVE DEPT</h3><h1 id="tv-active-dept" style="margin:10px 0; font-size:2rem;">-</h1></div>
+
+  <div id="sync-status">OFFLINE</div>
+  <div class="bg-overlay" id="main-bg"></div>
+  <div id="toast"></div>
+  
+  <div class="header">
+    <img id="m-logo" class="logo-img">
+    <div class="header-title">
+      <h1>DON BOSCO POLYTECHNIC COLLEGE</h1>
+      <p>G.O.A.T.S — Championship Portal</p>
+      <small>Givers of All Talents Students</small>
+    </div>
+    <img id="m-founder" class="founder-img">
+  </div>
+
+  <!-- PWA INSTALL BUTTON (Only shows if device allows it) -->
+  <button id="install-btn" onclick="installApp()">📲 INSTALL PORTAL TO HOME SCREEN</button>
+
+  <!-- ADMIN LEADERBOARD -->
+  <div id="lb-modal">
+    <div class="lb-header">
+      <button class="lb-back" onclick="closeLb()">← BACK</button>
+      <h2 id="lb-title">LEADERBOARD</h2>
+    </div>
+    <div class="lb-period-toggle">
+        <button id="btn-period-weekly" class="period-btn active" onclick="setLbPeriod('weekly')">📅 WEEKLY</button>
+        <button id="btn-period-annually" class="period-btn" onclick="setLbPeriod('annually')">🏆 ANNUALLY</button>
+    </div>
+    <div class="lb-filters" id="lb-cat-filters"></div>
+    <div class="lb-body" id="lb-body"><div class="lb-empty">Loading...</div></div>
+  </div>
+
+  <!-- DEPT GATE -->
+  <div id="dept-gate">
+    <p class="gate-title">SELECT DEPARTMENT</p>
+    <div id="dept-grid" class="dept-grid"></div>
+  </div>
+
+  <!-- LOGIN MODAL -->
+  <div id="login-modal" onclick="if(event.target==this)closeLogin()">
+    <div class="modal-box">
+      <h2 id="target-dept">DEPARTMENT</h2>
+      <input type="password" id="pass-input" placeholder="Enter Password" onkeydown="if(event.key==='Enter')handleLogin()">
+      <button class="btn-main" onclick="handleLogin()">ENTER PORTAL</button>
+    </div>
+  </div>
+
+  <!-- TEACHER VIEW -->
+  <div id="teacher-view">
+    <div class="scoreboard">
+      <div class="sb-label">🏆 LIVE HOUSE SCORES</div>
+      <div id="score-strip" class="score-strip"></div>
+    </div>
+    <div class="t-panel">
+      <div id="dept-label" style="font-size:11px;color:var(--accent);font-weight:900;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;text-align:center;"></div>
+      <div class="mode-toggle" id="type-select">
+        <button class="mode-btn active-pos" id="btn-pos" onclick="setMode('Positive')">＋10 POSITIVE</button>
+        <button class="mode-btn" id="btn-neg" onclick="setMode('Negative')">－5 NEGATIVE</button>
+      </div>
+      <div id="house-grid" class="house-grid"></div>
+      <div class="scan-area" id="cam-area">
+        <button id="cam-btn" onclick="toggleCam()">📷</button>
+        <div class="scan-hint" id="scan-hint">TAP TO SCAN QR</div>
+      </div>
+      <div id="reader"></div>
+      <div id="manual-area">
+        <div class="manual-row">
+          <input type="text" id="man-name" placeholder="Student Name" list="student-list">
+          <datalist id="student-list"></datalist>
+          <select id="man-house"><option selected disabled>House</option></select>
+        </div>
+        <button class="btn-sub" onclick="submitManual()">✓ SUBMIT MANUALLY</button>
+      </div>
+      <div class="meta-row" id="teacher-meta">
+        <input type="text" id="t-name" placeholder="Teacher Name">
+        <select id="p-cat"></select>
+      </div>
+      
+      <!-- ADMIN ACTIONS -->
+      <div id="admin-actions" class="admin-section" style="display:none;">
+        <button class="btn-admin" style="color:var(--accent);border:1px solid var(--accent);background:rgba(0,0,0,0.5)" onclick="toggleWebAppForm()">🔗 NEW WEB APP CONNECTION</button>
+        <button class="btn-admin" style="color:#00ff88;border:1px solid #00ff88;background:rgba(0,0,0,0.5)" onclick="toggleBranding()">🎨 BRANDING DASHBOARD</button>
+        <button class="btn-admin" style="color:var(--neon);border:1px solid var(--neon);background:rgba(0,0,0,0.5)" onclick="prepareBulkPrint()">🖨️ BULK QR SYSTEM (A4)</button>
+        <button class="btn-admin" style="color:white;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.5)" onclick="forceSync()">🔄 SYNC DATA CACHE</button>
+        
+        <!-- NEW WEB APP CONNECTION FORM -->
+        <div id="admin-webapp-form" class="admin-branding" style="border-top-color:var(--accent)">
+          <div class="upload-box"><label style="color:var(--accent)">App Name</label><input type="text" id="new-app-name" placeholder="e.g. TV Scoreboard"></div>
+          <div class="upload-box"><label style="color:var(--accent)">App URL Link</label><input type="text" id="new-app-url" placeholder="https://script.google.com/..."></div>
+          <div class="upload-box"><label style="color:var(--accent)">Icon (Emoji)</label><input type="text" id="new-app-icon" placeholder="📺"></div>
+          <button class="btn-sub" style="background:var(--accent);color:#000;margin-top:10px" onclick="saveNewApp()">UPLOAD LINK</button>
+        </div>
+
+        <div id="admin-branding" class="admin-branding">
+          <div class="upload-box"><label>Logo</label><input type="file" onchange="handleFile(this,'Logo_ID')" accept="image/*"></div>
+          <div class="upload-box"><label>Founder</label><input type="file" onchange="handleFile(this,'Founder_ID')" accept="image/*"></div>
+          <div class="upload-box"><label>Background</label><input type="file" onchange="handleFile(this,'Background_ID')" accept="image/*"></div>
         </div>
       </div>
-    </section>
-    <section id="module-teacher" class="module-page">
-      <div id="teacher-login" style="max-width:350px; margin: 50px auto;"><div class="card" style="text-align:center;"><h2 class="gold-title">TEACHER LOGIN</h2><input type="text" id="login-user" placeholder="Username"><input type="password" id="login-pass" placeholder="Password"><button class="btn btn-gold" style="width:100%;" onclick="login()">LOGIN</button></div></div>
-      <div id="teacher-ui" style="display:none; max-width:500px; margin:0 auto;"><div class="card"><h2 class="gold-title">AWARD POINTS</h2><input type="text" id="p-name" placeholder="Student Name"><select id="p-house"></select><input type="text" id="p-cat" placeholder="Category"><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button class="btn btn-primary" onclick="submitPoints('Positive')">👍 +10 PTS</button><button class="btn" style="background:#800" onclick="submitPoints('Negative')">👎 -5 PTS</button></div></div></div>
-    </section>
-    <section id="module-certs" class="module-page">
-      <div class="card" style="text-align:center;"><h1 class="gold-title">MERIT RECOGNITION</h1><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;"><button class="btn btn-gold" onclick="genAnalysis('weekly', 'poster')">📄 Weekly Poster</button><button class="btn btn-primary" onclick="genAnalysis('weekly', 'certs')">🎓 Weekly Certs</button><button class="btn btn-gold" onclick="genAnalysis('annual', 'poster')">🏆 Annual Poster</button><button class="btn btn-primary" onclick="genAnalysis('annual', 'certs')">🎖️ Annual Certs</button></div></div>
-    </section>
-    <section id="module-analysis" class="module-page"><div class="card"><h1 class="gold-title">DEEP ANALYSIS REPORTS</h1><div id="analysis-preview">Ready for Export</div></div></section>
-    <section id="module-qr" class="module-page"><div class="card admin-controls"><h1 class="gold-title">QR GENERATOR</h1><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px;"><button class="btn btn-gold" onclick="loadQR()">🔄 GENERATE ALL</button><button class="btn btn-primary" onclick="window.print()">🖨️ PRINT SHEET</button></div></div><div id="qr-container" class="sticker-grid"></div></section>
-    <section id="module-settings" class="module-page">
-      <div class="card"><h2 class="gold-title">SYSTEM SETTINGS</h2><div style="margin-top:15px;"><label>Background (MP3)</label><input type="file" id="audio-file" accept="audio/*"><button class="btn btn-primary" onclick="uploadAudio()">UPLOAD</button></div><button class="btn" style="margin-top:20px; background:#444" onclick="localStorage.removeItem('DBPC_GAS_URL'); location.reload();">🔧 Reset Backend Link</button></div>
-    </section>
-    <div id="print-zone" style="display:none;"></div>
-  </main>
+    </div>
+    <button class="btn-logout" onclick="logout()">← LOGOUT</button>
+  </div>
+
   <script>
-    let GAS_URL = localStorage.getItem('DBPC_GAS_URL') || "";
-    let state = { assets: null, user: null };
-    window.onload = () => { if (!GAS_URL) document.getElementById('config-overlay').style.display="flex"; else init(); };
-    function saveConfig() {
-      const url = document.getElementById('config-gas-url').value.trim();
-      if (url.includes('google.com')) { localStorage.setItem('DBPC_GAS_URL', url); location.reload(); }
-      else alert("Invalid URL");
+    // PWA Service Worker Link
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
+
+    // 👇👇 YOUR NEW GOOGLE SHEETS DEPLOYMENT URL GOES HERE! 👇👇
+    const API = "https://script.google.com/macros/s/AKfycbyyY63WqLuZvsFtx5rD2iUWabvZqVpl9Dvu2zbst8dR3ET_Ilu3P_oW8pTGL3pcvnQYyA/exec";  
+    
+    let scores={}, houseColors={}, currentMode="Positive", currentDept="", selectedDept="", scanActive=false, html5QrCode=null, isAdmin=false, adminCats=[], lbDept="", lbCat="ALL", lbPeriod="weekly";
+    let globalDeptList = [], globalAppLinks = [];
+    
+    const sfxSuccess = new Audio("https://upload.wikimedia.org/wikipedia/commons/e/ec/Notif1.wav");
+    const sfxFail = new Audio("https://upload.wikimedia.org/wikipedia/commons/3/30/Buzzer.ogg");
+
+    // ===== INSTALL PWA LOGIC =====
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-btn').style.display = 'block';
+    });
+
+    async function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') document.getElementById('install-btn').style.display = 'none';
+        deferredPrompt = null;
+      }
     }
-    async function api(action, data = {}) {
-      try { const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action, ...data }) }); return await res.json(); }
-      catch(e) { console.error(e); return { success:false }; }
+
+    // Check if iOS (Apple blocks automatic prompts, we must physically instruct them)
+    function checkiOS() {
+      const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+      const isStandalone = ('standalone' in window.navigator) && window.navigator.standalone;
+      if (isIos && !isStandalone) {
+        const btn = document.getElementById('install-btn');
+        btn.style.display = 'block';
+        btn.innerText = "📲 TAP 'SHARE' AND 'ADD TO HOME SCREEN'";
+        btn.onclick = () => alert("Apple requires you to install manually:\n\n1. Tap the Share Icon at the bottom of Safari.\n2. Scroll down and tap 'Add to Home Screen'.");
+      }
     }
-    async function init() {
-      document.getElementById('loading').style.display="flex";
-      const res = await api('getAssets');
-      state.assets = res;
-      applyDynamicCSS(res.houseConfig);
-      document.getElementById('loading').style.display="none";
-      startTVPolling();
-    }
-    function applyDynamicCSS(config) {
-      if(!config) return;
-      let css = ':root { --db-blue: #003366; --gold: #D4AF37; --gold-light: #F9E29C; ';
-      config.forEach(h => { css += `--h-${h.name.toLowerCase().replace(/\s+/g,'-')}: ${h.color}; `; });
-      document.getElementById('dynamic-css').innerText = css + ' }';
-      const hSel = document.getElementById('p-house');
-      if(hSel) hSel.innerHTML = config.map(h => `<option value="${h.name}">${h.name} HOUSE</option>`).join('');
-    }
-    function switchModule(id) {
-      document.querySelectorAll('.module-page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById('module-' + id).classList.add('active');
-      const navItem = document.getElementById('nav-' + id);
-      if(navItem) navItem.classList.add('active');
-    }
-    async function startTVPolling() { setInterval(async () => { const d = await api('getTVData'); updateTVUI(d); }, 15000); updateTVUI(await api('getTVData')); }
-    function updateTVUI(d) {
-      if(!d || !d.weeklyHouses) return;
-      const getH = (n) => `var(--h-${n.toLowerCase().replace(/\s+/g,'-')})`;
-      document.getElementById('tv-weekly-list').innerHTML = d.weeklyHouses.map((h, i) => `
-        <div class="house-row rank-${i}">
-          <div style="background:${getH(h[0])}; width:15px; height:15px; border-radius:5px;"></div>
-          <div class="house-name" style="color:${getH(h[0])}">${h[0]}</div>
-          <div class="house-pts">${h[1]}</div>
-        </div>
-      `).join('');
-      document.getElementById('tv-annual-list').innerHTML = d.yearlyHouses.map(h => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; opacity:0.8; font-size:0.9rem;"><span>${h[0]}</span><span>${h[1]}</span></div>`).join('');
-      document.getElementById('tv-active-dept').innerText = d.activeDept;
-    }
-    async function login() {
-      const res = await api('authenticate', { user:document.getElementById('login-user').value, pass:document.getElementById('login-pass').value });
-      if(res.success) { state.user = { ...res, user:document.getElementById('login-user').value }; document.getElementById('teacher-login').style.display="none"; document.getElementById('teacher-ui').style.display="block"; }
-      else alert("Invalid Login");
-    }
-    async function submitPoints(type) {
-      const res = await api('submitPoint', { data: { studentName: document.getElementById('p-name').value, house: document.getElementById('p-house').value, category: document.getElementById('p-cat').value, type, dept: state.user.dept, teacherName: state.user.user } });
-      if(res.success) alert("Points Recorded!");
-    }
-    async function loadQR() {
-      document.getElementById('loading').style.display="flex";
-      const students = await api('getStudentData');
-      const container = document.getElementById('qr-container'); container.innerHTML = "";
-      students.forEach((s, i) => {
-        const [name, dept, house] = s;
-        const sticker = document.createElement('div'); sticker.className = 'sticker';
-        const qrId = 'qr-' + i;
-        sticker.innerHTML = `<div id="${qrId}"></div><div class="sticker-name">${name}</div><div class="sticker-info">${dept} • ${house.toUpperCase()}</div>`;
-        container.appendChild(sticker);
-        new QRCode(document.getElementById(qrId), { text: `${name}|${dept}|${house}`, width:85, height:85 });
+
+    function api(payload) { return fetch(API, { method:"POST", body:JSON.stringify(payload) }).then(r=>r.json()); }
+
+    async function boot() {
+      checkiOS();
+      const st = document.getElementById('sync-status');
+      const cache = localStorage.getItem('goats_cache');
+      if(cache) try { render(JSON.parse(cache)); } catch(e){}
+      
+      try {
+        const res = await api({action:"getAppData"});
+        if(res && res.deptList) {
+          localStorage.setItem('goats_cache', JSON.stringify(res));
+          render(res);
+          st.innerText = "🟢 LIVE"; st.className = "status-live";
+          const savedUser = localStorage.getItem('goats_user'), savedPass = localStorage.getItem('goats_pass');
+          if (savedUser && savedPass) { selectedDept = savedUser; document.getElementById('pass-input').value = savedPass; handleLogin(true); }
+          processQueue();
+        } else throw new Error(res.error||"empty");
+      } catch(e) { st.innerText = "🔴 OFFLINE"; st.className = "status-offline"; }
+      
+      const pl = document.getElementById('preloader');
+      if(pl) { pl.style.opacity='0'; setTimeout(()=>pl.style.display='none', 600); }
+
+      api({action:"getStudentList"}).then(res => {
+        if(res && res.success) {
+          const dl = document.getElementById('student-list');
+          dl.innerHTML = res.students.map(s => `<option value="${s.name}" data-house="${s.house}">`).join('');
+          document.getElementById('man-name').addEventListener('input', (e)=>{
+            const val = e.target.value.toUpperCase(), opt = Array.from(dl.options).find(o => o.value.toUpperCase() === val);
+            if(opt && opt.dataset.house) {
+              const hs = document.getElementById('man-house');
+              for(let i=0; i<hs.options.length; i++) { if(hs.options[i].value === opt.dataset.house) hs.selectedIndex = i; }
+            }
+          });
+        }
       });
-      document.getElementById('loading').style.display="none";
     }
-    async function genAnalysis(period, type) {
-      document.getElementById('loading').style.display="flex";
-      const d = await api('getAnalysisData', { isAnnual: period === 'annual' });
-      let names = []; d.deptStats.forEach(dept => { (period === 'annual' ? dept.allStudents : dept.students).forEach(s => names.push(s.name)); });
-      const photoMap = await api('getStudentPhotos', { names });
-      document.getElementById('print-zone').innerHTML = (type === 'poster') ? drawPoster(d, photoMap) : drawCerts(d, period === 'annual', photoMap);
-      document.getElementById('loading').style.display="none";
-      setTimeout(() => window.print(), 800);
+
+    const deptIcons = {'cse':'💻','it':'🖥️','ece':'📡','eee':'⚡','mech':'⚙️','civil':'🏗️','auto':'🚗','chem':'🧪','arch':'🏛️','admin':'👑','mca':'🖱️','bca':'📱','arts':'🎨','science':'🔬','commerce':'📊'};
+    function getIcon(d){const k=d.toLowerCase().replace(/\s+/g,'');for(const key in deptIcons){if(k.includes(key))return deptIcons[key];}return '📚';}
+    
+    function render(data){
+      if(!data) return;
+      const {images,houseConfig,deptList,categories,appLinks}=data;
+      adminCats=categories||[];
+      globalDeptList = deptList||[];
+      globalAppLinks = appLinks||[];
+      
+      if(images&&images.bg) document.getElementById('main-bg').style.backgroundImage=`url('${images.bg}')`;
+      if(images&&images.logo) document.getElementById('m-logo').src=images.logo;
+      if(images&&images.founder) document.getElementById('m-founder').src=images.founder;
+      
+      document.getElementById('dept-grid').innerHTML = globalDeptList.map(d=>`
+        <div class="dept-card" onclick="handleCard('${d}')">
+          <div style="font-size:30px;margin-bottom:6px;">${getIcon(d)}</div>
+          <b>${d}</b><div class="dept-card-bar"></div>
+        </div>`).join('');
+        
+      if(categories) document.getElementById('p-cat').innerHTML=categories.map(c=>`<option>${c}</option>`).join('');
+      if(houseConfig){
+        const strip=document.getElementById('score-strip'),grid=document.getElementById('house-grid'),sel=document.getElementById('man-house');
+        strip.innerHTML="";grid.innerHTML="";sel.innerHTML='<option selected disabled>House</option>';
+        houseConfig.forEach((h,i)=>{
+          scores[h.name]=0;houseColors[h.name]=h.color;
+          strip.innerHTML+=`<div class="score-chip" id="chip-${h.name}" style="border-top-color:${h.color};--chip-color:${h.color}"><div class="chip-rank" id="rank-${h.name}"></div><div class="chip-name">${h.name}</div><div class="chip-score" id="s-${h.name}">0</div></div>`;
+          grid.innerHTML+=`<button class="house-btn" style="background:${h.color};--glow:${h.color};animation:pulseGlow ${2+i*.3}s ease-in-out infinite" onclick="record('${h.name}','WINNER')">${h.name}</button>`;
+          sel.add(new Option(h.name,h.name));
+        });
+      }
+      setMode('Positive');
     }
-    function drawPoster(d, photos) {
-       const getH = (n) => `var(--h-${n.toLowerCase().replace(/\s+/g,'-')})`;
-       return `<div style="width:297mm; min-height:420mm; padding:20mm; background:white; color:black; font-family:'Outfit'; text-align:center;">
-          <h1 style="font-family:'Cinzel'; font-size:4rem; margin:0;">${d.periodLabel} PERFORMANCE</h1>
-          <div style="display:flex; justify-content:space-around; margin:40px 0;">${d.houseRanks.map(h => `<div style="background:${getH(h[0])}; color:white; padding:20px; border-radius:15px; min-width:180px;"><h3>${h[0]}</h3><h1>${h[1]}</h1></div>`).join('')}</div>
-          <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;">${d.deptStats.map(dept => dept.students.map(s => `
-            <div style="border:2px solid #ddd; border-radius:15px; padding:15px; width:170px;">
-              <img src="${photos[s.name]||''}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:2px solid var(--gold);">
-              <h4 style="margin:10px 0 2px 0;">${s.name}</h4><small style="color:var(--gold); font-weight:900;">${dept.dept}</small>
-            </div>`).join('')).join('')}</div></div>`;
+
+    function updateRanks(){
+      const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+      const medals=['🥇','🥈','🥉'];
+      sorted.forEach(([name],i)=>{
+        document.getElementById('rank-'+name).innerText=medals[i]||'';
+        document.getElementById('chip-'+name).classList.toggle('leader',i===0);
+      });
     }
-    function drawCerts(d, isAnnual, photos) {
-      let html = ""; d.deptStats.forEach(dept => { (isAnnual ? dept.allStudents : dept.students).slice(0, isAnnual ? 3 : 1).forEach((s, idx) => {
-        html += `<div style="width:210mm; height:297mm; padding:20mm; background:white; color:black; font-family:'Outfit'; text-align:center; border:20px solid var(--db-blue); box-sizing:border-box;">
-          <h1 style="font-family:'Cinzel';">DON BOSCO MERIT AWARD</h1>
-          <img src="${photos[s.name]||''}" style="width:220px; height:220px; border-radius:50%; object-fit:cover; margin:30px 0; border:5px solid var(--gold);">
-          <p>Presented to</p><h1 style="font-size:3.5rem; font-family:'Playfair Display';">${s.name}</h1>
-          <div style="font-family:'Great Vibes'; font-size:3rem; color:var(--gold);">${isAnnual ? 'Rank #'+(idx+1) : 'Topper of the Week'}</div>
-          <p>${dept.dept.toUpperCase()}</p>
-        </div>`;
-      }); });
-      return html;
+
+    function handleCard(d){ isAdmin ? openLb(d) : openLogin(d); }
+    function openLogin(d){ selectedDept=d; document.getElementById('target-dept').innerText=d; document.getElementById('pass-input').value=''; document.getElementById('login-modal').style.display='flex'; setTimeout(()=>document.getElementById('pass-input').focus(), 50); }
+    function closeLogin(){ document.getElementById('login-modal').style.display='none'; }
+    
+    async function handleLogin(isSilent = false){
+      const p = document.getElementById('pass-input').value; if(!p) return;
+      try {
+        const res=await api({action:"authenticate",user:selectedDept,pass:p});
+        if(res.success){
+          closeLogin();
+          localStorage.setItem('goats_user', selectedDept);
+          localStorage.setItem('goats_pass', p);
+          
+          isAdmin = res.role==='Admin';
+          currentDept=selectedDept;
+          document.getElementById('dept-label').innerText=selectedDept;
+          document.getElementById('dept-gate').style.display = isAdmin ? 'block' : 'none';
+          document.getElementById('teacher-view').style.display='block';
+          document.getElementById('admin-actions').style.display=isAdmin?'flex':'none';
+          ['house-grid','cam-area','manual-area','type-select','teacher-meta'].forEach(id=>{ const el=document.getElementById(id);if(el) el.style.display=isAdmin?'none':''; });
+          document.getElementById('install-btn').style.display='none'; // Hide install button when working
+          
+          if(!isAdmin){
+            document.getElementById('type-select').style.display='flex'; document.getElementById('house-grid').style.display='grid';
+            document.querySelector('.scoreboard').style.display='block'; document.getElementById('dept-label').style.display='block';
+          } else {
+            document.querySelector('.gate-title').innerText = "📊 ADMIN DASHBOARD - SELECT LEADERBOARD";
+            
+            const leaderDepts = globalDeptList.filter(d => d.toLowerCase() !== 'admin');
+            const gridHtml = leaderDepts.map(d=>`
+              <div class="dept-card" onclick="openLb('${d}')">
+                <div style="font-size:30px;margin-bottom:6px;">${getIcon(d)}</div>
+                <b>${d}</b><div class="dept-card-bar"></div>
+              </div>`).join('');
+              
+            const allCard = `<div id="card-all" class="dept-card" style="border-color:var(--neon); box-shadow: 0 0 20px rgba(251,255,0,0.2);" onclick="openLb('ALL')">
+                <div style="font-size:30px;margin-bottom:6px;">👑</div>
+                <b style="color:var(--neon)">OVERALL TOTALS</b><div class="dept-card-bar" style="background:var(--neon)"></div>
+              </div>`;
+              
+            const externalApps = globalAppLinks.map(app=>`
+              <div class="dept-card" style="border-color:var(--accent); background:rgba(0,212,255,0.05); box-shadow: 0 0 15px rgba(0,212,255,0.15);" onclick="window.open('${app.url}', '_blank')">
+                <div style="font-size:30px;margin-bottom:6px;">${app.icon}</div>
+                <b style="color:var(--accent)">${app.name}</b><div class="dept-card-bar" style="background:var(--accent)"></div>
+              </div>`).join('');
+            
+            document.getElementById('dept-grid').innerHTML = allCard + gridHtml + externalApps;
+            document.querySelector('.scoreboard').style.display='none'; document.getElementById('dept-label').style.display='none';
+            document.getElementById('teacher-view').style.paddingBottom = "10px"; window.scrollTo(0, 0);
+          }
+        } else {
+          localStorage.removeItem('goats_user'); localStorage.removeItem('goats_pass');
+          if(!isSilent) showToast("❌ Wrong Password");
+        }
+      } catch(e) { if(!isSilent) showToast("❌ Login Error!"); }
     }
+
+    async function processQueue() {
+      const q = JSON.parse(localStorage.getItem('goats_queue') || '[]');
+      if(q.length === 0) return;
+      showToast("📡 Syncing " + q.length + " offline points...");
+      let failed = [];
+      for(const item of q) { try { const r = await api({action:"submitPoint", data:item}); if(!r || !r.success) throw new Error(); } catch(e) { failed.push(item); } }
+      localStorage.setItem('goats_queue', JSON.stringify(failed));
+      if(failed.length === 0) showToast("✅ All offline points synced!"); else showToast("⚠️ Some offline points still pending.");
+    }
+
+    async function record(hInput,sName,sDept=null){
+      const t=document.getElementById('t-name').value;
+      if(!t){showToast("⚠️ Enter Teacher Name first!");if(scanActive)stopCam();return;}
+      const actualH=Object.keys(scores).find(k=>k.toLowerCase()===hInput.trim().toLowerCase());
+      if(!actualH) return;
+      const pts=currentMode==='Positive'?10:-5;
+      
+      scores[actualH]+=pts; document.getElementById('s-'+actualH).innerText=scores[actualH]; updateRanks();
+      if(navigator.vibrate) navigator.vibrate(pts>0 ? [60,60,60] : [250]);
+      if(pts>0) { confetti({particleCount:60,spread:70,origin:{y:0.6}}); try{ sfxSuccess.currentTime=0; sfxSuccess.play().catch(()=>{}); }catch(e){} } 
+      else { popEmoji('😢'); try{ sfxFail.currentTime=0; sfxFail.play().catch(()=>{}); }catch(e){} }
+      const payload = {dept:currentDept,studentDept:sDept,studentName:sName,teacherName:t,category:document.getElementById('p-cat').value,house:actualH,type:currentMode};
+      
+      try{
+        if(!navigator.onLine) throw new Error("Offline");
+        const res=await api({action:"submitPoint",data:payload});
+        if(!res||!res.success) throw new Error();
+        showToast("✅ Point Saved: " + sName);
+      }catch(e){
+        const q = JSON.parse(localStorage.getItem('goats_queue') || '[]'); q.push(payload); localStorage.setItem('goats_queue', JSON.stringify(q));
+        showToast("📡 Offline Mode! Point queued for " + sName);
+      }
+    }
+    
+    function popEmoji(e){const el=document.createElement('div');el.className='emoji-pop';el.innerText=e;document.body.appendChild(el);setTimeout(()=>el.remove(),900);}
+    
+    async function toggleCam(){
+      const btn=document.getElementById('cam-btn'),hint=document.getElementById('scan-hint');
+      if(!scanActive){
+        document.getElementById('reader').style.display='block';
+        btn.classList.add('scanning');btn.innerText='⏹';hint.innerText='SCANNING...';
+        html5QrCode=new Html5Qrcode("reader");
+        await html5QrCode.start({facingMode:"environment"},{fps:15,qrbox:240},(t)=>{ const p=t.split('|').map(x=>x.trim()); if(p.length>=3){record(p[2],p[0],p[1]);stopCam();} });scanActive=true;
+      } else stopCam();
+    }
+    
+    async function stopCam(){ if(html5QrCode) await html5QrCode.stop(); document.getElementById('reader').style.display='none'; document.getElementById('cam-btn').classList.remove('scanning');document.getElementById('cam-btn').innerText='📷';document.getElementById('scan-hint').innerText='TAP TO SCAN QR';scanActive=false; }
+    function submitManual(){const n=document.getElementById('man-name').value,h=document.getElementById('man-house').value;if(!n||!h){showToast("⚠️ Fill name & house");return;}record(h,n);document.getElementById('man-name').value="";}
+    function setMode(m){currentMode=m;document.getElementById('btn-pos').className='mode-btn'+(m==='Positive'?' active-pos':'');document.getElementById('btn-neg').className='mode-btn'+(m==='Negative'?' active-neg':'');}
+    
+    function logout(){ localStorage.removeItem('goats_user'); localStorage.removeItem('goats_pass'); document.getElementById('teacher-view').style.display='none'; document.getElementById('dept-gate').style.display='block'; document.querySelector('.gate-title').innerText = "SELECT DEPARTMENT"; const allCard = document.getElementById('card-all'); if(allCard) allCard.remove(); isAdmin=false; currentDept=""; if(scanActive)stopCam(); if(localStorage.getItem('goats_cache')) render(JSON.parse(localStorage.getItem('goats_cache'))); checkiOS(); }
+    
+    function toggleBranding(){const b=document.getElementById('admin-branding');b.style.display=b.style.display==='block'?'none':'block'; document.getElementById('admin-webapp-form').style.display='none';}
+    function toggleWebAppForm(){const b=document.getElementById('admin-webapp-form');b.style.display=b.style.display==='block'?'none':'block'; document.getElementById('admin-branding').style.display='none';}
+    
+    async function forceSync(){ showToast("🔄 Syncing queues..."); await processQueue(); localStorage.removeItem('goats_cache'); await boot(); }
+    
+    async function saveNewApp() {
+      const name = document.getElementById('new-app-name').value;
+      const url = document.getElementById('new-app-url').value;
+      const icon = document.getElementById('new-app-icon').value || "✨";
+      if(!name || !url){ showToast("⚠️ Name and URL required"); return; }
+      
+      showToast("Uploading App Link...");
+      const res = await api({action:"saveAppLink", data: {name, url, icon}});
+      if(res.success) {
+         localStorage.removeItem('goats_cache');
+         document.getElementById('new-app-name').value='';
+         document.getElementById('new-app-url').value='';
+         showToast("✅ App Linked! Refreshing...");
+         setTimeout(()=>location.reload(), 1000);
+      } else showToast("❌ Failed to save.");
+    }
+    
+    // ── ADMIN LEADERBOARD ──
+    function openLb(dept){ lbDept=dept; lbCat='ALL'; setLbPeriod('weekly'); document.getElementById('lb-title').innerText=dept.toUpperCase(); const cats=['ALL',...adminCats]; document.getElementById('lb-cat-filters').innerHTML=cats.map(c=>`<button class="lb-filter-btn${c==='ALL'?' active':''}" onclick="setLbCat('${c}')">${c}</button>`).join(''); document.getElementById('lb-modal').style.display='flex'; }
+    function closeLb(){document.getElementById('lb-modal').style.display='none';}
+    function setLbCat(cat){lbCat=cat;document.querySelectorAll('.lb-filter-btn').forEach(b=>b.classList.toggle('active',b.innerText===cat));loadLb();}
+    function setLbPeriod(p){ lbPeriod=p; document.getElementById('btn-period-weekly').className='period-btn'+(p==='weekly'?' active':''); document.getElementById('btn-period-annually').className='period-btn'+(p==='annually'?' active':''); loadLb(); }
+    
+    async function loadLb(){
+      const body=document.getElementById('lb-body'); body.innerHTML='<div class="lb-empty">⌛ Loading...</div>';
+      try{
+        const res=await api({action:"getDeptLeaderboard",dept:lbDept,category:lbCat,period:lbPeriod});
+        if(!res.success||!res.leaderboard.length){body.innerHTML='<div class="lb-empty">No data for this timeframe.</div>';return;}
+        const lb=res.leaderboard, max=lb[0].pts||1, medals=['🥇','🥈','🥉']; let pod='<div class="lb-podium">'; const order=lb.length>=3?[1,0,2]:lb.map((_,i)=>i);
+        order.filter(i=>lb[i]).forEach(i=>{ const h=lb[i],col=houseColors[h.name]||'#888',ht=Math.max(60,Math.round((h.pts/max)*140)); pod+=`<div class="lb-podium-item"><div class="lb-podium-bar" style="background:${col};height:${ht}px">${medals[i]||''}</div><div class="lb-podium-name">${h.name}</div><div class="lb-podium-score">${h.pts}</div></div>`; }); pod+='</div>';
+        const rows=lb.map((h,i)=>{ const col=houseColors[h.name]||'#888',pct=Math.round((h.pts/max)*100); return `<div class="lb-row" style="border-left-color:${col}"><div class="lb-row-rank">${medals[i]||i+1}</div><div style="flex:1"><div class="lb-row-name">${h.name}</div><div class="lb-bar-bg"><div class="lb-bar-fill" style="width:${pct}%;background:${col}"></div></div></div><div class="lb-row-pts">${h.pts}</div></div>`; }).join('');
+        body.innerHTML=`<div style="font-size:10px;color:rgba(255,255,255,.3);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">${lbPeriod==='weekly'?'📅 LAST 7 DAYS':'🏆 ANNUAL SCORES'} · ${lbCat==='ALL'?'All Categories':lbCat}</div>${pod}${rows}`;
+      }catch(e){body.innerHTML='<div class="lb-empty">Failed to load.</div>';}
+    }
+    
+    async function prepareBulkPrint(){
+      showToast("Loading students...");
+      const res=await api({action:"getStudentList"});
+      const pw=window.open('','_blank');
+      pw.document.write(`<!DOCTYPE html><html><head><title>Batch QR</title>
+        <style>body{font-family:sans-serif;margin:0;padding:20px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.box{border:1px solid #ddd;padding:10px;text-align:center;page-break-inside:avoid;border-radius:8px}.qr{width:110px;height:110px;margin:5px auto;background:#fff}.lbl{font-size:9px;font-weight:900;text-transform:uppercase;line-height:1.4;margin-top:5px;color:#000}.btn{position:fixed;top:10px;right:10px;padding:12px 24px;background:#000;color:#fbff00;border:none;border-radius:8px;font-weight:900;cursor:pointer}@media print{.btn{display:none}@page{size:A4;margin:1cm}}</style>
+      </head><body>
+        <button class="btn" onclick="window.print()">PRINT A4 SHEET</button>
+        <div class="grid" id="g"></div>
+        <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
+        <script>function gen(){const ss=${JSON.stringify(res.students)},g=document.getElementById('g');if(typeof QRCode==='undefined'){setTimeout(gen,100);return;}ss.forEach(s=>{const b=document.createElement('div');b.className='box';const q=document.createElement('div');q.className='qr';const l=document.createElement('div');l.className='lbl';l.innerHTML=(s.name||'')+'<br>'+(s.dept||'')+' | '+(s.house||'');b.appendChild(q);b.appendChild(l);g.appendChild(b);try{new QRCode(q,{text:(s.name||'')+' | '+(s.dept||'')+' | '+(s.house||''),width:110,height:110});}catch(e){}});}gen();<\/script>
+      </body></html>`);
+      pw.document.close();
+    }
+    
+    function handleFile(input,key){
+      if(!input.files[0]) return;
+      const rd=new FileReader();
+      rd.onload=async(e)=>{
+        showToast("Uploading...");
+        const res=await api({action:"uploadBranding",data:{key,name:input.files[0].name,file:e.target.result}});
+        if(res.success){localStorage.removeItem('goats_cache');showToast("✅ Updated!");setTimeout(()=>location.reload(),1000);}
+        else showToast("❌ Upload Failed");
+      };
+      rd.readAsDataURL(input.files[0]);
+    }
+    
+    function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3200);}
   </script>
 </body>
 </html>
