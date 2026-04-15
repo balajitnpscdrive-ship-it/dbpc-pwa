@@ -1,13 +1,19 @@
 {
-  "name": "My GAS App",
-  "short_name": "GAS App",
-  "start_url": "index.html",
+  "name": "Don Bosco G.O.A.T.S",
+  "short_name": "GOATS",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4285f4",
+  "background_color": "#ffffff", 
+  "theme_color": "#fbff00",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2991/2991148.png",
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
