@@ -100,7 +100,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbz2ayZWrR8B06u_0pqtB6A6TUmEeV0IIiBFQ9RbFKmKUGhwDRkE-E8zqrrzNSrMI4U6FQ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbygB0b3MScq0ETe1XBX290rSef9Gj6Wy-pPFfpHVroogX4QHtr4HXEKGtOeh86HGHF5FA/exec";
         let appData={}, scanner=null, audioCtx=null;
         const call=(p)=>fetch(API_URL,{method:"POST",body:JSON.stringify(p)}).then(res=>res.json());
         function haptic(){ if(window.navigator.vibrate)window.navigator.vibrate(15); }
