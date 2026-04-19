@@ -1,925 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#fbff00">
-  <title>DB G.O.A.T.S | PORTAL</title>
-  <link rel="manifest" href="manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    /* =======================
-       GLOBAL VARIABLES
-       ======================= */
-    :root {
-      --neon: #fbff00;
-      --accent: #00d4ff;
-      --green: #00ff88;
-      --red: #ff416c;
-      --bg: #050508;
-      --gold: #d4af37;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; min-height: 100vh; overflow-x: hidden; }
-    /* =======================
-       PRELOADER & OVERLAY
-       ======================= */
-    .preloader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #050508; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease; }
-    .loader-pulse { animation: pulseLogo 0.8s infinite alternate; }
-    @keyframes pulseLogo { from { transform: scale(0.9); filter: drop-shadow(0 0 10px rgba(251,255,0,0)); } to { transform: scale(1.1); filter: drop-shadow(0 0 20px var(--neon)); } }
-    .bg-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; background-size: cover; background-position: center; filter: brightness(0.2) blur(6px); }
-    /* =======================
-       HEADER & MISC UI
-       ======================= */
-    .header { padding: calc(10px + env(safe-area-inset-top)) 14px 12px; display: grid; grid-template-columns: 60px 1fr 60px; align-items: center; gap: 8px; background: rgba(0,0,0,0.9); border-bottom: 1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index: 100; }
-    .logo-img { width: 54px; height: 54px; object-fit: contain; border-radius: 8px; }
-    .founder-img { width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--neon); object-fit: cover; justify-self: end; }
-    .header-title { text-align: center; }
-    .header-title h1 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: white; line-height: 1.2; }
-    .header-title p { font-size: 8px; color: var(--neon); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; opacity: .9; }
-    .header-title small { font-size: 7.5px; color: rgba(255,255,255,0.35); letter-spacing: 1px; text-transform: uppercase; display: block; }
-    #sync-status { position: fixed; bottom: 12px; right: 12px; font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 20px; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.08); z-index: 200; }
-    .status-live { color: var(--green) !important; border-color: rgba(0,255,136,.3) !important; }
-    .status-offline { color: var(--red) !important; border-color: rgba(255,65,108,.3) !important; }
-    /* =======================
-       DEPARTMENT GRID
-       ======================= */
-    #dept-gate { padding: 20px 14px; max-width: 900px; margin: auto; }
-    .gate-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; color: rgba(255,255,255,0.4); text-align: center; margin-bottom: 20px; }
-    .dept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-    .dept-card { background: rgba(20,20,25,0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 22px 10px; text-align: center; cursor: pointer; transition: transform 0.15s; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
-    .dept-card:active { transform: scale(0.92); box-shadow: 0 0 20px rgba(251,255,0,.3); }
-    .dept-card-icon { font-size: 32px; margin-bottom: 8px; }
-    .dept-card b { display: block; font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; word-wrap: break-word; }
-    .dept-card-bar { height: 3px; background: linear-gradient(90deg, var(--neon), var(--accent)); border-radius: 3px; margin: 10px auto 0; width: 80%; opacity: .8; }
-    /* =======================
-       LOGIN MODAL
-       ======================= */
-    #login-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-    .modal-box { background: rgba(20,20,25,1); border: 1px solid rgba(251,255,0,.4); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 0 60px rgba(251,255,0,.15); }
-    .modal-box h2 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--neon); letter-spacing: 3px; margin-bottom: 20px; }
-    input, select, textarea { width: 100%; padding: 14px 16px; margin: 8px 0; background: rgba(255,255,255,0.06); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; font-size: 16px; font-family: inherit; transition: border-color 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: var(--neon); outline: none; background: rgba(251,255,0,.08); }
-    textarea { resize: none; min-height: 50px; font-size: 14px; }
-    option { background: #1a1a1a; color: white; }
-    .btn-main { width: 100%; padding: 16px; border-radius: 12px; background: var(--neon); color: black; font-weight: 900; border: none; cursor: pointer; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 18px; margin-top: 5px; }
-    /* =======================
-       TEACHER VIEW & ADMIN
-       ======================= */
-    #teacher-view { max-width: 600px; margin: auto; padding-bottom: 40px; }
-    .scoreboard { padding: 16px; background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(255,255,255,0.07); }
-    .sb-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 10px; text-align: center; }
-    .score-strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
-    .score-chip { flex: 0 0 auto; min-width: 80px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 10px 14px; text-align: center; border-top: 3px solid #333; position: relative; }
-    .score-chip.leader { box-shadow: 0 0 20px var(--chip-color, #888); }
-    .chip-name { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6); }
-    .chip-score { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1.1; color: white; }
-    .chip-rank { font-size: 14px; position: absolute; top: -8px; right: -4px; }
-    .t-panel { margin: 16px; background: rgba(10,10,18,0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 16px 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
-    
-    /* Medal Tiers & Buttons */
-    .medal-section { margin-bottom: 16px; }
-    .medal-section-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.3); text-align: center; margin-bottom: 12px; }
-    .medal-row { display: flex; gap: 8px; justify-content: center; align-items: flex-end; margin-bottom: 8px; }
-    .medal-btn { position: relative; border: none; cursor: pointer; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; color: #000; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
-    .medal-btn:active { transform: scale(0.88) !important; }
-    .medal-btn .medal-icon { font-size: 28px; line-height: 1; }
-    .medal-btn .medal-pts { font-size: 11px; font-weight: 900; letter-spacing: 1px; margin-top: 2px; opacity: 0.8; }
-    .medal-btn .medal-label { font-size: 8px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; }
-    .medal-1st { width: 90px; height: 90px; background: linear-gradient(145deg, #ffd700, #b8860b, #ffd700); animation: medalFloat 3s ease-in-out infinite; }
-    .medal-1st.selected { box-shadow: 0 0 30px rgba(255,215,0,0.7), 0 0 60px rgba(255,215,0,0.3); transform: scale(1.1); }
-    .medal-2nd { width: 76px; height: 76px; background: linear-gradient(145deg, #e8e8e8, #a0a0a0, #e0e0e0); animation: medalFloat 3.2s ease-in-out 0.3s infinite; }
-    .medal-2nd.selected { box-shadow: 0 0 25px rgba(192,192,192,0.7), 0 0 50px rgba(192,192,192,0.3); transform: scale(1.1); }
-    .medal-3rd { width: 76px; height: 76px; background: linear-gradient(145deg, #e8a060, #8b4513, #cd7f32); animation: medalFloat 3.4s ease-in-out 0.6s infinite; }
-    .medal-3rd.selected { box-shadow: 0 0 25px rgba(205,127,50,0.7), 0 0 50px rgba(205,127,50,0.3); transform: scale(1.1); }
-    .medal-individual { width: 68px; height: 68px; border-radius: 14px; background: linear-gradient(135deg, #00b09b, #00ff88); color: #000 !important; animation: medalFloat 3.5s ease-in-out 0.9s infinite; }
-    .medal-individual.selected { box-shadow: 0 0 25px rgba(0,255,136,0.7), 0 0 50px rgba(0,255,136,0.3); transform: scale(1.1); }
-    .medal-individual .medal-icon { font-size: 22px; }
-    .medal-individual .medal-pts { font-size: 11px; }
-    .medal-deduct { width: 68px; height: 68px; border-radius: 14px; background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white !important; }
-    .medal-deduct.selected { box-shadow: 0 0 25px rgba(255,65,108,0.7); transform: scale(1.1); }
-    .medal-deduct .medal-icon { font-size: 20px; }
-    .medal-deduct .medal-pts { color: white; font-size: 10px; }
-    @keyframes medalFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-    .medal-btn.selected { animation: none !important; }
-    @keyframes medalStamp { 0% { transform: scale(1); } 30% { transform: scale(0.85) rotate(-3deg); } 60% { transform: scale(1.15) rotate(2deg); } 100% { transform: scale(1.1); } }
-    .medal-stamp { animation: medalStamp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important; }
-    .tier-indicator { text-align: center; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; padding: 8px; border-radius: 10px; margin-bottom: 16px; background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: var(--gold); transition: all 0.3s; }
-    .tier-indicator.negative { background: rgba(255,65,108,0.1); border-color: rgba(255,65,108,0.3); color: var(--red); }
-    .house-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-    .house-btn { padding: 28px 4px; border-radius: 16px; border: none; font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: black; cursor: pointer; position: relative; }
-    .house-btn:active { transform: scale(0.94); }
-    .scan-area { text-align: center; margin-bottom: 14px; }
-    #cam-btn { background: linear-gradient(135deg, var(--neon), #e8ff00); border: none; padding: 0; width: 80px; height: 80px; border-radius: 50%; font-size: 30px; cursor: pointer; }
-    .scan-hint { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 2px; text-transform: uppercase; margin-top: 8px; }
-    #reader { border-radius: 16px; overflow: hidden; border: 2px solid var(--neon); margin-bottom: 14px; }
-    .manual-row { display: flex; gap: 8px; margin-bottom: 6px; }
-    .btn-sub { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 14px; border-radius: 12px; font-weight: 900; cursor: pointer; width: 100%; margin-bottom: 14px; letter-spacing: 1px; }
-    .remarks-wrap { margin-bottom: 14px; }
-    .remarks-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
-    
-    /* ADMIN ACTIONS */
-    .admin-section { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
-    .btn-admin { padding: 14px 10px; border-radius: 12px; background: transparent; font-weight: 900; cursor: pointer; font-size: 12px; letter-spacing: 1px; font-family: inherit; }
-    .upload-box { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; }
-    .upload-box label { font-size: 10px; color: var(--accent); display: block; margin-bottom: 6px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; }
-    .btn-logout { width: calc(100% - 32px); margin: 16px; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: rgba(255,255,255,0.7); font-weight: 600; cursor: pointer; letter-spacing: 1px; }
-    
-    /* =======================
-       LEADERBOARD & CERT MODAL
-       ======================= */
-    #lb-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #050508; flex-direction: column; z-index: 3000; overflow-x: hidden; overflow-y: auto; }
-    .lb-header { padding: 16px; background: rgba(0,0,0,1); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
-    .lb-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; flex: 1; }
-    .lb-back { background: rgba(255,255,255,0.15); border: none; color: white; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 900; font-size: 13px; }
-    .lb-period-toggle { display: flex; gap: 10px; padding: 16px 16px 4px 16px; }
-    .period-btn { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); padding: 10px 4px; border-radius: 12px; cursor: pointer; font-weight: 900; font-size: 11px; }
-    .period-btn.active { background: var(--neon); color: black; border-color: var(--neon); box-shadow: 0 0 15px rgba(251,255,0,0.2); }
-    .lb-filters { display: flex; gap: 12px; padding: 16px 16px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
-    .lb-filters::-webkit-scrollbar { display: none; }
-    .lb-filter-btn { -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4); color: #ffffff; padding: 12px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 900; flex-shrink: 0; text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center; line-height: normal; min-height: 44px; }
-    .lb-filter-btn.active { background: var(--accent); color: #000000; border-color: var(--accent); box-shadow: 0 0 15px rgba(0,212,255,0.5); }
-    .lb-body { padding: 20px 14px; }
-    .lb-podium { display: flex; gap: 8px; margin-bottom: 24px; align-items: flex-end; justify-content: center; }
-    .lb-podium-item { text-align: center; flex: 1; max-width: 90px; }
-    .lb-podium-bar { border-radius: 10px 10px 0 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: rgba(0,0,0,0.8); min-height: 36px; transform: scaleY(0); transform-origin: bottom; transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .lb-podium-name { font-size: 10px; font-weight: 900; text-transform: uppercase; margin-top: 6px; color: white; }
-    .lb-podium-score { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--neon); }
-    .lb-row { display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.06); border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #333; }
-    .lb-row-rank { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: rgba(255,255,255,0.5); width: 26px; text-align: center; }
-    .lb-row-name { font-weight: 900; font-size: 14px; text-transform: uppercase; }
-    .lb-bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-top: 4px; overflow: hidden; }
-    .lb-bar-fill { height: 100%; transform: scaleX(0); transform-origin: left; transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .lb-row-pts { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--neon); }
-    
-    /* =======================
-       TOAST / POPUP
-       ======================= */
-    #toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: rgba(15,15,20,0.95); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.8); color: white; padding: 14px 28px; border-radius: 50px; z-index: 5000; font-weight: 600; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; white-space: nowrap; }
-    #toast.show { bottom: 28px; opacity: 1; }
-    .shimmer { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmerFlow 1.5s infinite linear; border-radius: 8px; }
-    @keyframes shimmerFlow { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    #paper-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0) perspective(800px) rotateX(45deg); opacity: 0; width: 90%; max-width: 400px; background: linear-gradient(160deg, #1a1200, #0a0800); border: 2px solid rgba(255,215,0,0.6); color: white; padding: 30px; border-radius: 24px; z-index: 100000; text-align: center; box-shadow: 0 0 80px rgba(255,180,0,0.35), 0 0 200px rgba(0,0,0,0.95); pointer-events: none; display: none; }
-    #paper-popup.show { display: block; animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    @keyframes popIn { 0% { transform: translate(-50%, -20%) scale(0.5) perspective(800px) rotateX(60deg); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1) perspective(800px) rotateX(0deg); opacity: 1; } }
-    @keyframes screenShake { 0%, 100% { transform: translateX(0); } 10% { transform: translateX(-6px) rotate(-0.5deg); } 30% { transform: translateX(5px) rotate(0.5deg); } 50% { transform: translateX(-4px); } 70% { transform: translateX(3px); } 90% { transform: translateX(-2px); } }
-    .shake { animation: screenShake 0.5s ease; }
-    #pop-remarks { font-size: 12px; color: rgba(255,255,255,0.5); font-style: italic; margin-top: 8px; max-height: 40px; overflow: hidden; word-wrap: break-word; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>G.O.A.T.S | PLATINUM HUB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --bg: #050b1a; --card: rgba(15, 23, 42, 0.98); --accent: #00f2fe; --house-col: #00f2fe; --gold: #fdbb2d; }
+        * { box-sizing: border-box; margin: 0; padding: 0; outline:none; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        
+        /* THE AWARD POSTER */
+        .award-poster {
+            width: 350px; min-height: 580px; margin: 30px auto; background: radial-gradient(circle at center, #1b2735 0%, #050b1a 100%);
+            border-radius: 20px; padding: 35px 25px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08); text-align: center;
+        }
+        .cert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+        .clg-title { font-family: 'Bebas Neue'; font-size: 22px; flex: 1; line-height: 1; letter-spacing: 0.5px; color: #fff; }
+        .sub-tag { font-size: 8px; font-weight: 900; color: var(--gold); letter-spacing: 2px; margin-top: 5px; }
+
+        .award-title { font-family: 'Bebas Neue'; font-size: 45px; line-height: 0.85; margin: 20px 0 10px 0; }
+        .award-subtitle { color: var(--gold); font-size: 14px; font-weight: 900; letter-spacing: 4px; }
+
+        /* PORTRAIT */
+        .portrait-zone { width: 180px; height: 180px; margin: 30px auto; position: relative; }
+        .portrait-ring { position: absolute; inset: -12px; border: 4px solid var(--house-col); border-radius: 50%; box-shadow: 0 0 35px var(--house-col); animation: pulseGlow 3s infinite; }
+        @keyframes pulseGlow { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.05);opacity:1} }
+        .portrait-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid #fff; position: relative; z-index: 5; background: #111; }
+
+        /* RIBBON */
+        .ribbon-box { margin: 30px 0; position: relative; }
+        .winner-pill { background: #000; color: var(--gold); padding: 6px 25px; border-radius: 20px; display: inline-block; font-size: 11px; font-weight: 900; border: 1.5px solid var(--gold); margin-bottom: -15px; position: relative; z-index: 10; }
+        .winner-banner { background: var(--gold); color: #000; font-family: 'Bebas Neue'; font-size: 38px; letter-spacing: 6px; padding: 12px 45px; clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%); }
+
+        .citation { font-size: 11px; opacity: 0.9; line-height: 1.7; margin-top: 30px; font-weight: 600; padding: 0 5px; }
+        .highlight { color: var(--gold); font-weight: 900; text-transform: uppercase; }
+
+        /* UI */
+        .glass { background: var(--card); backdrop-filter: blur(30px); border-radius: 35px; padding: 25px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; }
+        .btn-elite { background: linear-gradient(135deg, var(--gold), #fff); color: #000; border: none; padding: 24px; border-radius: 25px; width: 100%; font-family: 'Bebas Neue'; font-size: 30px; cursor: pointer; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s cubic-bezier(0.8, 0, 0, 1); }
+        .splash-img { width: 140px; height: 140px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 80px var(--accent); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+        #ticker { background: rgba(0, 242, 254, 0.1); padding: 15px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--accent); }
+        .ticker-move { display: inline-block; animation: scrollT 25s linear infinite; font-weight: 900; letter-spacing: 2px; font-size: 11px; }
+        @keyframes scrollT { from{transform:translateX(100%)} to{transform:translateX(-100%)} }
+    </style>
 </head>
-<body onload="boot()">
-  <div class="preloader" id="preloader">
-    <div class="loader-pulse" style="font-size:60px;margin-bottom:10px;">⚡</div>
-    <div style="font-family:'Bebas Neue',sans-serif; letter-spacing:4px; color:var(--neon); font-size:24px;">G.O.A.T.S UPLINK</div>
-    <div style="font-size:10px; color:rgba(255,255,255,0.4); letter-spacing:2px; margin-top:5px;">SECURE CONNECTION ESTABLISHING...</div>
-  </div>
-  <div id="sync-status">OFFLINE</div>
-  <div class="bg-overlay" id="main-bg"></div>
-  <div id="toast"></div>
+<body>
 
-  <!-- CINEMATIC PAPER POPUP -->
-  <div id="paper-popup">
-    <div style="font-size:16px;font-weight:900;color:var(--neon);letter-spacing:2px;text-transform:uppercase;" id="pop-status">🎉 POINT AWARDED 🎉</div>
-    <div id="pop-medal" style="font-size:50px;margin:8px 0;">🥇</div>
-    <div id="pop-name" style="font-family:'Bebas Neue',sans-serif;font-size:40px;margin:4px 0;line-height:1.1;word-wrap:break-word;color:white;text-shadow:0 2px 10px #000;">STUDENT</div>
-    <div id="pop-dept" style="font-size:14px;font-weight:900;color:rgba(255,255,255,0.9);letter-spacing:1px;background:rgba(255,255,255,0.1);display:inline-block;padding:4px 12px;border-radius:20px;">DEPT</div>
-    <div id="pop-pts" style="font-family:'Bebas Neue',sans-serif;font-size:80px;font-weight:900;color:var(--neon);line-height:1;margin:10px 0;">+10</div>
-    <div id="pop-house" style="color:black;padding:12px 20px;border-radius:14px;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase;box-shadow:inset 0 0 10px rgba(0,0,0,0.5);">HOUSE</div>
-    <div id="pop-remarks"></div>
-  </div>
+    <div id="splash"><img id="sp-img" class="splash-img"><h1 style="font-family:'Bebas Neue'; letter-spacing:10px; margin-top:30px; font-size:45px;">SYNCING CORE...</h1></div>
+    <div id="ticker" style="display:none;"><div class="ticker-move" id="ticker-tx">🏆 BATTLE ARENA SYNCED... PREPARE FOR GLORY</div></div>
 
-  <div class="header">
-    <img id="m-logo" class="logo-img">
-    <div class="header-title">
-      <h1>DON BOSCO POLYTECHNIC COLLEGE</h1>
-      <p>G.O.A.T.S — Championship Portal</p>
-      <small>Givers of All Talents Students</small>
+    <div id="pop-over" style="position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:20000; display:none; align-items:center; justify-content:center; padding:30px; backdrop-filter:blur(20px);" onclick="this.style.display='none'">
+        <div class="glass" style="text-align:center; padding:50px; border-color:var(--gold);"><div style="font-size:80px;">🏆</div><h1 style="font-family:'Bebas Neue'; font-size:55px; color:var(--gold);">NEW VICTORY!</h1><p id="pop-msg" style="font-weight:900; margin-top:15px;"></p><button class="btn-elite" style="margin-top:40px; font-size:22px;">CONTINUE</button></div>
     </div>
-    <img id="m-founder" class="founder-img">
-  </div>
 
-  <!-- LEADERBOARD MODAL -->
-  <div id="lb-modal" style="display:none;">
-    <div class="lb-header">
-      <button class="lb-back" onclick="closeLb()">← BACK</button>
-      <h2 id="lb-title">LEADERBOARD</h2>
-    </div>
-    <div class="lb-period-toggle">
-      <button id="btn-period-weekly" class="period-btn active" onclick="setLbPeriod('weekly')">📅 WEEKLY</button>
-      <button id="btn-period-annually" class="period-btn" onclick="setLbPeriod('annually')">🏆 ANNUALLY</button>
-    </div>
-    <div class="lb-filters" id="lb-cat-filters"></div>
-    <div class="lb-body" id="lb-body"><div class="lb-empty">Loading...</div></div>
-  </div>
-
-  <!-- CERTIFICATE GENERATOR MODAL -->
-  <div id="cert-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#050508; z-index:4000; overflow-y:auto; padding-bottom:50px;">
-    <div class="lb-header">
-      <button class="lb-back" onclick="closeCertDashboard()">← BACK</button>
-      <h2 id="cert-title" style="font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:2px; flex:1;">CERTIFICATES</h2>
-    </div>
-    <div style="padding:20px; max-width:800px; margin:0 auto;">
-      <button class="btn-main" onclick="generateCertificates()" style="background:linear-gradient(to right, #d4af37, #ffd700); color:#000; margin-bottom:20px; font-size:16px;">🖨️ GENERATE A5 CERTIFICATES</button>
-      <div id="cert-list"></div>
-    </div>
-  </div>
-
-  <!-- DEPARTMENT GRID -->
-  <div id="dept-gate" style="display:block;">
-    <p class="gate-title">SELECT DEPARTMENT</p>
-    <div id="dept-grid" class="dept-grid"></div>
-  </div>
-
-  <!-- LOGIN MODAL -->
-  <div id="login-modal" style="display:none;" onclick="if(event.target==this)closeLogin()">
-    <div class="modal-box">
-      <h2 id="target-dept">DEPARTMENT</h2>
-      <input type="password" id="pass-input" placeholder="Enter Password" onkeydown="if(event.key==='Enter')handleLogin()">
-      <button class="btn-main" onclick="handleLogin()">ENTER PORTAL</button>
-    </div>
-  </div>
-
-  <!-- TEACHER / ADMIN VIEW -->
-  <div id="teacher-view" style="display:none;">
-    <div class="scoreboard" style="display:none;">
-      <div class="sb-label">🏆 LIVE HOUSE SCORES</div>
-      <div id="score-strip" class="score-strip"></div>
-    </div>
-    <div class="t-panel">
-      <div id="dept-label" style="font-size:11px;color:var(--accent);font-weight:900;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;text-align:center;"></div>
-      
-      <!-- STAFF NAME DROPDOWN -->
-      <div id="staff-area" style="margin-bottom:14px;">
-        <select id="t-name">
-          <option value="" disabled selected>👤 Select Your Name</option>
-        </select>
-      </div>
-      
-      <!-- MEDAL TIER SELECTOR -->
-      <div class="medal-section" id="medal-section">
-        <div class="medal-section-label">🏅 SELECT POINT TIER</div>
-        <div class="medal-row">
-          <button class="medal-btn medal-2nd" id="medal-2" onclick="selectTier('2nd')"><span class="medal-icon">🥈</span><span class="medal-pts" id="medal-2-pts">+10</span></button>
-          <button class="medal-btn medal-1st selected" id="medal-1" onclick="selectTier('1st')"><span class="medal-icon">🥇</span><span class="medal-pts" id="medal-1-pts">+15</span></button>
-          <button class="medal-btn medal-3rd" id="medal-3" onclick="selectTier('3rd')"><span class="medal-icon">🥉</span><span class="medal-pts" id="medal-3-pts">+5</span></button>
-        </div>
-        <div style="display:flex;justify-content:center;gap:12px;margin-top:10px;">
-          <button class="medal-btn medal-individual" id="medal-ind" onclick="selectTier('individual')"><span class="medal-icon">⭐</span><span class="medal-pts" id="medal-ind-pts">+10</span><span class="medal-label">INDIVIDUAL</span></button>
-          <button class="medal-btn medal-deduct" id="medal-neg" onclick="selectTier('deduct')"><span class="medal-icon">➖</span><span class="medal-pts" id="medal-neg-pts">-5</span><span class="medal-label">DEDUCT</span></button>
-        </div>
-      </div>
-      <div class="tier-indicator" id="tier-indicator">🥇 1ST PLACE — +15 POINTS</div>
-      
-      <div id="house-grid" class="house-grid"></div>
-      <div class="scan-area" id="cam-area">
-        <button id="cam-btn" onclick="toggleCam()">📷</button>
-        <div class="scan-hint" id="scan-hint">TAP TO SCAN QR</div>
-      </div>
-      <div id="reader" style="display:none;"></div>
-      <div id="manual-area">
-        <div class="manual-row" style="display:flex; gap:10px; position:relative; margin-bottom:12px;">
-          <div style="flex:1; position:relative;">
-            <input type="text" id="man-name" placeholder="Student Name" autocomplete="off" style="margin:0; width:100%;">
-            <div id="student-autocomplete" style="position:absolute; top:100%; left:0; right:0; background:#1a1a1a; border:1px solid var(--neon); border-radius:8px; max-height:200px; overflow-y:auto; z-index:1000; display:none; box-shadow:0 4px 20px rgba(0,0,0,0.8); margin-top:4px; text-align:left;"></div>
-          </div>
-          <select id="man-house" style="flex:1; margin:0;"><option selected disabled>House</option></select>
-        </div>
-        <button class="btn-sub" onclick="submitManual()">✓ SUBMIT MANUALLY</button>
-      </div>
-
-      <!-- REMARKS -->
-      <div class="remarks-wrap" id="remarks-area">
-        <div class="remarks-label">📝 REMARKS (OPTIONAL)</div>
-        <textarea id="remarks-input" placeholder="Reason for awarding points..." rows="2"></textarea>
-      </div>
-      <div class="meta-row" id="teacher-meta"><select id="p-cat"></select></div>
-      
-      <!-- ADMIN ACTIONS -->
-      <div id="admin-actions" class="admin-section" style="display:none;">
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-            <button class="btn-admin" style="flex:1; background:rgba(212,175,55,0.1); color:#d4af37; border:2px solid #d4af37;" onclick="openCertDashboard('weekly')">🏅 WEEKLY CERTIFICATES (TOP 3)</button>
-            <button class="btn-admin" style="flex:1; background:rgba(255,215,0,0.1); color:#ffd700; border:2px solid #ffd700;" onclick="openCertDashboard('annually')">🏆 ANNUAL CERTIFICATES (TOP 5)</button>
-        </div>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <button class="btn-admin" style="flex:1; color:var(--neon);border:1px solid var(--neon);font-size:12px;padding:12px;" onclick="generateReport('annually')">📊 ANNUAL REPORT</button>
-          <button class="btn-admin" style="flex:1; color:#00d4ff;border:1px solid #00d4ff;font-size:12px;padding:12px;" onclick="generateReport('weekly')">📅 WEEKLY REPORT</button>
-        </div>
-        <button class="btn-admin" style="color:var(--accent);border:1px solid var(--accent);" onclick="toggleWebAppForm()">🔗 NEW WEB APP CONNECTION</button>
-        <button class="btn-admin" style="color:#00ff88;border:1px solid #00ff88;" onclick="toggleBranding()">🎨 BRANDING DASHBOARD</button>
-        <button class="btn-admin" style="color:white;border:1px dashed rgba(255,255,255,0.4);" onclick="prepareBulkPrint()">🖨️ BULK QR SYSTEM (A4)</button>
-        <button class="btn-admin" style="color:white;border:1px solid rgba(255,255,255,0.15);" onclick="forceSync()">🔄 SYNC DATA CACHE</button>
+    <div class="container" style="max-width:480px; margin:0 auto;">
         
-        <div id="admin-webapp-form" style="display:none; margin-top:4px; padding-top:16px; border-top:1px dashed rgba(255,255,255,.2);">
-          <div class="upload-box"><label>App Name</label><input type="text" id="new-app-name" placeholder="e.g. Scoreboard"></div>
-          <div class="upload-box"><label>URL Link</label><input type="text" id="new-app-url" placeholder="https://..."></div>
-          <div class="upload-box"><label>Icon (Emoji)</label><input type="text" id="new-app-icon" placeholder="📺"></div>
-          <button class="btn-sub" style="background:var(--accent);color:#000;margin-top:10px;" onclick="saveNewApp()">UPLOAD LINK</button>
+        <div id="view-login" style="padding: 60px 20px; text-align:center;">
+            <h1 style="font-family:'Bebas Neue'; font-size:90px; letter-spacing:15px;">G.O.A.T.S</h1>
+            <button class="glass" style="width:100%; color:var(--accent); font-weight:900; border:1px dashed var(--accent);" onclick="startScan()">⚡ SCAN IDENTITY QR</button>
+            <div id="reader" style="display:none; margin:20px 0; border-radius:20px; overflow:hidden;"></div>
+            <div style="margin:30px 0; opacity:0.1; display:flex; align-items:center;"><hr style="flex:1;"><span style="padding:0 15px; font-size:10px;">SECURE UPLINK</span><hr style="flex:1;"></div>
+            <select id="sel-dept" onchange="haptic(); loadNames()" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select>
+            <div id="name-box" style="display:none; margin-top:15px;"><select id="sel-name" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select><button class="btn-elite" style="margin-top:25px;" id="u-btn" onclick="fetchU()">UPLINK SESSION</button></div>
         </div>
-        <div id="admin-branding" style="display:none; margin-top:4px; padding-top:16px; border-top:1px dashed rgba(255,255,255,.2);">
-          <div class="upload-box"><label>Logo</label><input type="file" onchange="handleFile(this,'Logo_ID')" accept="image/*"></div>
-          <div class="upload-box"><label>Founder</label><input type="file" onchange="handleFile(this,'Founder_ID')" accept="image/*"></div>
-          <div class="upload-box"><label>Background</label><input type="file" onchange="handleFile(this,'Background_ID')" accept="image/*"></div>
-        </div>
-      </div>
-    </div>
-    <button class="btn-logout" onclick="logout()">← LOGOUT</button>
-    
-    <!-- UNDO SNACKBAR -->
-    <div id="undo-snackbar" style="display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:rgba(20,20,25,0.95); color:white; padding:12px 16px 12px 24px; border-radius:30px; font-weight:600; font-size:14px; z-index:9999; box-shadow:0 10px 40px rgba(0,0,0,0.8); border:1px solid rgba(251,255,0,0.3); align-items:center; gap:16px; backdrop-filter:blur(10px);">
-      <span>Sending point to database...</span>
-      <button onclick="undoPoint()" style="background:var(--neon); color:#000; font-family:'Bebas Neue', sans-serif; letter-spacing:2px; font-size:16px; border:none; padding:8px 20px; border-radius:20px; cursor:pointer; box-shadow:0 0 15px rgba(251,255,0,0.4);">UNDO</button>
-    </div>
-  </div>
 
-  <script>
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(console.error); }
-    
-    /* ============================================================
-       CONFIG
-    ============================================================ */
-    const API = "https://script.google.com/macros/s/AKfycbwUBipWIUPe8NT1aC5I1YoB9gpjIhXnY6YDh18obcv_eXN6Z3cEOamVjr8nH9c2HNV2mg/exec";
-    
-    /* ============================================================
-       GLOBAL STATE
-    ============================================================ */
-    let scores = {}, houseColors = {}, currentDept = "", selectedDept = "",
-        scanActive = false, html5QrCode = null, isAdmin = false, adminCats = [],
-        lbDept = "", lbCat = "ALL", lbPeriod = "weekly";
-    let globalDeptList = [], globalAppLinks = [];
-    let pendingPayload = null, undoTimeout = null;
-    let currentTier = '1st';
-    let pointSettings = { '1st': 15, '2nd': 10, '3rd': 5, 'individual': 10, 'deduct': -5 };
-    const tierMedals = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉', 'individual': '⭐', 'deduct': '➖' };
-    const tierLabels = { '1st': '1ST PLACE', '2nd': '2ND PLACE', '3rd': '3RD PLACE', 'individual': 'INDIVIDUAL', 'deduct': 'DEDUCTION' };
-    let currentCertType = '';
-    let certStudents = [];
-    
-    /* ============================================================
-       SOUND SYNTHESIZER
-    ============================================================ */
-    let audioCtx = null;
-    function ensureAudioCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-    function playBeep(type) {
-      try {
-        ensureAudioCtx();
-        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
-        if (type === 'success') {
-          osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08); osc.frequency.setValueAtTime(880.00, now + 0.16);
-          gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.5, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-          osc.start(now); osc.stop(now + 0.5);
-        } else {
-          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(80, now + 0.25);
-          gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.4, now + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-          osc.start(now); osc.stop(now + 0.35);
-        }
-      } catch (e) {}
-    }
-    
-    function api(payload) { return fetch(API, { method: "POST", body: JSON.stringify(payload) }).then(r => r.json()); }
-    
-    /* ============================================================
-       BOOT
-    ============================================================ */
-    async function boot() {
-      const st = document.getElementById('sync-status');
-      const cache = localStorage.getItem('goats_cache');
-      if (cache) { try { render(JSON.parse(cache)); } catch (e) {} }
-      try {
-        const res = await api({ action: "getAppData" });
-        if (res && res.deptList) {
-          localStorage.setItem('goats_cache', JSON.stringify(res));
-          render(res);
-          st.innerText = "🟢 LIVE"; st.className = "status-live";
-          if (res.pointSettings) {
-            pointSettings['1st'] = res.pointSettings['1st'] || 15; pointSettings['2nd'] = res.pointSettings['2nd'] || 10;
-            pointSettings['3rd'] = res.pointSettings['3rd'] || 5; pointSettings['individual'] = res.pointSettings['individual'] || 10;
-            pointSettings['deduct'] = res.pointSettings['deduct'] || -5;
-            updateMedalDisplay();
-          }
-          const savedUser = localStorage.getItem('goats_user');
-          const savedPass = localStorage.getItem('goats_pass');
-          if (savedUser && savedPass) { selectedDept = savedUser; document.getElementById('pass-input').value = savedPass; handleLogin(true); }
-          processQueue();
-        } else { throw new Error(res.error || "empty"); }
-      } catch (e) { st.innerText = "🔴 OFFLINE"; st.className = "status-offline"; }
-      const pl = document.getElementById('preloader');
-      if (pl) { pl.style.opacity = '0'; setTimeout(() => pl.style.display = 'none', 600); }
-      
-      api({ action: "getStudentList" }).then(res => {
-        if (res && res.success) {
-          const inp = document.getElementById('man-name'), ac = document.getElementById('student-autocomplete'), hs = document.getElementById('man-house');
-          inp.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase(); ac.innerHTML = '';
-            if (val.length >= 3) {
-              const deptFilter = currentDept === 'Admin' ? null : currentDept;
-              const matches = res.students.filter(s => s.name.toLowerCase().includes(val) && (!deptFilter || !s.dept || s.dept.toLowerCase() === deptFilter.toLowerCase()));
-              if (matches.length > 0) {
-                ac.style.display = 'block';
-                matches.slice(0, 15).forEach(s => {
-                  const div = document.createElement('div');
-                  div.style.padding = '10px 14px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid rgba(255,255,255,0.05)'; div.style.color = '#fff'; div.style.fontSize = '14px';
-                  div.innerHTML = `<span style="font-weight:900;">${s.name}</span> <span style="color:#aaa;font-size:10px;margin-left:6px;">(${s.house})</span>`;
-                  div.onclick = () => { inp.value = s.name; for (let i = 0; i < hs.options.length; i++) { if (hs.options[i].value === s.house) hs.selectedIndex = i; } ac.style.display = 'none'; };
-                  ac.appendChild(div);
-                });
-              } else { ac.style.display = 'none'; }
-            } else { ac.style.display = 'none'; }
-          });
-          document.addEventListener('click', (e) => { if (e.target !== inp && !ac.contains(e.target)) ac.style.display = 'none'; });
-        }
-      }).catch(() => {});
-      selectTier('1st');
-    }
-    
-    function updateMedalDisplay() {
-      document.getElementById('medal-1-pts').innerText = '+' + pointSettings['1st']; document.getElementById('medal-2-pts').innerText = '+' + pointSettings['2nd'];
-      document.getElementById('medal-3-pts').innerText = '+' + pointSettings['3rd']; document.getElementById('medal-ind-pts').innerText = '+' + pointSettings['individual'];
-      document.getElementById('medal-neg-pts').innerText = pointSettings['deduct']; selectTier(currentTier);
-    }
-    
-    function selectTier(tier) {
-      currentTier = tier; const pts = pointSettings[tier], isNeg = pts < 0;
-      ['medal-1', 'medal-2', 'medal-3', 'medal-ind', 'medal-neg'].forEach(id => { const el = document.getElementById(id); el.classList.remove('selected', 'medal-stamp'); });
-      const targetId = { '1st': 'medal-1', '2nd': 'medal-2', '3rd': 'medal-3', 'individual': 'medal-ind', 'deduct': 'medal-neg' }[tier];
-      const targetEl = document.getElementById(targetId);
-      targetEl.classList.add('medal-stamp');
-      setTimeout(() => { targetEl.classList.remove('medal-stamp'); targetEl.classList.add('selected'); }, 400);
-      const ind = document.getElementById('tier-indicator');
-      ind.innerText = `${tierMedals[tier]} ${tierLabels[tier]} — ${pts > 0 ? '+' : ''}${pts} POINTS`;
-      ind.className = 'tier-indicator' + (isNeg ? ' negative' : '');
-      let metaTheme = document.querySelector('meta[name="theme-color"]'); if (!metaTheme) { metaTheme = document.createElement('meta'); metaTheme.name = "theme-color"; document.head.appendChild(metaTheme); }
-      metaTheme.content = { '1st': '#d4af37', '2nd': '#c0c0c0', '3rd': '#cd7f32', 'individual': '#00ff88', 'deduct': '#ff416c' }[tier] || '#fbff00';
-    }
-    
-    const deptIcons = { 'cse':'💻','it':'🖥️','ece':'📡','eee':'⚡','mech':'⚙️','civil':'🏗️','auto':'🚗','chem':'🧪','arch':'🏛️','admin':'👑','mca':'🖱️','bca':'📱','arts':'🎨','science':'🔬','commerce':'📊' };
-    function getIcon(d) { const k = d.toLowerCase().replace(/\s+/g,''); for (const key in deptIcons) { if (k.includes(key)) return deptIcons[key]; } return '📚'; }
-    
-    function render(data) {
-      if (!data) return;
-      const { images, houseConfig, deptList, categories, appLinks } = data;
-      adminCats = categories || []; globalDeptList = deptList || []; globalAppLinks = appLinks || [];
-      if (images && images.bg) document.getElementById('main-bg').style.backgroundImage = `url('${images.bg}')`;
-      if (images && images.logo) document.getElementById('m-logo').src = images.logo;
-      if (images && images.founder) document.getElementById('m-founder').src = images.founder;
-      document.getElementById('dept-grid').innerHTML = globalDeptList.map(d => `<div class="dept-card" onclick="handleCard('${d}')"><div class="dept-card-icon">${getIcon(d)}</div><b>${d}</b><div class="dept-card-bar"></div></div>`).join('');
-      if (categories) { document.getElementById('p-cat').innerHTML = categories.map(c => `<option>${c}</option>`).join(''); }
-      if (houseConfig) {
-        const strip = document.getElementById('score-strip'), grid = document.getElementById('house-grid'), sel = document.getElementById('man-house');
-        strip.innerHTML = ""; grid.innerHTML = ""; sel.innerHTML = '<option selected disabled>House</option>';
-        houseConfig.forEach((h, i) => {
-          scores[h.name] = 0; houseColors[h.name] = h.color;
-          strip.innerHTML += `<div class="score-chip" id="chip-${h.name}" style="border-top-color:${h.color};--chip-color:${h.color}"><div class="chip-rank" id="rank-${h.name}"></div><div class="chip-name">${h.name}</div><div class="chip-score" id="s-${h.name}">0</div></div>`;
-          grid.innerHTML += `<button class="house-btn" style="background:${h.color}" onclick="record('${h.name}','WINNER')">${h.name}</button>`;
-          sel.add(new Option(h.name, h.name));
-        });
-      }
-    }
-    
-    function updateRanks() {
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]), medals = ['🥇','🥈','🥉'];
-      sorted.forEach(([name], i) => {
-        const r = document.getElementById('rank-' + name), c = document.getElementById('chip-' + name);
-        if (r) r.innerText = medals[i] || ''; if (c) c.classList.toggle('leader', i === 0);
-      });
-    }
-    
-    function handleCard(d) { if (isAdmin) openLb(d); else openLogin(d); }
-    function openLogin(d) { selectedDept = d; document.getElementById('target-dept').innerText = d; document.getElementById('pass-input').value = ''; document.getElementById('login-modal').style.display = 'flex'; setTimeout(() => document.getElementById('pass-input').focus(), 50); }
-    function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
-    
-    async function handleLogin(isSilent = false) {
-      const p = document.getElementById('pass-input').value; if (!p) return;
-      try {
-        const res = await api({ action: "authenticate", user: selectedDept, pass: p });
-        if (res.success) {
-          closeLogin(); localStorage.setItem('goats_user', selectedDept); localStorage.setItem('goats_pass', p);
-          isAdmin = (res.role === 'Admin'); currentDept = selectedDept; document.getElementById('dept-label').innerText = selectedDept;
-          document.getElementById('dept-gate').style.display = isAdmin ? 'block' : 'none'; document.getElementById('teacher-view').style.display = 'block'; document.getElementById('admin-actions').style.display = isAdmin ? 'flex' : 'none';
-          if (!isAdmin) {
-            document.getElementById('medal-section').style.display = 'block'; document.getElementById('tier-indicator').style.display = 'block'; document.getElementById('house-grid').style.display = 'grid';
-            document.getElementById('cam-area').style.display = 'block'; document.getElementById('manual-area').style.display = 'block'; document.getElementById('remarks-area').style.display = 'block';
-            document.getElementById('teacher-meta').style.display = 'flex'; document.getElementById('staff-area').style.display = 'block'; document.querySelector('.scoreboard').style.display = 'block'; document.getElementById('dept-label').style.display = 'block';
-            loadStaffForDept(selectedDept);
-          } else {
-            document.getElementById('medal-section').style.display = 'none'; document.getElementById('tier-indicator').style.display = 'none'; document.getElementById('house-grid').style.display = 'none';
-            document.getElementById('cam-area').style.display = 'none'; document.getElementById('manual-area').style.display = 'none'; document.getElementById('remarks-area').style.display = 'none';
-            document.getElementById('teacher-meta').style.display = 'none'; document.getElementById('staff-area').style.display = 'none'; document.querySelector('.scoreboard').style.display = 'none'; document.getElementById('dept-label').style.display = 'none';
-            document.querySelector('.gate-title').innerText = "📊 ADMIN DASHBOARD - SELECT PORTAL";
-            const leaderDepts = globalDeptList.filter(d => d.toLowerCase() !== 'admin');
-            const gridHtml = leaderDepts.map(d => `<div class="dept-card" onclick="openLb('${d}')"><div class="dept-card-icon">${getIcon(d)}</div><b>${d}</b><div class="dept-card-bar"></div></div>`).join('');
-            const allCard = `<div id="card-all" class="dept-card" style="border-color:var(--neon);box-shadow:0 0 20px rgba(251,255,0,0.2);" onclick="openLb('ALL')"><div class="dept-card-icon">👑</div><b style="color:var(--neon)">OVERALL TOTALS</b><div class="dept-card-bar" style="background:var(--neon)"></div></div>`;
-            const externalApps = globalAppLinks.map(app => `<div class="dept-card" style="border-color:var(--accent);background:rgba(0,212,255,0.05);box-shadow:0 0 15px rgba(0,212,255,0.15);" onclick="window.open('${app.url}','_blank')"><div class="dept-card-icon">${app.icon}</div><b style="color:var(--accent)">${app.name}</b><div class="dept-card-bar" style="background:var(--accent)"></div></div>`).join('');
-            document.getElementById('dept-grid').innerHTML = allCard + gridHtml + externalApps;
-            document.getElementById('teacher-view').style.paddingBottom = "10px"; window.scrollTo(0, 0);
-          }
-        } else { localStorage.removeItem('goats_user'); localStorage.removeItem('goats_pass'); if (!isSilent) showToast("❌ Wrong Password"); }
-      } catch (e) { if (!isSilent) showToast("❌ Login Error!"); }
-    }
-    
-    async function loadStaffForDept(dept) {
-      const sel = document.getElementById('t-name'); sel.innerHTML = '<option value="" disabled selected>👤 Loading staff...</option>';
-      try {
-        const res = await api({ action: "getStaffByDept", dept: dept });
-        sel.innerHTML = '<option value="" disabled selected>👤 Select Your Name</option>';
-        if (res.success && res.staff && res.staff.length) { res.staff.forEach(s => { sel.add(new Option(s, s)); }); } else { sel.innerHTML = '<option value="" disabled selected>No staff found — Type below</option>'; }
-      } catch (e) { sel.innerHTML = '<option value="" disabled selected>👤 Select Your Name</option>'; }
-    }
-    
-    async function processQueue() {
-      const q = JSON.parse(localStorage.getItem('goats_queue') || '[]'); if (q.length === 0) return;
-      showToast("📡 Syncing " + q.length + " offline points..."); let failed = [];
-      for (const item of q) { try { const r = await api({ action: "submitPoint", data: item }); if (!r || !r.success) throw new Error(); } catch (e) { failed.push(item); } }
-      localStorage.setItem('goats_queue', JSON.stringify(failed)); if (failed.length === 0) showToast("✅ All synced!"); else showToast("⚠️ Some pending.");
-    }
-    
-    async function record(hInput, sName, sDept = null) {
-      if (isAdmin) return;
-      const tSel = document.getElementById('t-name'); const teacherName = tSel.value;
-      if (!teacherName) { showToast("⚠️ Select your name first!"); if (scanActive) stopCam(); return; }
-      const actualH = Object.keys(scores).find(k => k.toLowerCase() === hInput.trim().toLowerCase()); if (!actualH) return;
-      const pts = pointSettings[currentTier]; const remarks = document.getElementById('remarks-input').value.trim();
-      scores[actualH] += pts; document.getElementById('s-' + actualH).innerText = scores[actualH]; updateRanks();
-      if (navigator.vibrate) { try { navigator.vibrate(pts > 0 ? [60, 60, 60] : [250]); } catch (e) {} }
-      if (pts > 0) { confetti({ particleCount: currentTier === '1st' ? 120 : currentTier === '2nd' ? 80 : 40, spread: 70, origin: { y: 0.6 } }); playBeep('success'); } else { playBeep('fail'); }
-      document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 500);
-      const pop = document.getElementById('paper-popup');
-      document.getElementById('pop-status').innerText = pts > 0 ? "🎉 POINT AWARDED 🎉" : "⚠️ POINT DEDUCTED ⚠️";
-      document.getElementById('pop-status').style.color = pts > 0 ? "var(--neon)" : "var(--red)";
-      document.getElementById('pop-medal').innerText = tierMedals[currentTier]; document.getElementById('pop-name').innerText = sName || "STUDENT";
-      document.getElementById('pop-dept').innerText = currentDept.toUpperCase(); document.getElementById('pop-pts').innerText = (pts > 0 ? '+' : '') + pts;
-      document.getElementById('pop-pts').style.color = pts > 0 ? "var(--neon)" : "var(--red)";
-      document.getElementById('pop-house').innerText = actualH; document.getElementById('pop-house').style.background = houseColors[actualH] || "#fff";
-      document.getElementById('pop-remarks').innerText = remarks ? `"${remarks}"` : '';
-      pop.classList.remove('show'); void pop.offsetWidth; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 3500);
-      const payload = { dept: currentDept, studentDept: sDept, studentName: sName, teacherName: teacherName, category: document.getElementById('p-cat').value, house: actualH, type: pts > 0 ? 'Positive' : 'Negative', points: pts, tier: currentTier, remarks: remarks };
-      document.getElementById('remarks-input').value = '';
-      if (pendingPayload) { if (undoTimeout) clearTimeout(undoTimeout); executePendingPoint(); }
-      pendingPayload = payload; const sb = document.getElementById('undo-snackbar'); sb.style.display = 'flex'; undoTimeout = setTimeout(() => { executePendingPoint(); }, 10000);
-    }
-    
-    async function executePendingPoint() {
-      if (!pendingPayload) return; const p = pendingPayload; pendingPayload = null; document.getElementById('undo-snackbar').style.display = 'none';
-      try { if (!navigator.onLine) throw new Error("Offline"); const res = await api({ action: "submitPoint", data: p }); if (!res || !res.success) throw new Error(); }
-      catch (e) { const q = JSON.parse(localStorage.getItem('goats_queue') || '[]'); q.push(p); localStorage.setItem('goats_queue', JSON.stringify(q)); }
-    }
-    
-    function undoPoint() {
-      if (undoTimeout) { clearTimeout(undoTimeout); undoTimeout = null; }
-      if (pendingPayload) { const h = pendingPayload.house; scores[h] -= pendingPayload.points; document.getElementById('s-' + h).innerText = scores[h]; updateRanks(); showToast("↩️ Point assignment canceled!"); }
-      pendingPayload = null; document.getElementById('undo-snackbar').style.display = 'none';
-    }
-    
-    async function toggleCam() {
-      if (!scanActive) {
-        document.getElementById('reader').style.display = 'block'; document.getElementById('cam-btn').innerText = '⏹'; document.getElementById('scan-hint').innerText = 'SCANNING...';
-        html5QrCode = new Html5Qrcode("reader");
-        await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 240 }, (t) => { const p = t.split('|').map(x => x.trim()); if (p.length >= 3) { record(p[2], p[0], p[1]); stopCam(); } });
-        scanActive = true;
-      } else { stopCam(); }
-    }
-    async function stopCam() { if (html5QrCode) await html5QrCode.stop(); document.getElementById('reader').style.display = 'none'; document.getElementById('cam-btn').innerText = '📷'; document.getElementById('scan-hint').innerText = 'TAP TO SCAN QR'; scanActive = false; }
-    function submitManual() { const n = document.getElementById('man-name').value, h = document.getElementById('man-house').value; if (!n || !h) { showToast("⚠️ Fill name & house"); return; } record(h, n); document.getElementById('man-name').value = ""; }
-    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3200); }
-    function logout() { localStorage.removeItem('goats_user'); localStorage.removeItem('goats_pass'); document.getElementById('teacher-view').style.display = 'none'; document.getElementById('dept-gate').style.display = 'block'; document.querySelector('.gate-title').innerText = "SELECT DEPARTMENT"; const allCard = document.getElementById('card-all'); if (allCard) allCard.remove(); isAdmin = false; currentDept = ""; if (scanActive) stopCam(); if (localStorage.getItem('goats_cache')) render(JSON.parse(localStorage.getItem('goats_cache'))); }
-    function toggleBranding() { const b = document.getElementById('admin-branding'); b.style.display = (b.style.display === 'block') ? 'none' : 'block'; document.getElementById('admin-webapp-form').style.display = 'none'; }
-    function toggleWebAppForm() { const b = document.getElementById('admin-webapp-form'); b.style.display = (b.style.display === 'block') ? 'none' : 'block'; document.getElementById('admin-branding').style.display = 'none'; }
-    async function forceSync() { showToast("🔄 Syncing..."); await processQueue(); localStorage.removeItem('goats_cache'); await boot(); }
-    
-    async function saveNewApp() {
-      const name = document.getElementById('new-app-name').value, url = document.getElementById('new-app-url').value, icon = document.getElementById('new-app-icon').value || "✨";
-      if (!name || !url) { showToast("⚠️ Name and URL required"); return; }
-      showToast("Uploading..."); const res = await api({ action: "saveAppLink", data: { name, url, icon } });
-      if (res.success) { localStorage.removeItem('goats_cache'); document.getElementById('new-app-name').value = ''; document.getElementById('new-app-url').value = ''; showToast("✅ Linked!"); setTimeout(() => location.reload(), 1000); } else showToast("❌ Failed.");
-    }
-    
-    function handleFile(input, key) {
-      if (!input.files[0]) return; const rd = new FileReader();
-      rd.onload = async (e) => {
-        showToast("Uploading..."); const res = await api({ action: "uploadBranding", data: { key, name: input.files[0].name, file: e.target.result } });
-        if (res.success) { localStorage.removeItem('goats_cache'); showToast("✅ Updated!"); setTimeout(() => location.reload(), 1000); } else showToast("❌ Upload Failed");
-      }; rd.readAsDataURL(input.files[0]);
-    }
-    
-    function openLb(dept) { lbDept = dept; lbCat = 'ALL'; setLbPeriod('weekly'); document.getElementById('lb-title').innerText = dept.toUpperCase(); const cats = ['ALL', ...adminCats]; document.getElementById('lb-cat-filters').innerHTML = cats.map(c => `<button class="lb-filter-btn${c === 'ALL' ? ' active' : ''}" onclick="setLbCat('${c}')">${c}</button>`).join(''); document.getElementById('lb-modal').style.display = 'flex'; }
-    function closeLb() { document.getElementById('lb-modal').style.display = 'none'; }
-    function setLbCat(cat) { lbCat = cat; document.querySelectorAll('.lb-filter-btn').forEach(b => b.classList.toggle('active', b.innerText === cat)); loadLb(); }
-    function setLbPeriod(p) { lbPeriod = p; document.getElementById('btn-period-weekly').className = 'period-btn' + (p === 'weekly' ? ' active' : ''); document.getElementById('btn-period-annually').className = 'period-btn' + (p === 'annually' ? ' active' : ''); loadLb(); }
-    
-    async function loadLb() {
-      const body = document.getElementById('lb-body');
-      body.innerHTML = `<div style="height:120px;width:100%;margin-bottom:20px;" class="shimmer"></div><div style="height:45px;width:100%;margin-bottom:10px;" class="shimmer"></div><div style="height:45px;width:100%;margin-bottom:10px;" class="shimmer"></div>`;
-      try {
-        const res = await api({ action: "getDeptLeaderboard", dept: lbDept, category: lbCat, period: lbPeriod });
-        if (!res.success || !res.leaderboard.length) { body.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">No data for this timeframe.</div>'; return; }
-        const lb = res.leaderboard, max = lb[0].pts || 1, medals = ['🥇', '🥈', '🥉'];
-        let pod = '<div class="lb-podium">'; const order = lb.length >= 3 ? [1, 0, 2] : lb.map((_, i) => i);
-        order.filter(i => lb[i]).forEach(i => { const h = lb[i], col = houseColors[h.name] || '#888', ht = Math.max(60, Math.round((h.pts / max) * 140)); pod += `<div class="lb-podium-item"><div class="lb-podium-bar val-bar" style="background:${col};height:${ht}px">${medals[i]||''}</div><div class="lb-podium-name">${h.name}</div><div class="lb-podium-score count-up" data-val="${h.pts}">0</div></div>`; }); pod += '</div>';
-        let rowsHtml = '';
-        lb.forEach((h, i) => { const col = houseColors[h.name] || '#888'; let pct = max > 0 && h.pts > 0 ? Math.round((h.pts / max) * 100) : 0; rowsHtml += `<div class="lb-row" style="border-left-color:${col}"><div class="lb-row-rank">${medals[i]||i+1}</div><div style="flex:1;min-width:0;"><div class="lb-row-name">${h.name}</div><div class="lb-bar-bg"><div class="lb-bar-fill val-bar" style="width:${pct}%;background:${col}"></div></div></div><div class="lb-row-pts count-up" data-val="${h.pts}">0</div></div>`; });
-        const subtitle = lbPeriod === 'weekly' ? '📅 LAST 7 DAYS' : '🏆 ANNUAL SCORES';
-        body.innerHTML = `<div style="font-size:10px;color:rgba(255,255,255,.3);text-align:center;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px">${subtitle} · ${lbCat === 'ALL' ? 'All Categories' : lbCat}</div>${pod}${rowsHtml}`;
-        body.querySelectorAll('.count-up').forEach(el => { const target = parseInt(el.getAttribute('data-val'), 10) || 0; const dur = 1400; let start = null; function step(ts) { if (!start) start = ts; const prog = Math.min((ts - start) / dur, 1); el.innerText = Math.floor((1 - Math.pow(1 - prog, 3)) * target); if (prog < 1) window.requestAnimationFrame(step); } window.requestAnimationFrame(step); });
-        setTimeout(() => { body.querySelectorAll('.val-bar').forEach(el => { el.style.transform = 'scaleX(1) scaleY(1)'; }); }, 50);
-      } catch (e) { body.innerHTML = '<div style="text-align:center;color:red;padding:40px;">Failed to load.</div>'; }
-    }
+        <div id="view-dash" style="display:none; padding:15px;">
+            <header id="institutional-header" style="display:none; justify-content:space-between; align-items:center; padding:20px 10px;">
+                <img id="h-logo" style="height:50px;">
+                <div style="text-align:right;"><p style="font-size:9px; opacity:0.4; font-weight:900;">TOWARDS EXCELLENCE</p><p style="font-family:'Bebas Neue'; font-size:22px;">BATTLE TERMINAL</p></div>
+            </header>
 
-    /* ============================================================
-       CERTIFICATE SYSTEM LOGIC
-    ============================================================ */
-    async function openCertDashboard(type) {
-        currentCertType = type;
-        document.getElementById('cert-modal').style.display = 'block';
-        document.getElementById('cert-title').innerText = type === 'weekly' ? '🏅 WEEKLY CERTIFICATES (TOP 3)' : '🏆 ANNUAL CERTIFICATES (TOP 5)';
-        document.getElementById('cert-list').innerHTML = '<div class="shimmer" style="height:100px;margin-bottom:15px;"></div><div class="shimmer" style="height:100px;"></div>';
-
-        const res = await api({ action: "getReportData", period: type });
-        if (!res.success) { document.getElementById('cert-list').innerHTML = '<div style="color:red;">Error fetching data.</div>'; return; }
-
-        certStudents = [];
-        const depts = res.departments;
-        const maxRank = type === 'weekly' ? 3 : 5;
-
-        for (const dept in depts) {
-            if (!depts.hasOwnProperty(dept)) continue;
-            const toppers = depts[dept].toppers || [];
-            if (toppers.length === 0) continue;
-
-            let scores = toppers.map(t => t[1]);
-            let uniqueScores = [...new Set(scores)].sort((a, b) => b - a); 
-            let cutoffScore = uniqueScores.length >= maxRank ? uniqueScores[maxRank - 1] : uniqueScores[uniqueScores.length - 1];
-            if(cutoffScore === undefined) cutoffScore = -9999;
-
-            toppers.forEach(t => {
-                if (t[1] >= cutoffScore) {
-                    let rank = uniqueScores.indexOf(t[1]) + 1;
-                    certStudents.push({ name: t[0], pts: t[1], dept: dept, rank: rank, photoUrl: '' });
-                }
-            });
-        }
-        renderCertList();
-    }
-
-    function closeCertDashboard() { document.getElementById('cert-modal').style.display = 'none'; }
-
-    function renderCertList() {
-        if (certStudents.length === 0) { document.getElementById('cert-list').innerHTML = '<div style="color:#aaa;">No outstanding students found.</div>'; return; }
-        
-        let html = '';
-        certStudents.forEach((st, i) => {
-            html += `
-            <div style="background:rgba(255,255,255,0.05); padding:10px 15px; margin-bottom:12px; border-radius:10px; display:flex; align-items:center; gap:15px; border-left:4px solid #d4af37;">
-                <div style="width:60px; height:60px; background:#222; border-radius:50%; overflow:hidden; border:2px solid #d4af37;">
-                    <img id="cert-img-prev-${i}" src="${st.photoUrl || 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23888\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'}" style="width:100%; height:100%; object-fit:cover;">
-                </div>
-                <div style="flex:1;">
-                    <div style="font-weight:900; font-size:16px; text-transform:uppercase; color:#fff;">${st.name} <span style="font-size:10px; color:#d4af37;">(Rank ${st.rank})</span></div>
-                    <div style="font-size:12px; color:#aaa; font-weight:600; margin-top:2px;">${st.dept.toUpperCase()} • ${st.pts} POINTS</div>
-                    <div style="margin-top:8px;">
-                        <label style="font-size:10px; font-weight:900; background:rgba(255,215,0,0.15); color:#d4af37; padding:6px 10px; border-radius:6px; cursor:pointer; letter-spacing:1px;">
-                            📷 UPLOAD PHOTO
-                            <input type="file" style="display:none;" accept="image/*" onchange="handleCertPhoto(this, ${i})">
-                        </label>
-                    </div>
-                </div>
-            </div>`;
-        });
-        document.getElementById('cert-list').innerHTML = html;
-    }
-
-    function handleCertPhoto(input, index) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                certStudents[index].photoUrl = e.target.result;
-                document.getElementById(`cert-img-prev-${index}`).src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    async function generateCertificates() {
-        const pw = window.open('', '_blank');
-        if (!pw) { showToast("❌ Popup blocked!"); return; }
-        
-        pw.document.write(`<html><body style="background:#111; color:#fff; text-align:center; padding-top:20vh; font-family:sans-serif;"><h2>Generating Premium Certificates...</h2></body></html>`);
-        
-        const cache = JSON.parse(localStorage.getItem('goats_cache') || '{}');
-        let logoUrl = cache.images && cache.images.logo ? cache.images.logo : '';
-        let founderUrl = cache.images && cache.images.founder ? cache.images.founder : '';
-        
-        // Build Premium A5 Certificate Templates
-        let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>G.O.A.T.S Premium Certificates</title>
-            <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
-            <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { background: #555; }
-                @page { size: A5 portrait; margin: 0; }
-                .cert-page {
-                    width: 148mm; height: 210mm;
-                    background: #000;
-                    margin: 0 auto;
-                    position: relative;
-                    page-break-after: always;
-                    overflow: hidden;
-                    font-family: 'Montserrat', sans-serif;
-                    color: #fff;
-                }
-                .cert-page::before {
-                    content: '';
-                    position: absolute; top:0; left:0; right:0; bottom:0;
-                    background: radial-gradient(circle at center, rgba(30,20,0,1) 0%, rgba(5,5,5,1) 100%);
-                    z-index: 1;
-                }
-                .sparkles {
-                    position: absolute; top:0; left:0; right:0; bottom:0; z-index: 2;
-                    background-image: 
-                        radial-gradient(circle at 20% 30%, rgba(255,215,0,0.1) 0%, transparent 6%),
-                        radial-gradient(circle at 80% 20%, rgba(255,215,0,0.15) 0%, transparent 8%),
-                        radial-gradient(circle at 10% 70%, rgba(255,200,0,0.1) 0%, transparent 6%),
-                        radial-gradient(circle at 90% 80%, rgba(255,220,0,0.12) 0%, transparent 7%),
-                        radial-gradient(circle at 50% 50%, rgba(255,215,0,0.2) 0%, transparent 40%);
-                    background-size: 100% 100%;
-                    opacity: 0.9;
-                }
-                .content { position: relative; z-index: 5; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 25px 30px; }
-                
-                .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-                .logo-wrap { display: flex; align-items: center; gap: 8px; text-align: left; flex: 1.2; }
-                .logo-wrap img { width: 45px; height: 45px; object-fit: contain; }
-                .logo-text { font-size: 8px; font-weight: 900; color: #fff; line-height: 1.2; letter-spacing: 0.5px; }
-                .logo-text span { color: #d4af37; font-size: 5px; letter-spacing: 1px; text-transform: uppercase; }
-                
-                .title-wrap { flex: 1; text-align: center; }
-                .title-1 { font-family: 'Montserrat', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: 2.5px; color: #fff; line-height: 1; margin-bottom: 4px; }
-                .title-2 { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; color: #d4af37; letter-spacing: 1px; }
-                
-                .founder-wrap { flex: 1.2; text-align: right; }
-                .founder-wrap img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; }
-                
-                .photo-circle {
-                    width: 170px; height: 170px; border-radius: 50%;
-                    border: 5px solid #d4af37;
-                    box-shadow: 0 0 35px rgba(212,175,55,0.7), inset 0 0 20px rgba(0,0,0,0.8);
-                    overflow: hidden; position: relative;
-                    margin-top: 15px;
-                    background: #111;
-                }
-                .photo-circle img { width: 100%; height: 100%; object-fit: cover; }
-                
-                .ribbon {
-                    position: relative;
-                    background: linear-gradient(135deg, #ffd700, #b8860b, #ffd700);
-                    color: #000;
-                    padding: 12px 45px;
-                    font-family: 'Cinzel', serif;
-                    font-weight: 900;
-                    font-size: 26px;
-                    letter-spacing: 2px;
-                    margin-top: 35px;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.6);
-                    text-align: center;
-                    white-space: nowrap;
-                }
-                .ribbon::before, .ribbon::after {
-                    content: ''; position: absolute; bottom: -12px; border: 18px solid transparent; 
-                }
-                .ribbon::before { left: -22px; border-right-color: #8b6508; border-bottom-color: transparent; border-left-color: transparent; border-top-color: #8b6508; z-index: -1; }
-                .ribbon::after { right: -22px; border-left-color: #8b6508; border-bottom-color: transparent; border-right-color: transparent; border-top-color: #8b6508; z-index: -1; }
-                
-                .badge {
-                    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
-                    background: #050508; border: 2px solid #d4af37; border-radius: 20px;
-                    padding: 4px 18px; font-size: 9px; color: #ffd700; letter-spacing: 2px; font-weight: 900;
-                    box-shadow: 0 5px 10px rgba(0,0,0,0.7); font-family: 'Montserrat', sans-serif;
-                }
-
-                .description {
-                    margin-top: 40px;
-                    text-align: center;
-                    font-size: 11px;
-                    color: #ddd;
-                    line-height: 1.8;
-                    padding: 0 25px;
-                }
-                .description span { color: #d4af37; font-weight: 900; font-size: 12px; }
-                
-                .footer {
-                    position: absolute; bottom: 35px; left: 0; width: 100%;
-                    display: flex; justify-content: space-around; align-items: flex-end;
-                }
-                .sign-box { text-align: center; }
-                .sign-line { width: 120px; height: 1.5px; background: #d4af37; margin: 0 auto 6px; }
-                .sign-title { font-size: 10px; font-weight: 900; letter-spacing: 1.5px; color: #fff; text-transform: uppercase; }
-                .sign-sub { font-size: 8px; color: #888; letter-spacing: 1px; margin-top:2px; text-transform: uppercase; }
-                
-                @media print { body { background: #fff; } .cert-page { box-shadow: none; } .print-btn { display: none; } }
-                
-                .print-btn { position: fixed; top: 20px; right: 20px; z-index: 1000; background: linear-gradient(to right, #d4af37, #ffd700); color: #000; border: none; padding: 15px 30px; border-radius: 30px; font-weight: 900; font-family: 'Montserrat', sans-serif; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.5); font-size: 16px; }
-            </style>
-        </head>
-        <body>
-            <button class="print-btn" onclick="window.print()">🖨️ PRINT CERTIFICATES (A5)</button>
-        `;
-
-        certStudents.forEach(st => {
-            let title2 = currentCertType === 'weekly' ? 'OF THE WEEK' : 'OF THE YEAR';
-            let badgeTxt = currentCertType === 'weekly' ? 'WEEKLY CHAMPION' : 'ANNUAL CHAMPION';
-            let defaultPhoto = 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23333\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>';
-            let finalPhoto = st.photoUrl || defaultPhoto;
+            <div id="top-winner-box"></div>
             
-            let desc = `Congratulations on your brilliant achievement! 
-            You have proven to be an outstanding student, demonstrating excellence and commitment. 
-            Your monumental contribution to the <span>DEPARTMENT OF ${st.dept.toUpperCase()}</span> securing a massive <span>${st.pts} POINTS</span> validates you as a true asset to this institution.`;
-            
-            html += `
-            <div class="cert-page">
-                <div class="sparkles"></div>
-                <div class="content">
-                    <div class="header">
-                        <div class="logo-wrap">
-                            ${logoUrl ? `<img src="${logoUrl}" />` : ''}
-                            <div class="logo-text">DON BOSCO<br>POLYTECHNIC COLLEGE<br><span>GIVERS OF ALL TALENTS STUDENTS</span></div>
-                        </div>
-                        <div class="title-wrap">
-                            <div class="title-1">BEST G.O.A.T.</div>
-                            <div class="title-2">${title2}</div>
-                        </div>
-                        <div class="founder-wrap">
-                            ${founderUrl ? `<img src="${founderUrl}" />` : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="photo-circle">
-                        <img src="${finalPhoto}" />
-                    </div>
-                    
-                    <div style="position:relative; width:100%; margin-top:20px; display:flex; justify-content:center;">
-                        <div class="ribbon">
-                            <div class="badge">${badgeTxt}</div>
-                            ${st.name}
-                        </div>
-                    </div>
-                    
-                    <div class="description">${desc}</div>
-                    
-                    <div class="footer">
-                        <div class="sign-box">
-                            <div class="sign-line" style="margin-top:30px;"></div>
-                            <div class="sign-title">HEAD OF DEPARTMENT</div>
-                            <div class="sign-sub">${st.dept.toUpperCase()}</div>
-                        </div>
-                        <div class="sign-box">
-                            <div class="sign-line" style="margin-top:30px;"></div>
-                            <div class="sign-title">PRINCIPAL</div>
-                            <div class="sign-sub">Don Bosco Polytechnic</div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        });
+            <div class="glass" style="text-align:center;">
+                <p style="font-weight:900; font-size:11px; color:var(--house-col); letter-spacing:3px;">RANK PROGRESSION</p>
+                <h2 id="r-text" style="font-family:'Bebas Neue'; font-size:42px; margin:10px 0;">ROOKIE</h2>
+                <div style="height:12px; background:#000; border-radius:6px; overflow:hidden;"><div id="r-fill" style="height:100%; transition:2s;"></div></div>
+                <p id="r-hint" style="font-size:10px; opacity:0.3; margin-top:12px; font-weight:900;"></p>
+            </div>
 
-        html += `</body></html>`;
-        pw.document.open();
-        pw.document.write(html);
-        pw.document.close();
-    }
-    
-    async function prepareBulkPrint() { /* ... existing bulk logic ... */
-      showToast("Loading students..."); const res = await api({ action: "getStudentList" }); const pw = window.open('', '_blank');
-      pw.document.write(`<!DOCTYPE html><html><head><title>Batch QR</title><style>body{font-family:sans-serif;margin:0;padding:20px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.box{border:1px solid #ddd;padding:10px;text-align:center;page-break-inside:avoid;border-radius:8px}.qr{width:110px;height:110px;margin:5px auto;background:#fff}.lbl{font-size:9px;font-weight:900;text-transform:uppercase;line-height:1.4;margin-top:5px;color:#000}.btn{position:fixed;top:10px;right:10px;padding:12px 24px;background:#000;color:#fbff00;border:none;border-radius:8px;font-weight:900;cursor:pointer}@media print{.btn{display:none}@page{size:A4;margin:1cm}}</style></head><body><button class="btn" onclick="window.print()">PRINT A4 SHEET</button><div class="grid" id="g"></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>function gen(){const ss=${JSON.stringify(res.students)},g=document.getElementById('g');if(typeof QRCode==='undefined'){setTimeout(gen,100);return;}ss.forEach(s=>{const b=document.createElement('div');b.className='box';const q=document.createElement('div');q.className='qr';const l=document.createElement('div');l.className='lbl';l.innerHTML=(s.name||'')+'<br>'+(s.dept||'')+' | '+(s.house||'');b.appendChild(q);b.appendChild(l);g.appendChild(b);try{new QRCode(q,{text:(s.name||'')+' | '+(s.dept||'')+' | '+(s.house||''),width:110,height:110});}catch(e){}});}gen();<\/script></body></html>`);
-      pw.document.close();
-    }
+            <div style="padding:40px 0; text-align:center;"><p id="pill-house" style="font-weight:900; letter-spacing:6px; color:var(--house-col); font-size:12px; margin-bottom:15px;">HOUSE</p><h1 id="total-val" style="font-family:'Bebas Neue'; font-size:140px;">000</h1><h2 id="sn-display" style="font-family:'Bebas Neue'; font-size:45px; letter-spacing:6px;">PLAYER</h2></div>
 
-    async function generateReport(period) { /* ... existing report logic ... */
-      const pw = window.open('', '_blank'); if (!pw) { showToast("❌ Popup blocked!"); return; }
-      pw.document.write(`<html><body style="font-family:sans-serif; text-align:center; margin-top:20vh; background:#111; color:#00ff88;"><h2>Fetching Database...<br><br>Please wait ⏳</h2></body></html>`);
-      showToast("📊 Generating " + (period === 'weekly' ? "Weekly" : "Annual") + " Report...");
-      try {
-        const res = await api({ action: "getReportData", period: period }); if (!res.success) { showToast("❌ Report failed: " + (res.error || '')); return; }
-        const titleText = period === 'weekly' ? 'WEEKLY REPORT' : 'ANNUAL REPORT', { overall, categoryResults, departments, houseConfig, categoryNames, images } = res;
-        const logoUrl = images.logo || '', rankLabels = ['🏆 WINNER', '🥈 RUNNER UP', '🥉 2ND RUNNER UP', '4TH PLACE'], rankColors = ['#d4af37', '#c0c0c0', '#cd7f32', '#888'];
-        const today = new Date().toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' }); const hColors = {}; houseConfig.forEach(h => hColors[h.name] = h.color);
-        function standingsTable(arr, title) { let html = `<div class="section-title">${title}</div><table class="standings"><tr><th>RANK</th><th>HOUSE</th><th>POINTS</th></tr>`; arr.forEach(([name, pts], i) => { const bg = i === 0 ? 'rgba(212,175,55,0.15)' : i === 1 ? 'rgba(192,192,192,0.10)' : i === 2 ? 'rgba(205,127,50,0.10)' : ''; html += `<tr style="background:${bg}"><td class="rank-cell"><span style="color:${rankColors[i]||'#888'};font-weight:900;">${rankLabels[i]||(i+1)}</span></td><td><span class="house-dot" style="background:${hColors[name]||'#888'}"></span>${name}</td><td class="pts-cell">${pts}</td></tr>`; }); html += '</table>'; return html; }
-        function catRow(catName, arr) { let row = `<tr><td class="cat-name">${catName}</td>`; arr.forEach(([name, pts], i) => { const icon = i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''; row += `<td>${icon} ${name} <b>(${pts})</b></td>`; }); for (let i = arr.length; i < 4; i++) row += '<td>—</td>'; row += '</tr>'; return row; }
-        let page1 = `<div class="page"><div class="report-header">${logoUrl ? `<img src="${logoUrl}" class="college-logo">` : ''}<div class="college-name">DON BOSCO POLYTECHNIC COLLEGE</div><div class="college-sub">Givers of All Talents Students</div><div class="report-title">G.O.A.T.S CHAMPIONSHIP — ${titleText}</div><div class="report-date">${today}</div></div>${standingsTable(overall, '🏆 OVERALL HOUSE CHAMPIONSHIP')}<div class="section-title">📊 CATEGORY WISE RESULTS</div><table class="cat-table"><tr><th>CATEGORY</th><th>🏆 WINNER</th><th>🥈 RUNNER</th><th>🥉 2ND RUNNER</th><th>4TH</th></tr>${categoryNames.map(c => catRow(c, categoryResults[c] || [])).join('')}</table><div class="signature-area"><div class="sig-line"></div><div class="sig-label">PRINCIPAL</div><div class="sig-sub">Don Bosco Polytechnic College</div></div></div>`;
-        let deptPages = ''; const deptNames = Object.keys(departments).sort();
-        deptNames.forEach(deptName => { const d = departments[deptName]; deptPages += `<div class="page"><div class="report-header">${logoUrl ? `<img src="${logoUrl}" class="college-logo-sm">` : ''}<div class="college-name" style="font-size:18px;">DON BOSCO POLYTECHNIC COLLEGE</div><div class="college-sub">Givers of All Talents Students</div><div class="dept-title">DEPARTMENT OF ${deptName.toUpperCase()}</div><div class="report-date">${today}</div></div>${standingsTable(d.houses, '🏆 HOUSE STANDINGS — ' + deptName.toUpperCase())}<div class="section-title">📊 CATEGORY BREAKDOWN</div><table class="cat-table"><tr><th>CATEGORY</th><th>🏆 WINNER</th><th>🥈 RUNNER</th><th>🥉 2ND RUNNER</th><th>4TH</th></tr>${categoryNames.map(c => catRow(c, d.categories[c] || [])).join('')}</table>${d.toppers.length > 0 ? `<div class="section-title">⭐ TOP CONTRIBUTORS</div><table class="toppers"><tr><th>#</th><th>STUDENT NAME</th><th>POINTS</th></tr>${d.toppers.slice(0,10).map(([name, pts], i) => `<tr><td>${i+1}</td><td>${name}</td><td class="pts-cell">${pts}</td></tr>`).join('')}</table>` : ''}<div class="signature-area"><div style="display:flex;justify-content:space-between;gap:40px;"><div style="text-align:center;flex:1;"><div class="sig-line"></div><div class="sig-label">HEAD OF DEPARTMENT</div><div class="sig-sub">${deptName}</div></div><div style="text-align:center;flex:1;"><div class="sig-line"></div><div class="sig-label">PRINCIPAL</div><div class="sig-sub">Don Bosco Polytechnic College</div></div></div></div></div>`; });
-        pw.document.open();
-        pw.document.write(`<!DOCTYPE html><html><head><title>G.O.A.T.S Report</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:sans-serif;background:#fff;color:#111;padding:0;}.page{width:210mm;min-height:297mm;margin:0 auto;padding:15mm 15mm;page-break-after:always;position:relative;background:white;}.page:last-child{page-break-after:auto;}.print-btn{position:fixed;top:16px;right:16px;z-index:999;padding:14px 32px;background:#111;color:#fbff00;border:none;border-radius:10px;font-weight:900;font-size:14px;cursor:pointer;letter-spacing:1px;}.report-header{text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:3px double #333;}.college-logo{width:60px;height:60px;object-fit:contain;margin-bottom:4px;}.college-logo-sm{width:50px;height:50px;object-fit:contain;margin-bottom:4px;}.college-name{font-size:20px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}.college-sub{font-size:10px;color:#666;letter-spacing:2px;text-transform:uppercase;margin:2px 0;}.report-title{font-size:15px;font-weight:900;color:#b8860b;letter-spacing:2px;margin-top:6px;}.dept-title{font-size:15px;font-weight:900;color:#333;letter-spacing:2px;margin-top:6px;border:2px solid #333;display:inline-block;padding:4px 16px;border-radius:6px;}.report-date{font-size:10px;color:#999;margin-top:4px;}.section-title{font-size:12px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#333;margin:16px 0 8px;padding:4px 10px;background:#f5f5f5;border-left:4px solid #d4af37;border-radius:4px;page-break-after:avoid;}.standings{width:100%;border-collapse:collapse;margin-bottom:16px;}.standings th{background:#111;color:#fbff00;padding:8px 12px;text-align:left;font-size:10px;letter-spacing:2px;}.standings td{padding:10px 12px;border-bottom:1px solid #eee;font-size:13px;}.standings .rank-cell{width:160px;}.standings .pts-cell{font-weight:900;font-size:16px;text-align:right;}.house-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;}.cat-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:10px;}.cat-table th{background:#222;color:#fff;padding:6px 8px;text-align:left;font-size:9px;letter-spacing:1px;}.cat-table td{padding:6px 8px;border-bottom:1px solid #eee;}.cat-table .cat-name{font-weight:900;text-transform:uppercase;letter-spacing:1px;background:#fafafa;}.cat-table b{color:#333;}.toppers{width:100%;border-collapse:collapse;margin-bottom:12px;}.toppers th{background:#1a5e1a;color:white;padding:6px 10px;text-align:left;font-size:9px;letter-spacing:1px;}.toppers td{padding:6px 10px;border-bottom:1px solid #eee;font-size:11px;}.toppers .pts-cell{font-weight:900;text-align:right;}table,tr,td,th{page-break-inside:avoid;}.signature-area{margin-top:30px;padding-top:10px;page-break-inside:avoid;}.sig-line{width:200px;border-bottom:1px solid #333;margin:0 auto 6px;}.sig-label{font-weight:900;font-size:11px;letter-spacing:2px;text-transform:uppercase;text-align:center;}.sig-sub{font-size:9px;color:#888;text-align:center;}@media print{.print-btn{display:none !important;}@page{size:A4 portrait;margin:10mm;}body{padding:0;background:#fff;}.page{padding:0mm;margin:0;width:100%;min-height:auto;box-shadow:none;page-break-after:always;}.signature-area{page-break-inside:avoid;}table{page-break-inside:auto;}tr{page-break-inside:avoid;page-break-after:auto;}}</style></head><body><button class="print-btn" onclick="window.print()">🖨️ PRINT REPORT</button>${page1}${deptPages}</body></html>`);
-        pw.document.close(); showToast("✅ Report generated!");
-      } catch (e) { if (pw && !pw.closed) { pw.document.body.innerHTML = `<h3 style="color:red;font-family:sans-serif;">❌ Error generating report.</h3>`; } showToast("❌ Error: " + e.message); }
-    }
-  </script>
+            <!-- THE POSTER -->
+            <div class="glass" style="text-align:center; padding: 20px 10px;">
+               <div id="cap-zone"><div class="award-poster">
+                  <div class="cert-header">
+                     <img id="logo-c1" style="height:45px;">
+                     <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<div class="sub-tag">GIVERS OF ALL TALENTS STUDENTS</div></div>
+                     <img src="assets/founder.png" style="height:50px; width:50px; border-radius:50%; border:2.5px solid var(--gold);" onerror="this.src='https://img.icons8.com/isometric/100/star.png'">
+                  </div>
+                  <h1 class="award-title">BEST G.O.A.T.<br>AWARD</h1>
+                  <p class="award-subtitle">OF THE WEEK</p>
+                  <div class="portrait-zone"><div class="portrait-ring"></div><img id="avatar-img" class="portrait-img" src="https://via.placeholder.com/300"></div>
+                  <div class="ribbon-box"><div class="winner-pill">WEEKLY CHAMPION</div><div class="winner-banner">WINNER</div></div>
+                  <div class="citation">
+                      Congratulations on your brilliant achievement! 
+                      Your monumental contribution for <span id="cite-h" class="highlight">ALPHA</span> house 
+                      & the <span id="cite-d" class="highlight">DEPT</span> 
+                      securing <span id="cite-p" class="highlight">000 POINTS</span> validates you as a true asset.
+                  </div>
+               </div></div>
+               <button class="glass" style="width:100%; border:2px dashed #ffffff22; margin:20px 0;" onclick="document.getElementById('ph-i').click()">📸 CONFIGURE PHOTO</button>
+               <input type="file" id="ph-i" accept="image/*" hidden onchange="hAvatar(this)">
+               <button class="btn-elite" onclick="saveCert()">💾 SAVE TO GALLERY</button>
+            </div>
+
+            <div id="c-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:40px;"></div>
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:50px 0 20px 0;">🎖️ DEPT RANKING</h3><div class="glass" id="d-lb"></div>
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:40px 0 20px 0;">🌎 GLOBAL RANKING</h3><div class="glass" id="o-lb"></div>
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:40px 0 20px 0;">📜 BATTLE LOGS</h3><div id="l-list"></div>
+            <button class="btn-elite" style="background:#222; color:#fff; border:1px solid #333; margin-top:80px;" onclick="localStorage.clear(); location.reload();">SIGN OUT</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbw3Y69Quyz_kSdaJA_71eQYwDMFKi8JrTBd-Z2zK0DUYiZbANR9KUiOmttCQaJTbb6TeA/exec";
+        const CAT_C = {'Activities':'#bf5af2','Discipline':'#32d74b','Academics':'#0a84ff','Sports':'#ff9f0a','Special':'#ff375f'};
+        let appData={}, scanner=null, audioCtx=null;
+        const call=(p)=>fetch(API_URL,{method:"POST",body:JSON.stringify(p)}).then(res=>res.json());
+        function haptic(){ if(window.navigator.vibrate)window.navigator.vibrate(12); }
+        function animS(o,s,e,d){ let st=null; const stp=(t)=>{ if(!st)st=t; const p=Math.min((t-st)/d,1); o.innerHTML=Math.floor(p*(e-s)+s); if(p<1)window.requestAnimationFrame(stp); }; window.requestAnimationFrame(stp); }
+
+        async function init(){
+           const saved=localStorage.getItem('g_sn'); if(saved)fetchU(saved);
+           appData=await call({action:"getInitialData"}); document.getElementById('sp-img').src=appData.logo; document.getElementById('h-logo').src=appData.logo; document.getElementById('logo-c1').src=appData.logo;
+           const ds=document.getElementById('sel-dept'); ds.innerHTML='<option disabled selected>SELECT DEPARTMENT</option>';
+           appData.depts.forEach(d=>ds.add(new Option(d,d))); setTimeout(()=>{document.getElementById('splash').style.transform='translateY(-110%)';},2000);
+        }
+
+        async function startScan(){ document.getElementById('reader').style.display='block'; scanner=new Html5Qrcode("reader"); await scanner.start({facingMode:"environment"},{fps:15},(tx)=>{ const p=tx.split('|').map(x=>x.trim()); scanner.stop(); haptic(); fetchU(p[0]); }); }
+        async function loadNames(){ const res=await call({action:"getStudentsByDept",dept:document.getElementById('sel-dept').value}); const ss=document.getElementById('sel-name'); ss.innerHTML='<option disabled selected>SELECT NAME</option>'; res.students.forEach(s=>ss.add(new Option(s.name,s.name))); document.getElementById('name-box').style.display='block'; }
+        
+        async function fetchU(n=null){
+           try {
+               const btn=document.getElementById('u-btn'); btn.innerText="UPLINKING...";
+               const name=n||document.getElementById('sel-name').value;
+               const res=await call({action:"getStudentStats",name});
+               const ot=parseInt(localStorage.getItem('g_lt')||0); 
+               if(res.total>ot && ot>0) { localStorage.setItem('g_lt',res.total); celebV(res); }
+               localStorage.setItem('g_sn',name); localStorage.setItem('g_lt',res.total);
+               
+               renderH(res);
+               document.getElementById('view-login').style.display='none';
+               document.getElementById('view-dash').style.display='block';
+               document.getElementById('institutional-header').style.display='flex';
+               document.getElementById('ticker').style.display='block';
+               window.scrollTo(0,0);
+           } catch(e) { alert("CONNECTION TIMEOUT. PLEASE RETRY."); document.getElementById('u-btn').innerText="RETRY UPLINK"; }
+        }
+
+        setInterval(()=>{ const sn=localStorage.getItem('g_sn'); if(sn && document.getElementById('view-dash').style.display==='block'){ call({action:"getStudentStats",name:sn}).then(res=>{ if(res.total>parseInt(localStorage.getItem('g_lt')||0)){ localStorage.setItem('g_lt',res.total); celebV(res); renderH(res); } }); } },30000);
+        function celebV(r){ haptic(); confetti({particleCount:150,spread:75,origin:{y:0.6},zIndex:25000}); document.getElementById('pop-msg').innerText=`Victory! ${r.profile.name}, your performance has updated live!`; document.getElementById('pop-over').style.display='flex'; }
+        function hAvatar(inp){ if(inp.files && inp.files[0]){ const r=new FileReader(); r.onload=(e)=>document.getElementById('avatar-img').src=e.target.result; r.readAsDataURL(inp.files[0]); } }
+        function saveCert(){ html2canvas(document.querySelector("#cap-zone")).then(c=>{ const l=document.createElement('a'); l.download='AWARD_WEEKLY.png'; l.href=c.toDataURL(); l.click(); }); }
+
+        function renderH(res){
+           animS(document.getElementById('total-val'),0,res.total,1200); 
+           document.getElementById('sn-display').innerText=res.profile.name;
+           document.getElementById('cite-h').innerText=res.profile.house.toUpperCase(); 
+           document.getElementById('cite-d').innerText=res.profile.dept.toUpperCase(); 
+           document.getElementById('cite-p').innerText=res.total + " POINTS";
+           
+           const hC=appData.houses.find(h=>h.name===res.profile.house); if(hC){ document.documentElement.style.setProperty('--house-col',hC.color); document.getElementById('pill-house').innerText=hC.name; }
+           
+           let rnk="ROOKIE",nxt=500; if(res.total>=500){rnk="LEGEND";nxt=1000;} else if(res.total>=100){rnk="GOLD TIER";nxt=500;}
+           document.getElementById('r-text').innerText=rnk; document.getElementById('r-fill').style.width=(res.total/nxt*100)+"%"; document.getElementById('r-fill').style.background=hC?hC.color:'#fff';
+           document.getElementById('r-hint').innerText=(res.total<nxt)?`${nxt-res.total} PTS TO NEXT RANK`:"MAX LEVEL";
+           
+           const dr=res.studentLeaderboard.findIndex(x=>x[0].trim().toLowerCase()===res.profile.name.trim().toLowerCase())+1;
+           if(dr>0 && dr<=10){ document.getElementById('top-winner-box').innerHTML=`<div class="glass" style="border:2px solid #32d74b; text-align:center;"><h3 style="font-family:'Bebas Neue'; font-size:30px; color:#32d74b;">🏆 WEEKLY CHAMPION</h3><p style="font-size:12px; font-weight:900;">You are currently Rank #${dr} in ${res.profile.dept}!</p></div>`; }
+           
+           document.getElementById('c-grid').innerHTML=['Activities','Discipline','Academics','Sports','Special'].map(c=>{ const col=CAT_C[c]||'#fff'; return `<div class="glass" style="text-align:center; border-bottom:4px solid ${col};"><h3 style="font-family:'Bebas Neue'; color:${col}; font-size:38px;">${res.breakdown[c]||0}</h3><p style="font-size:10px; opacity:0.3; letter-spacing:2px;">${c.toUpperCase()}</p></div>`; }).join('');
+           const lb=(d)=>{ return d.map(([n,p])=>{ const c=appData.houses.find(h=>h.name===n)?.color||'#fff'; return `<div style="margin-bottom:18px;"><div style="display:flex; justify-content:space-between; font-weight:900; font-size:11px;"><span>${n.toUpperCase()}</span><span>${p}</span></div><div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; margin-top:5px;"><div style="height:100%; width:${(p/d[0][1]*100)}%; background:${c};"></div></div></div>`; }).join(''); };
+           document.getElementById('d-lb').innerHTML=lb(res.overallLeaderboard); // In getStudentStats, deptLeaderboard is actually house stats for that dept.
+           document.getElementById('l-list').innerHTML=res.logs.map(l=>{ const isP=l.pts>0; return `<div class="glass" style="display:flex; justify-content:space-between; border-left:5px solid ${isP?'#32d74b':'#ff375f'}; padding:22px;"><div style="flex:1;"><h4 style="font-family:'Bebas Neue'; color:${isP?'#32d74b':'#ff375f'}; font-size:22px;">${l.cat.toUpperCase()}</h4><p style="opacity:0.4; font-size:10px;">${new Date(l.date).toLocaleString([],{month:'short',day:'numeric'})} • BY: ${l.by}</p><p style="font-size:11px; margin-top:8px; opacity:0.8;">${l.remarks||''}</p></div><div style="font-family:'Bebas Neue'; font-size:32px; color:${isP?'#32d74b':'#ff375f'};">${isP?'+':''}${l.pts}</div></div>`; }).join('');
+        }
+        init();
+    </script>
 </body>
 </html>
