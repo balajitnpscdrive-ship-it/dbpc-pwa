@@ -91,10 +91,10 @@
                      <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<div class="sub-tag">GIVERS OF ALL TALENTS STUDENTS</div></div>
                      <img id="founder-img" src="assets/founder.png" style="height:50px; width:50px; border-radius:50%; border:2.5px solid var(--gold);" onerror="this.src='https://img.icons8.com/isometric/100/star.png'">
                   </div>
-                  <h1 class="award-title">BEST G.O.A.T.<br>AWARD</h1>
-                  <p class="award-subtitle">OF THE WEEK</p>
-                  
-                  <div class="ribbon-box"><div class="winner-pill">WEEKLY CHAMPION</div><div class="winner-banner">WINNER</div></div>
+                   <h1 class="award-title" id="cert-title">DEPARTMENT RANK<br>#0</h1>
+                   <p class="award-subtitle">COLLEGE ELITE</p>
+                   
+                   <div class="ribbon-box"><div class="winner-pill">ACTIVE CHAMPION</div><div class="winner-banner" id="cert-banner">PLAYER</div></div>
                   <div class="citation">
                       Congratulations on your brilliant achievement! 
                       Your monumental contribution for <span id="cite-h" class="highlight">ALPHA</span> house 
@@ -203,6 +203,8 @@
            document.getElementById('r-hint').innerText=(res.total<nxt)?`${nxt-res.total} PTS TO NEXT RANK`:"MAX LEVEL";
            
            const dr=res.studentLeaderboard.findIndex(x=>x[0].trim().toLowerCase()===res.profile.name.trim().toLowerCase())+1;
+           document.getElementById('cert-title').innerHTML = `DEPARTMENT RANK<br>#${dr || '?'}`;
+           document.getElementById('cert-banner').innerText = res.profile.name.toUpperCase();
            if(dr>0 && dr<=10){ 
                document.getElementById('top-winner-box').innerHTML=`
                <div class="glass" style="background:linear-gradient(135deg, rgba(50,215,75,0.1), transparent); border:1px solid #32d74b; animation: glowPulse 2s infinite alternate;">
@@ -218,8 +220,9 @@
            } else { document.getElementById('top-winner-box').innerHTML=''; }
            
            document.getElementById('c-grid').innerHTML=['Activities','Discipline','Academics','Sports','Special'].map(c=>{ const col=CAT_C[c]||'#fff'; return `<div class="glass" style="text-align:center; border-bottom:4px solid ${col};"><h3 style="font-family:'Bebas Neue'; color:${col}; font-size:38px;">${res.breakdown[c]||0}</h3><p style="font-size:10px; opacity:0.3; letter-spacing:2px;">${c.toUpperCase()}</p></div>`; }).join('');
-           const lb=(d)=>{ return d.map(([n,p])=>{ const c=appData.houses.find(h=>h.name===n)?.color||'#fff'; return `<div style="margin-bottom:18px;"><div style="display:flex; justify-content:space-between; font-weight:900; font-size:11px;"><span>${n.toUpperCase()}</span><span>${p}</span></div><div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; margin-top:5px;"><div style="height:100%; width:${(p/d[0][1]*100)}%; background:${c};"></div></div></div>`; }).join(''); };
-           document.getElementById('d-lb').innerHTML=lb(res.overallLeaderboard); // In getStudentStats, deptLeaderboard is actually house stats for that dept.
+           const lb=(d)=>{ if(!d || !d.length) return '<p style="opacity:0.2; font-size:10px; text-align:center; padding:20px;">CALCULATING ARENA...</p>'; return d.map(([n,p])=>{ const c=appData.houses.find(h=>h.name===n)?.color||'#fff'; return `<div style="margin-bottom:18px;"><div style="display:flex; justify-content:space-between; font-weight:900; font-size:11px;"><span>${n.toUpperCase()}</span><span>${p}</span></div><div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; margin-top:5px;"><div style="height:100%; width:${(p/(d[0][1]||1)*100)}%; background:${c}; box-shadow:0 0 10px ${c}55;"></div></div></div>`; }).join(''); };
+           document.getElementById('d-lb').innerHTML=lb(res.deptLeaderboard); 
+           document.getElementById('o-lb').innerHTML=lb(res.overallLeaderboard);
            document.getElementById('l-list').innerHTML=res.logs.map(l=>{ const isP=l.pts>0; return `<div class="glass" style="display:flex; justify-content:space-between; border-left:5px solid ${isP?'#32d74b':'#ff375f'}; padding:22px;"><div style="flex:1;"><h4 style="font-family:'Bebas Neue'; color:${isP?'#32d74b':'#ff375f'}; font-size:22px;">${l.cat.toUpperCase()}</h4><p style="opacity:0.4; font-size:10px;">${new Date(l.date).toLocaleString([],{month:'short',day:'numeric'})} • BY: ${l.by}</p><p style="font-size:11px; margin-top:8px; opacity:0.8;">${l.remarks||''}</p></div><div style="font-family:'Bebas Neue'; font-size:32px; color:${isP?'#32d74b':'#ff375f'};">${isP?'+':''}${l.pts}</div></div>`; }).join('');
         }
         init();
