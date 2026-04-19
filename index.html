@@ -9,180 +9,176 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg: #050b1a; --card: rgba(15, 23, 42, 0.98); --accent: #00f2fe; --house-col: #00f2fe; --gold: #fdbb2d; }
+        :root { --bg: #030712; --card: rgba(15, 23, 42, 0.98); --accent: #00f2fe; --house-col: #00f2fe; --gold: #fdbb2d; }
         * { box-sizing: border-box; margin: 0; padding: 0; outline:none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
         
-        /* THE AWARD POSTER */
+        /* THE AWARD POSTER (FOR WINNERS ONLY) */
         .award-poster {
-            width: 350px; min-height: 580px; margin: 30px auto; background: radial-gradient(circle at center, #1b2735 0%, #050b1a 100%);
+            width: 350px; min-height: 580px; margin: 20px auto; background: radial-gradient(circle at center, #1b2735 0%, #050b1a 100%);
             border-radius: 20px; padding: 35px 25px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: relative; overflow: hidden;
             border: 1px solid rgba(255,255,255,0.08); text-align: center;
         }
         .cert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
-        .clg-title { font-family: 'Bebas Neue'; font-size: 22px; flex: 1; line-height: 1; letter-spacing: 0.5px; color: #fff; }
-        .sub-tag { font-size: 8px; font-weight: 900; color: var(--gold); letter-spacing: 2px; margin-top: 5px; }
+        .clg-title { font-family: 'Bebas Neue'; font-size: 20px; flex: 1; line-height: 1.1; letter-spacing: 0.5px; }
+        .sub-tag { font-size: 8px; font-weight: 900; color: var(--gold); letter-spacing: 2px; }
 
-        .award-title { font-family: 'Bebas Neue'; font-size: 45px; line-height: 0.85; margin: 20px 0 10px 0; }
-        .award-subtitle { color: var(--gold); font-size: 14px; font-weight: 900; letter-spacing: 4px; }
+        .award-main-title { font-family: 'Bebas Neue'; font-size: 45px; line-height: 0.85; margin: 15px 0 5px 0; }
+        .award-of-week { color: var(--gold); font-size: 14px; font-weight: 900; letter-spacing: 4px; }
 
-        /* PORTRAIT */
         .portrait-zone { width: 180px; height: 180px; margin: 30px auto; position: relative; }
         .portrait-ring { position: absolute; inset: -12px; border: 4px solid var(--house-col); border-radius: 50%; box-shadow: 0 0 35px var(--house-col); animation: pulseGlow 3s infinite; }
         @keyframes pulseGlow { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.05);opacity:1} }
         .portrait-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 5px solid #fff; position: relative; z-index: 5; background: #111; }
 
-        /* RIBBON */
-        .ribbon-box { margin: 30px 0; position: relative; }
+        .ribbon-box { margin: 25px 0; position: relative; }
         .winner-pill { background: #000; color: var(--gold); padding: 6px 25px; border-radius: 20px; display: inline-block; font-size: 11px; font-weight: 900; border: 1.5px solid var(--gold); margin-bottom: -15px; position: relative; z-index: 10; }
         .winner-banner { background: var(--gold); color: #000; font-family: 'Bebas Neue'; font-size: 38px; letter-spacing: 6px; padding: 12px 45px; clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%); }
 
-        .citation { font-size: 11px; opacity: 0.9; line-height: 1.7; margin-top: 30px; font-weight: 600; padding: 0 5px; }
+        .winner-citation { font-size: 11px; opacity: 0.9; line-height: 1.7; margin-top: 30px; font-weight: 600; }
         .highlight { color: var(--gold); font-weight: 900; text-transform: uppercase; }
 
-        /* UI */
-        .glass { background: var(--card); backdrop-filter: blur(30px); border-radius: 35px; padding: 25px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; }
-        .btn-elite { background: linear-gradient(135deg, var(--gold), #fff); color: #000; border: none; padding: 24px; border-radius: 25px; width: 100%; font-family: 'Bebas Neue'; font-size: 30px; cursor: pointer; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
-        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s cubic-bezier(0.8, 0, 0, 1); }
-        .splash-img { width: 140px; height: 140px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 80px var(--accent); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        /* STANDARD CARD (FOR REGULAR STUDENTS) */
+        .standard-card {
+            width: 320px; height: 450px; margin: 20px auto; background: var(--card); border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 30px; padding: 30px; position: relative; overflow: hidden;
+        }
+        .standard-card::before { content: 'GOAT'; position: absolute; font-family: 'Bebas Neue'; font-size: 180px; opacity: 0.03; top: 50%; left: 50%; transform: translate(-50%,-50%); }
 
-        #ticker { background: rgba(0, 242, 254, 0.1); padding: 15px; overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--accent); }
-        .ticker-move { display: inline-block; animation: scrollT 25s linear infinite; font-weight: 900; letter-spacing: 2px; font-size: 11px; }
-        @keyframes scrollT { from{transform:translateX(100%)} to{transform:translateX(-100%)} }
+        /* GLOBAL UI */
+        .glass { background: var(--card); backdrop-filter: blur(30px); border-radius: 35px; padding: 25px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 25px; }
+        .btn-elite { background: linear-gradient(135deg, var(--gold), #fff); color: #000; border: none; padding: 22px; border-radius: 25px; width: 100%; font-family: 'Bebas Neue'; font-size: 28px; cursor: pointer; box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s cubic-bezier(0.8, 0, 0, 1); }
+        .splash-img { width: 140px; height: 140px; border-radius: 50%; border: 3px solid var(--accent); animation: pulse 2s infinite; box-shadow: 0 0 100px var(--accent); }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.8} 50%{transform:scale(1.1);opacity:1} }
     </style>
 </head>
 <body>
 
-    <div id="splash"><img id="sp-img" class="splash-img"><h1 style="font-family:'Bebas Neue'; letter-spacing:10px; margin-top:30px; font-size:45px;">SYNCING CORE...</h1></div>
-    <div id="ticker" style="display:none;"><div class="ticker-move" id="ticker-tx">🏆 BATTLE ARENA SYNCED... PREPARE FOR GLORY</div></div>
+    <div id="splash"><img id="sp-img" class="splash-img"><h1 style="font-family:'Bebas Neue'; letter-spacing:10px; margin-top:30px; font-size:45px;">SYNCING ARENA...</h1></div>
 
-    <div id="pop-over" style="position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:20000; display:none; align-items:center; justify-content:center; padding:30px; backdrop-filter:blur(20px);" onclick="this.style.display='none'">
-        <div class="glass" style="text-align:center; padding:50px; border-color:var(--gold);"><div style="font-size:80px;">🏆</div><h1 style="font-family:'Bebas Neue'; font-size:55px; color:var(--gold);">NEW VICTORY!</h1><p id="pop-msg" style="font-weight:900; margin-top:15px;"></p><button class="btn-elite" style="margin-top:40px; font-size:22px;">CONTINUE</button></div>
+    <div id="pop-winner" style="position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:20000; display:none; align-items:center; justify-content:center; padding:30px; backdrop-filter:blur(20px);" onclick="this.style.display='none'">
+        <div class="glass" style="text-align:center; padding:50px; border-color:var(--gold);"><div style="font-size:80px;">🏆</div><h1 style="font-family:'Bebas Neue'; font-size:55px; color:var(--gold);">NEW RECORD!</h1><p id="pop-txt" style="font-weight:900; margin-top:15px;"></p><button class="btn-elite" style="margin-top:40px; font-size:22px;">CONTINUE</button></div>
     </div>
 
     <div class="container" style="max-width:480px; margin:0 auto;">
         
         <div id="view-login" style="padding: 60px 20px; text-align:center;">
             <h1 style="font-family:'Bebas Neue'; font-size:90px; letter-spacing:15px;">G.O.A.T.S</h1>
+            <p style="opacity:0.4; letter-spacing:6px; font-weight:900; margin-bottom:50px;">PRO PERFORMANCE TERMINAL</p>
             <button class="glass" style="width:100%; color:var(--accent); font-weight:900; border:1px dashed var(--accent);" onclick="startScan()">⚡ SCAN IDENTITY QR</button>
             <div id="reader" style="display:none; margin:20px 0; border-radius:20px; overflow:hidden;"></div>
-            <div style="margin:30px 0; opacity:0.1; display:flex; align-items:center;"><hr style="flex:1;"><span style="padding:0 15px; font-size:10px;">SECURE UPLINK</span><hr style="flex:1;"></div>
-            <select id="sel-dept" onchange="haptic(); loadNames()" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select>
-            <div id="name-box" style="display:none; margin-top:15px;"><select id="sel-name" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select><button class="btn-elite" style="margin-top:25px;" id="u-btn" onclick="fetchU()">UPLINK SESSION</button></div>
+            <hr style="margin:30px 0; opacity:0.1;">
+            <select id="sel-dept" onchange="loadN()" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select>
+            <div id="n-box" style="display:none; margin-top:15px;"><select id="sel-name" style="width:100%; padding:22px; border-radius:15px; background:#000; color:#fff;"></select><button class="btn-elite" style="margin-top:25px;" id="u-btn" onclick="fetchU()">UPLINK SESSION</button></div>
         </div>
 
         <div id="view-dash" style="display:none; padding:15px;">
-            <header id="institutional-header" style="display:none; justify-content:space-between; align-items:center; padding:20px 10px;">
+            <header style="display:flex; justify-content:space-between; align-items:center;  padding:20px 10px;">
                 <img id="h-logo" style="height:50px;">
-                <div style="text-align:right;"><p style="font-size:9px; opacity:0.4; font-weight:900;">TOWARDS EXCELLENCE</p><p style="font-family:'Bebas Neue'; font-size:22px;">BATTLE TERMINAL</p></div>
+                <div style="text-align:right;"><p style="font-size:9px; opacity:0.4; font-weight:900;">DON BOSCO POLYTECHNIC</p><p style="font-family:'Bebas Neue'; font-size:22px;">BATTLE PORTAL</p></div>
             </header>
 
-            <div id="top-winner-box"></div>
+            <div id="rank-recognition"></div>
+
+            <div id="card-render-zone">
+                <!-- Standard or Award Card Injected Here -->
+            </div>
+
+            <div style="padding:40px 0; text-align:center;"><p id="pill-h" style="font-weight:900; letter-spacing:6px; color:var(--house-col); font-size:12px; margin-bottom:15px;">HOUSE</p><h1 id="total-val" style="font-family:'Bebas Neue'; font-size:140px;">000</h1><h2 id="sn-display" style="font-family:'Bebas Neue'; font-size:45px; letter-spacing:6px;">PLAYER</h2></div>
+
+            <div id="stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:18px;"></div>
             
-            <div class="glass" style="text-align:center;">
-                <p style="font-weight:900; font-size:11px; color:var(--house-col); letter-spacing:3px;">RANK PROGRESSION</p>
-                <h2 id="r-text" style="font-family:'Bebas Neue'; font-size:42px; margin:10px 0;">ROOKIE</h2>
-                <div style="height:12px; background:#000; border-radius:6px; overflow:hidden;"><div id="r-fill" style="height:100%; transition:2s;"></div></div>
-                <p id="r-hint" style="font-size:10px; opacity:0.3; margin-top:12px; font-weight:900;"></p>
-            </div>
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:24px; margin:50px 0 20px 0; color:var(--gold);">🎖️ COLLEGE OVERALL HOUSE LEADERBOARD</h3>
+            <div class="glass" id="overall-lb"></div>
 
-            <div style="padding:40px 0; text-align:center;"><p id="pill-house" style="font-weight:900; letter-spacing:6px; color:var(--house-col); font-size:12px; margin-bottom:15px;">HOUSE</p><h1 id="total-val" style="font-family:'Bebas Neue'; font-size:140px;">000</h1><h2 id="sn-display" style="font-family:'Bebas Neue'; font-size:45px; letter-spacing:6px;">PLAYER</h2></div>
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:24px; margin:40px 0 20px 0;">📜 ACHIEVEMENT LOGS</h3>
+            <div id="logs-list"></div>
 
-            <!-- THE POSTER -->
-            <div class="glass" style="text-align:center; padding: 20px 10px;">
-               <div id="cap-zone"><div class="award-poster">
-                  <div class="cert-header">
-                     <img id="logo-c1" style="height:45px;">
-                     <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<div class="sub-tag">GIVERS OF ALL TALENTS STUDENTS</div></div>
-                     <img src="assets/founder.png" style="height:50px; width:50px; border-radius:50%; border:2.5px solid var(--gold);" onerror="this.src='https://img.icons8.com/isometric/100/star.png'">
-                  </div>
-                  <h1 class="award-title">BEST G.O.A.T.<br>AWARD</h1>
-                  <p class="award-subtitle">OF THE WEEK</p>
-                  <div class="portrait-zone"><div class="portrait-ring"></div><img id="avatar-img" class="portrait-img" src="https://via.placeholder.com/300"></div>
-                  <div class="ribbon-box"><div class="winner-pill">WEEKLY CHAMPION</div><div class="winner-banner">WINNER</div></div>
-                  <div class="citation">
-                      Congratulations on your brilliant achievement! 
-                      Your monumental contribution for <span id="cite-h" class="highlight">ALPHA</span> house 
-                      & the <span id="cite-d" class="highlight">DEPT</span> 
-                      securing <span id="cite-p" class="highlight">000 POINTS</span> validates you as a true asset.
-                  </div>
-               </div></div>
-               <button class="glass" style="width:100%; border:2px dashed #ffffff22; margin:20px 0;" onclick="document.getElementById('ph-i').click()">📸 CONFIGURE PHOTO</button>
-               <input type="file" id="ph-i" accept="image/*" hidden onchange="hAvatar(this)">
-               <button class="btn-elite" onclick="saveCert()">💾 SAVE TO GALLERY</button>
-            </div>
-
-            <div id="c-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:40px;"></div>
-            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:50px 0 20px 0;">🎖️ DEPT RANKING</h3><div class="glass" id="d-lb"></div>
-            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:40px 0 20px 0;">🌎 GLOBAL RANKING</h3><div class="glass" id="o-lb"></div>
-            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:26px; margin:40px 0 20px 0;">📜 BATTLE LOGS</h3><div id="l-list"></div>
-            <button class="btn-elite" style="background:#222; color:#fff; border:1px solid #333; margin-top:80px;" onclick="localStorage.clear(); location.reload();">SIGN OUT</button>
+            <button class="btn-elite" style="background:#222; color:#fff; margin-top:100px;" onclick="localStorage.clear(); location.reload();">QUIT PORTAL</button>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw3Y69Quyz_kSdaJA_71eQYwDMFKi8JrTBd-Z2zK0DUYiZbANR9KUiOmttCQaJTbb6TeA/exec";
-        const CAT_C = {'Activities':'#bf5af2','Discipline':'#32d74b','Academics':'#0a84ff','Sports':'#ff9f0a','Special':'#ff375f'};
+        const API_URL = "https://script.google.com/macros/s/AKfycbz2ayZWrR8B06u_0pqtB6A6TUmEeV0IIiBFQ9RbFKmKUGhwDRkE-E8zqrrzNSrMI4U6FQ/exec";
         let appData={}, scanner=null, audioCtx=null;
         const call=(p)=>fetch(API_URL,{method:"POST",body:JSON.stringify(p)}).then(res=>res.json());
-        function haptic(){ if(window.navigator.vibrate)window.navigator.vibrate(12); }
-        function animS(o,s,e,d){ let st=null; const stp=(t)=>{ if(!st)st=t; const p=Math.min((t-st)/d,1); o.innerHTML=Math.floor(p*(e-s)+s); if(p<1)window.requestAnimationFrame(stp); }; window.requestAnimationFrame(stp); }
+        function haptic(){ if(window.navigator.vibrate)window.navigator.vibrate(15); }
 
         async function init(){
-           const saved=localStorage.getItem('g_sn'); if(saved)fetchU(saved);
-           appData=await call({action:"getInitialData"}); document.getElementById('sp-img').src=appData.logo; document.getElementById('h-logo').src=appData.logo; document.getElementById('logo-c1').src=appData.logo;
-           const ds=document.getElementById('sel-dept'); ds.innerHTML='<option disabled selected>SELECT DEPARTMENT</option>';
+           const s=localStorage.getItem('g_sn'); if(s)fetchU(s);
+           appData=await call({action:"getInitialData"}); document.getElementById('sp-img').src=appData.logo; document.getElementById('h-logo').src=appData.logo;
+           const ds=document.getElementById('sel-dept'); ds.innerHTML='<option disabled selected>CHOOSE DEPARTMENT</option>';
            appData.depts.forEach(d=>ds.add(new Option(d,d))); setTimeout(()=>{document.getElementById('splash').style.transform='translateY(-110%)';},2000);
         }
 
-        async function startScan(){ document.getElementById('reader').style.display='block'; scanner=new Html5Qrcode("reader"); await scanner.start({facingMode:"environment"},{fps:15},(tx)=>{ const p=tx.split('|').map(x=>x.trim()); scanner.stop(); haptic(); fetchU(p[0]); }); }
-        async function loadNames(){ const res=await call({action:"getStudentsByDept",dept:document.getElementById('sel-dept').value}); const ss=document.getElementById('sel-name'); ss.innerHTML='<option disabled selected>SELECT NAME</option>'; res.students.forEach(s=>ss.add(new Option(s.name,s.name))); document.getElementById('name-box').style.display='block'; }
+        async function startScan(){ document.getElementById('reader').style.display='block'; scanner=new Html5Qrcode("reader"); await scanner.start({facingMode:"environment"},{fps:15},(tx)=>{ const p=tx.split('|').map(x=>x.trim()); scanner.stop(); fetchU(p[0]); }); }
+        async function loadN(){ const res=await call({action:"getStudentsByDept",dept:document.getElementById('sel-dept').value}); const ss=document.getElementById('sel-name'); ss.innerHTML='<option disabled selected>SELECT NAME</option>'; res.students.forEach(s=>ss.add(new Option(s.name,s.name))); document.getElementById('n-box').style.display='block'; }
         
         async function fetchU(n=null){
            try {
-               const btn=document.getElementById('u-btn'); btn.innerText="UPLINKING...";
                const name=n||document.getElementById('sel-name').value;
                const res=await call({action:"getStudentStats",name});
                const ot=parseInt(localStorage.getItem('g_lt')||0); 
-               if(res.total>ot && ot>0) { localStorage.setItem('g_lt',res.total); celebV(res); }
+               if(res.total>ot && ot>0) { localStorage.setItem('g_lt',res.total); celeb(res); }
                localStorage.setItem('g_sn',name); localStorage.setItem('g_lt',res.total);
-               
-               renderH(res);
+               renderHub(res);
                document.getElementById('view-login').style.display='none';
                document.getElementById('view-dash').style.display='block';
-               document.getElementById('institutional-header').style.display='flex';
-               document.getElementById('ticker').style.display='block';
                window.scrollTo(0,0);
-           } catch(e) { alert("CONNECTION TIMEOUT. PLEASE RETRY."); document.getElementById('u-btn').innerText="RETRY UPLINK"; }
+           } catch(e) { alert("ERROR CONNECING TO TERMINAL."); }
         }
 
-        setInterval(()=>{ const sn=localStorage.getItem('g_sn'); if(sn && document.getElementById('view-dash').style.display==='block'){ call({action:"getStudentStats",name:sn}).then(res=>{ if(res.total>parseInt(localStorage.getItem('g_lt')||0)){ localStorage.setItem('g_lt',res.total); celebV(res); renderH(res); } }); } },30000);
-        function celebV(r){ haptic(); confetti({particleCount:150,spread:75,origin:{y:0.6},zIndex:25000}); document.getElementById('pop-msg').innerText=`Victory! ${r.profile.name}, your performance has updated live!`; document.getElementById('pop-over').style.display='flex'; }
-        function hAvatar(inp){ if(inp.files && inp.files[0]){ const r=new FileReader(); r.onload=(e)=>document.getElementById('avatar-img').src=e.target.result; r.readAsDataURL(inp.files[0]); } }
-        function saveCert(){ html2canvas(document.querySelector("#cap-zone")).then(c=>{ const l=document.createElement('a'); l.download='AWARD_WEEKLY.png'; l.href=c.toDataURL(); l.click(); }); }
+        setInterval(()=>{ const sn=localStorage.getItem('g_sn'); if(sn && document.getElementById('view-dash').style.display==='block'){ call({action:"getStudentStats",name:sn}).then(res=>{ if(res.total>parseInt(localStorage.getItem('g_lt')||0)){ localStorage.setItem('g_lt',res.total); celeb(res); renderHub(res); } }); } },30000);
+        function celeb(r){ haptic(); confetti({particleCount:150,spread:75,origin:{y:0.6},zIndex:25000}); document.getElementById('pop-txt').innerText=`Victory! ${r.profile.name}, your total has increased!`; document.getElementById('pop-winner').style.display='flex'; }
 
-        function renderH(res){
-           animS(document.getElementById('total-val'),0,res.total,1200); 
+        function renderHub(res){
+           document.getElementById('total-val').innerText=res.total; 
            document.getElementById('sn-display').innerText=res.profile.name;
-           document.getElementById('cite-h').innerText=res.profile.house.toUpperCase(); 
-           document.getElementById('cite-d').innerText=res.profile.dept.toUpperCase(); 
-           document.getElementById('cite-p').innerText=res.total + " POINTS";
+           const hC=appData.houses.find(h=>h.name===res.profile.house); if(hC){ document.documentElement.style.setProperty('--house-col',hC.color); document.getElementById('pill-h').innerText=hC.name; }
            
-           const hC=appData.houses.find(h=>h.name===res.profile.house); if(hC){ document.documentElement.style.setProperty('--house-col',hC.color); document.getElementById('pill-house').innerText=hC.name; }
-           
-           let rnk="ROOKIE",nxt=500; if(res.total>=500){rnk="LEGEND";nxt=1000;} else if(res.total>=100){rnk="GOLD TIER";nxt=500;}
-           document.getElementById('r-text').innerText=rnk; document.getElementById('r-fill').style.width=(res.total/nxt*100)+"%"; document.getElementById('r-fill').style.background=hC?hC.color:'#fff';
-           document.getElementById('r-hint').innerText=(res.total<nxt)?`${nxt-res.total} PTS TO NEXT RANK`:"MAX LEVEL";
-           
-           const dr=res.studentLeaderboard.findIndex(x=>x[0].trim().toLowerCase()===res.profile.name.trim().toLowerCase())+1;
-           if(dr>0 && dr<=10){ document.getElementById('top-winner-box').innerHTML=`<div class="glass" style="border:2px solid #32d74b; text-align:center;"><h3 style="font-family:'Bebas Neue'; font-size:30px; color:#32d74b;">🏆 WEEKLY CHAMPION</h3><p style="font-size:12px; font-weight:900;">You are currently Rank #${dr} in ${res.profile.dept}!</p></div>`; }
-           
-           document.getElementById('c-grid').innerHTML=['Activities','Discipline','Academics','Sports','Special'].map(c=>{ const col=CAT_C[c]||'#fff'; return `<div class="glass" style="text-align:center; border-bottom:4px solid ${col};"><h3 style="font-family:'Bebas Neue'; color:${col}; font-size:38px;">${res.breakdown[c]||0}</h3><p style="font-size:10px; opacity:0.3; letter-spacing:2px;">${c.toUpperCase()}</p></div>`; }).join('');
-           const lb=(d)=>{ return d.map(([n,p])=>{ const c=appData.houses.find(h=>h.name===n)?.color||'#fff'; return `<div style="margin-bottom:18px;"><div style="display:flex; justify-content:space-between; font-weight:900; font-size:11px;"><span>${n.toUpperCase()}</span><span>${p}</span></div><div style="height:8px; background:rgba(255,255,255,0.05); border-radius:4px; margin-top:5px;"><div style="height:100%; width:${(p/d[0][1]*100)}%; background:${c};"></div></div></div>`; }).join(''); };
-           document.getElementById('d-lb').innerHTML=lb(res.overallLeaderboard); // In getStudentStats, deptLeaderboard is actually house stats for that dept.
-           document.getElementById('l-list').innerHTML=res.logs.map(l=>{ const isP=l.pts>0; return `<div class="glass" style="display:flex; justify-content:space-between; border-left:5px solid ${isP?'#32d74b':'#ff375f'}; padding:22px;"><div style="flex:1;"><h4 style="font-family:'Bebas Neue'; color:${isP?'#32d74b':'#ff375f'}; font-size:22px;">${l.cat.toUpperCase()}</h4><p style="opacity:0.4; font-size:10px;">${new Date(l.date).toLocaleString([],{month:'short',day:'numeric'})} • BY: ${l.by}</p><p style="font-size:11px; margin-top:8px; opacity:0.8;">${l.remarks||''}</p></div><div style="font-family:'Bebas Neue'; font-size:32px; color:${isP?'#32d74b':'#ff375f'};">${isP?'+':''}${l.pts}</div></div>`; }).join('');
+           // CONDITIONAL AWARD LOGIC
+           const zone = document.getElementById('card-render-zone');
+           if(res.rank === 1) {
+               // BEST GOAT (THE CERTIFICATE)
+               zone.innerHTML = `
+               <div id="cap-area"><div class="award-poster" style="--house-col:var(--house-col)">
+                  <div class="cert-header">
+                     <img src="${appData.logo}" style="height:45px;">
+                     <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<div class="sub-tag">GIVERS OF ALL TALENTS STUDENTS</div></div>
+                     <img src="${appData.founder}" style="height:50px; width:50px; border-radius:50%; border:2.5px solid var(--gold); border:2.5px solid var(--gold);" onerror="this.src='https://img.icons8.com/isometric/100/star.png'">
+                  </div>
+                  <h1 class="award-main-title">BEST G.O.A.T.<br>AWARD</h1>
+                  <p class="award-of-week">OF THE WEEK</p>
+                  <div class="portrait-zone"><div class="portrait-ring"></div><img id="avatar-img" class="portrait-img" src="https://via.placeholder.com/300"></div>
+                  <div class="ribbon-box"><div class="winner-pill">WEEKLY CHAMPION</div><div class="winner-banner">WINNER</div></div>
+                  <div class="winner-citation">Congratulations on your brilliant achievement! Your contribution for <span class="highlight">${res.profile.house}</span> house & the <span class="highlight">${res.profile.dept}</span> securing <span class="highlight">${res.total} POINTS</span> validates you as a true asset.</div>
+               </div></div>
+               <button class="btn-elite" style="margin-top:20px; font-size:22px;" onclick="saveImg()">💾 SAVE PHOTO</button>
+               <input type="file" id="ph-i" accept="image/*" hidden onchange="hAvatar(this)">
+               <button class="glass" style="width:100%; margin-top:10px; font-weight:900;" onclick="document.getElementById('ph-i').click()">📸 CONFIGURE AVATAR</button>
+               `;
+           } else {
+               // STANDARD PLAYER CARD
+               zone.innerHTML = `
+               <div class="standard-card">
+                  <div style="font-family:'Bebas Neue'; font-size:30px; color:var(--house-col); text-align:center;">PLAYER PROFILE</div>
+                  <div style="text-align:center; margin:30px 0;"><img id="avatar-img" src="https://via.placeholder.com/300" style="width:140px; height:140px; border-radius:50%; border:4px solid #fff; object-fit:cover;"></div>
+                  <div style="text-align:center;"><h2 style="font-family:'Bebas Neue'; font-size:40px; letter-spacing:4px;">${res.profile.name}</h2><p style="opacity:0.4; font-weight:900;">${res.profile.dept} / RANK #${res.rank}</p></div>
+                  <div style="margin-top:30px; display:flex; justify-content:space-around; text-align:center;"><div class="glass" style="padding:15px; margin:0;"><h4 style="color:var(--gold); font-size:24px;">${res.total}</h4><p style="font-size:9px;">SCORE</p></div><div class="glass" style="padding:15px; margin:0;"><h4 style="color:var(--accent); font-size:24px;">#${res.rank}</h4><p style="font-size:9px;">RANK</p></div></div>
+               </div>
+               <input type="file" id="ph-i" accept="image/*" hidden onchange="hAvatar(this)">
+               <button class="glass" style="width:100%; margin-top:20px; font-weight:900;" onclick="document.getElementById('ph-i').click()">📸 CONFIGURE AVATAR</button>
+               `;
+           }
+
+           document.getElementById('stats-grid').innerHTML=['Activities','Discipline','Academics','Sports','Special'].map(c=>{ const col=CAT_C[c]||'#fff'; return `<div class="glass" style="text-align:center; border-bottom:4px solid ${col};"><h3 style="font-family:'Bebas Neue'; color:${col}; font-size:35px;">${res.breakdown[c]||0}</h3><p style="font-size:10px; opacity:0.3; letter-spacing:2px;">${c.toUpperCase()}</p></div>`; }).join('');
+           const lb=(d)=>{ return d.map(([n,p])=>{ const c=appData.houses.find(h=>h.name===n)?.color||'#fff'; return `<div style="margin-bottom:20px;"><div style="display:flex; justify-content:space-between; font-weight:900; font-size:11px;"><span>${n.toUpperCase()}</span><span>${p} PTS</span></div><div style="height:10px; background:rgba(255,255,255,0.05); border-radius:5px; margin-top:5px;"><div style="height:100%; width:${(p/(d[0][1]||1)*100)}%; background:${c}; box-shadow:0 0 10px ${c}; transition:2s;"></div></div></div>`; }).join(''); };
+           document.getElementById('overall-lb').innerHTML=lb(res.overallLeaderboard);
+           document.getElementById('logs-list').innerHTML=res.logs.map(l=>{ const isP=l.pts>0; return `<div class="glass" style="display:flex; justify-content:space-between; border-left:5px solid ${isP?'#32d74b':'#ff375f'}; padding:22px;"><div style="flex:1;"><h4 style="font-family:'Bebas Neue'; color:${isP?'#32d74b':'#ff375f'}; font-size:22px;">${l.cat.toUpperCase()}</h4><p style="opacity:0.4; font-size:10px;">${new Date(l.date).toLocaleString([],{month:'short',day:'numeric'})} • BY: ${l.by}</p></div><div style="font-family:'Bebas Neue'; font-size:32px; color:${isP?'#32d74b':'#ff375f'};">${isP?'+':''}${l.pts}</div></div>`; }).join('');
         }
+        function hAvatar(inp){ if(inp.files && inp.files[0]){ const r=new FileReader(); r.onload=(e)=>document.getElementById('avatar-img').src=e.target.result; r.readAsDataURL(inp.files[0]); } }
+        function saveImg(){ html2canvas(document.querySelector("#cap-area")).then(c=>{ const l=document.createElement('a'); l.download='WINNER_POSTER.png'; l.href=c.toDataURL(); l.click(); }); }
         init();
     </script>
 </body>
