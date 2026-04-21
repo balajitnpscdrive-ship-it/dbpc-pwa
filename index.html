@@ -292,13 +292,13 @@
          * 1. Deploy your student_backend.gs as a Web App (Anyone can access)
          * 2. Copy the /exec URL and paste it below.
          */
-        const API_URL = "https://script.google.com/macros/s/AKfycbxLETI1CPluE7iR21yvRmPP_-JJFdGrE5Rhhd5L8wWsQGN30Q9jTO758lSyDjBEIwSV/exec";
+        const API_URL = "PASTE_YOUR_GAS_WEB_APP_URL_HERE";
         let appData = {};
         /**
          * API COMMUNICATION WRAPPER
          */
         async function call(payload) {
-            if (API_URL === "PASTE_YOUR_GAS_WEB_APP_URL_HERE") {
+            if (API_URL === "https://script.google.com/macros/s/AKfycbxLETI1CPluE7iR21yvRmPP_-JJFdGrE5Rhhd5L8wWsQGN30Q9jTO758lSyDjBEIwSV/exec") {
                 document.getElementById('sp-status').innerText = "ERROR: API URL NOT SET";
                 return;
             }
