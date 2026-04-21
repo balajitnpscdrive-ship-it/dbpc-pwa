@@ -292,22 +292,21 @@
          * 1. Deploy your student_backend.gs as a Web App (Anyone can access)
          * 2. Copy the /exec URL and paste it below.
          */
-        const API_URL = "https://script.google.com/macros/s/AKfycbw9uK4m6GVRbok9QlSqvGpJcYmlOSJh14I_LeS7wlZ7SPwHOV2TGkw1vZJfHCnhsAaF/exec";
+        const API_URL = "PASTE_YOUR_GAS_WEB_APP_URL_HERE";
         let appData = {};
         /**
          * API COMMUNICATION WRAPPER
          */
         async function call(payload) {
-            if (API_URL === "PASTE_YOUR_GAS_WEB_APP_URL_HERE") {
-                document.getElementById('sp-status').innerText = "ERROR: API URL NOT SET";
+            if (API_URL === "https://script.google.com/macros/s/AKfycbw-P9_AjOios4B4BaeqI7fj9L-LUzXhpvSnKgJ4355ggn4Wv06Bfq3YjUIEKqrv1CWN/exec") {
+                document.getElementById('sp-status').innerText = "ERROR: API_URL NOT SET";
                 document.getElementById('retry-btn').style.display = "none";
                 return;
             }
             try {
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
+                // Using GET with query parameters to bypass CORS preflight issues
+                const finalUrl = API_URL + "?payload=" + encodeURIComponent(JSON.stringify(payload));
+                const res = await fetch(finalUrl);
                 return await res.json();
             } catch (e) {
                 console.error("API Error: ", e);
