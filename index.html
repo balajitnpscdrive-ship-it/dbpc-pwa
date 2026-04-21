@@ -1,3 +1,8 @@
+
+index.html
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -316,9 +321,9 @@
                     <p style="font-size:11px; opacity:0.5;">in your department</p>
                 </div>
                 <div class="card" style="text-align:center; padding:20px; margin-bottom:0;">
-                    <p style="font-size:11px; font-weight:700; opacity:0.5; letter-spacing:1px;">HOUSE TOTAL</p>
+                    <p style="font-size:11px; font-weight:700; opacity:0.5; letter-spacing:1px;">TOTAL AWARDS</p>
                     <h2 id="rnk-house" style="font-family:'Bebas Neue'; font-size:48px; color:#fbbf24;">0</h2>
-                    <p style="font-size:11px; opacity:0.5;">house points</p>
+                    <p style="font-size:11px; opacity:0.5;">times recognized</p>
                 </div>
             </div>
             <!-- OFFICIAL STATEMENT POSTER -->
@@ -354,6 +359,7 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxLETI1CPluE7iR21yvRmPP_-JJFdGrE5Rhhd5L8wWsQGN30Q9jTO758lSyDjBEIwSV/exec";
         let appData = {};
+        let cachedImages = { logo: null, founder: null }; // stored as base64 strings
         // Create floating particles
         (function() {
             const colors = ['#ff0080','#7928ca','#00d2ff','#00ff88','#fbbf24'];
@@ -382,26 +388,72 @@
                 throw e;
             }
         }
+        const CACHE_KEY = 'goats_appdata';
+        const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+        function saveCache(data) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+            } catch(e) {} // ignore if storage full
+        }
+        function loadCache() {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (!raw) return null;
+                const { ts, data } = JSON.parse(raw);
+                if (Date.now() - ts > CACHE_TTL) return null; // expired
+                return data;
+            } catch(e) { return null; }
+        }
         async function init() {
             document.getElementById('retry-btn').style.display = 'none';
-            document.getElementById('sp-status').innerText = 'Loading your data...';
+            document.getElementById('sp-status').innerHTML = 'Loading...';
             try {
                 const urlName = new URLSearchParams(window.location.search).get('name');
-                appData = await call({action:"getInitialData"});
-                document.getElementById('sp-logo').src = appData.logo;
-                document.getElementById('h-logo').src  = appData.logo;
-                document.getElementById('p-logo').src  = appData.logo;
-                document.getElementById('p-founder').src = appData.founder;
-                const ds = document.getElementById('sel-dept');
-                ds.innerHTML = '<option disabled selected>Select Your Department</option>';
-                (appData.depts || []).forEach(d => ds.add(new Option(d,d)));
+                // ── Try cache first (saves 1 API call for returning students) ──
+                const cached = loadCache();
+                if (cached) {
+                    appData = cached;
+                    document.getElementById('sp-status').innerHTML =
+                        'Welcome back! ⚡<br><span style="font-size:8px;opacity:0.4;">Data from cache · refreshes every 24h</span>';
+                    applyAppData();
+                    const saved = urlName || localStorage.getItem('goats_s');
+                    if (saved) await fetchStats(saved);
+                    else show('login');
+                    // Refresh cache in background (non-blocking)
+                    refreshCacheInBackground();
+                    return;
+                }
+                // ── Fresh fetch ──
+                document.getElementById('sp-status').innerHTML = 'Connecting to G.O.A.T.S...';
+                appData = await call({action: "getInitialData"});
+                if (!appData || !appData.logo) throw new Error("No data from server.");
+                saveCache(appData);
+                applyAppData();
                 const saved = urlName || localStorage.getItem('goats_s');
-                if(saved) await fetchStats(saved);
+                if (saved) await fetchStats(saved);
                 else show('login');
             } catch(e) {
-                document.getElementById('sp-status').innerText = 'Connection failed. Check internet.';
+                document.getElementById('sp-status').innerHTML =
+                    'Connection Failed<br><span style="color:#ff4757; font-size:9px;">' + e.message.toUpperCase() + '</span>';
                 document.getElementById('retry-btn').style.display = 'block';
             }
+        }
+        function applyAppData() {
+            cachedImages.logo    = appData.logoB64 || appData.logo;
+            cachedImages.founder = appData.founderB64 || appData.founder;
+            document.getElementById('sp-logo').src  = appData.logo;
+            document.getElementById('h-logo').src   = appData.logo;
+            document.getElementById('p-logo').src   = cachedImages.logo;
+            document.getElementById('p-founder').src = cachedImages.founder;
+            const ds = document.getElementById('sel-dept');
+            ds.innerHTML = '<option disabled selected>Select Your Department</option>';
+            (appData.depts || []).forEach(d => ds.add(new Option(d, d)));
+        }
+        async function refreshCacheInBackground() {
+            try {
+                const fresh = await call({action: "getInitialData"});
+                if (fresh && fresh.logo) saveCache(fresh);
+            } catch(e) { /* silently fail */ }
         }
         function show(v) {
             document.getElementById('view-login').style.display = v==='login' ? 'block' : 'none';
@@ -466,8 +518,9 @@
             // Dept rank
             const dRank = (res.studentLeaderboard||[]).findIndex(x=>x[0]?.toLowerCase()===res.profile.name?.toLowerCase())+1;
             document.getElementById('rnk-dept').innerText = dRank ? '#'+dRank : '#--';
-            const hScore = (res.overallLeaderboard||[]).find(x=>x[0]===res.profile.house)?.[1] || 0;
-            document.getElementById('rnk-house').innerText = hScore;
+            // Total awards (count of log entries) — always accurate
+            const totalAwards = (res.logs||[]).length;
+            document.getElementById('rnk-house').innerText = totalAwards;
             // POINT LOG (WHO, WHEN, WHY)
             const list = document.getElementById('log-list');
             if(!res.logs || res.logs.length===0) {
@@ -499,14 +552,134 @@
         }
         function savePoster() {
             const btn = event.target;
-            btn.innerText = 'Saving...';
-            html2canvas(document.querySelector('#cap-zone'), {scale:2, backgroundColor:'#0f0c29'}).then(canvas=>{
-                const a = document.createElement('a');
-                a.download = 'MyGoatsCard.png';
-                a.href = canvas.toDataURL();
-                a.click();
-                btn.innerText = '📥 Save My Card';
-                confetti({particleCount:60, spread:50, origin:{y:0.8}});
+            btn.innerText = 'Saving...'; btn.disabled = true;
+            // Read student data from DOM
+            const name  = document.getElementById('p-name').innerText;
+            const pts   = document.getElementById('p-total').innerText;
+            const house = document.getElementById('c-house').innerText;
+            // Use cached base64 images (avoids all CORS issues)
+            const logoSrc  = cachedImages.logo;
+            const foundSrc = cachedImages.founder;
+            const W = 800, H = 500;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            // Background gradient
+            const bg = ctx.createLinearGradient(0, 0, W, H);
+            bg.addColorStop(0, '#0f0c29');
+            bg.addColorStop(0.5, '#302b63');
+            bg.addColorStop(1, '#24243e');
+            ctx.fillStyle = bg;
+            ctx.roundRect(0, 0, W, H, 30);
+            ctx.fill();
+            // Rainbow border
+            const brd = ctx.createLinearGradient(0, 0, W, H);
+            brd.addColorStop(0,   '#ff0080');
+            brd.addColorStop(0.33,'#7928ca');
+            brd.addColorStop(0.66,'#00d2ff');
+            brd.addColorStop(1,   '#00ff88');
+            ctx.strokeStyle = brd;
+            ctx.lineWidth = 4;
+            ctx.roundRect(2, 2, W-4, H-4, 28);
+            ctx.stroke();
+            // Helper to load an image — do NOT set crossOrigin for base64 data URLs
+            const loadImg = (src) => new Promise((res) => {
+                if (!src || src.length < 5) return res(null);
+                const img = new Image();
+                // crossOrigin only for external http URLs (not data: URLs)
+                if (src.startsWith('http')) img.crossOrigin = 'anonymous';
+                img.onload  = () => res(img);
+                img.onerror = () => {
+                    console.warn('Image load failed:', src.substring(0, 60));
+                    res(null);
+                };
+                img.src = src;
+            });
+            // Helper: draw a circular image or a placeholder ring
+            const drawCircleImg = (img, cx, cy, r, borderColor) => {
+                if (img) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI*2);
+                    ctx.clip();
+                    ctx.drawImage(img, cx-r, cy-r, r*2, r*2);
+                    ctx.restore();
+                } else {
+                    // Draw placeholder circle
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r, 0, Math.PI*2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    ctx.fill();
+                }
+                // Border ring
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI*2);
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            };
+            Promise.all([loadImg(logoSrc), loadImg(foundSrc)]).then(([logo, founder]) => {
+                // Draw logo (circle, top-left)
+                drawCircleImg(logo, 70, 70, 48, 'rgba(255,255,255,0.5)');
+                // Draw founder (circle, top-right)
+                drawCircleImg(founder, W-70, 70, 48, '#fbbf24');
+                // College name
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.font = 'bold 22px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('DON BOSCO POLYTECHNIC COLLEGE', W/2, 150);
+                // Title
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 52px Arial';
+                ctx.fillText('MY POINT CARD', W/2, 215);
+                // G.O.A.T.S label
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 16px Arial';
+                ctx.letterSpacing = '4px';
+                ctx.fillText('G.O.A.T.S CHAMPIONSHIP', W/2, 255);
+                // Divider
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(60, 275); ctx.lineTo(W-60, 275); ctx.stroke();
+                // Certificate text
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                // Line 1
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.fillText('This is to certify that', W/2, 320);
+                // Student name (highlighted)
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 26px Arial';
+                ctx.fillText(name, W/2, 355);
+                // Line 2
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.font = '20px Arial';
+                ctx.fillText('has earned', W/2, 390);
+                // Points (big green)
+                ctx.fillStyle = '#00ff88';
+                ctx.font = 'bold 36px Arial';
+                ctx.fillText(pts + ' points', W/2, 130 + 300);
+                // House
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.font = '20px Arial';
+                ctx.fillText('for the', W/2, 465);
+                ctx.fillStyle = '#a855f7';
+                ctx.font = 'bold 22px Arial';
+                ctx.fillText(house + ' HOUSE', W/2, 492);
+                // Footer
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.font = '13px Arial';
+                ctx.fillText('G.O.A.T.S OFFICIAL RECORD', W/2, H - 18);
+                // Download
+                canvas.toBlob(blob => {
+                    const a = document.createElement('a');
+                    a.download = 'GOATS_' + name.replace(/ /g,'_') + '.png';
+                    a.href = URL.createObjectURL(blob);
+                    a.click();
+                    btn.innerText = '📥 Save My Card';
+                    btn.disabled = false;
+                    confetti({particleCount:80, spread:60, origin:{y:0.8}});
+                }, 'image/png');
             });
         }
         function logout() {
