@@ -173,13 +173,13 @@
          * [IMPORTANT] CONFIGURATION
          * Paste your Google Apps Script Web App URL here after you deploy it.
          */
-        const API_URL = "https://script.google.com/macros/s/AKfycbzxvcbqQZsTJJjPZNNFOZQxR-cW8zwLhDFjAfaw06h7dAD0hw6R3v7Y6qXUJYhDs7Hc/exec";
+        const API_URL = "PASTE_YOUR_GAS_WEB_APP_URL_HERE";
         let appData = {};
         /**
          * COMMUNICATE WITH GAS BACKEND VIA FETCH (CORS SUPPORTED)
          */
         async function call(payload) {
-            if (API_URL === "https://script.google.com/macros/s/AKfycbzxvcbqQZsTJJjPZNNFOZQxR-cW8zwLhDFjAfaw06h7dAD0hw6R3v7Y6qXUJYhDs7Hc/exec") {
+            if (API_URL === "https://script.google.com/macros/s/AKfycbw9uK4m6GVRbok9QlSqvGpJcYmlOSJh14I_LeS7wlZ7SPwHOV2TGkw1vZJfHCnhsAaF/exec") {
                 console.error("API_URL not configured. Please paste your Google Apps Script URL.");
                 return { success: false, error: "API_URL_MISSING" };
             }
