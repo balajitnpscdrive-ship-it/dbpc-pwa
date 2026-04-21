@@ -292,22 +292,34 @@
          * 1. Deploy your student_backend.gs as a Web App (Anyone can access)
          * 2. Copy the /exec URL and paste it below.
          */
-        const API_URL = "PASTE_YOUR_GAS_WEB_APP_URL_HERE";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxLETI1CPluE7iR21yvRmPP_-JJFdGrE5Rhhd5L8wWsQGN30Q9jTO758lSyDjBEIwSV/exec";
         let appData = {};
         /**
          * API COMMUNICATION WRAPPER
          */
         async function call(payload) {
-            if (API_URL === "https://script.google.com/macros/s/AKfycbw-P9_AjOios4B4BaeqI7fj9L-LUzXhpvSnKgJ4355ggn4Wv06Bfq3YjUIEKqrv1CWN/exec") {
-                document.getElementById('sp-status').innerText = "ERROR: API_URL NOT SET";
-                document.getElementById('retry-btn').style.display = "none";
+            if (API_URL === "PASTE_YOUR_GAS_WEB_APP_URL_HERE") {
+                document.getElementById('sp-status').innerText = "ERROR: API URL NOT SET";
                 return;
             }
             try {
-                // Using GET with query parameters to bypass CORS preflight issues
                 const finalUrl = API_URL + "?payload=" + encodeURIComponent(JSON.stringify(payload));
                 const res = await fetch(finalUrl);
-                return await res.json();
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP Error: ${res.status}`);
+                }
+                
+                const text = await res.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    // If parsing fails, it's likely a Google Script error (HTML response)
+                    console.error("Non-JSON response: ", text);
+                    if (text.includes("ScriptError")) throw new Error("Google Script Error. Check logs.");
+                    if (text.includes("Service Spreadsheet not found")) throw new Error("Spreadsheet ID Incorrect.");
+                    throw new Error("Invalid Response from Server.");
+                }
             } catch (e) {
                 console.error("API Error: ", e);
                 throw e;
@@ -316,13 +328,11 @@
         async function init() {
             try {
                 document.getElementById('retry-btn').style.display = "none";
-                document.getElementById('sp-status').innerText = "SYNCING WITH GOATS CORE...";
-                // 1. Check URL Parameters for ?name=...
+                document.getElementById('sp-status').innerHTML = "SYNCING WITH GOATS CORE...<br><span style='font-size:8px; opacity:0.5;'>Attempting Link...</span>";
                 const urlParams = new URLSearchParams(window.location.search);
                 const nameParam = urlParams.get('name');
-                // 2. Fetch Initial App Data (Branding, Houses, Depts)
                 appData = await call({action: "getInitialData"});
-                if(!appData) throw new Error("No data returned");
+                if(!appData || !appData.logo) throw new Error("Incomplete data from server.");
                 document.getElementById('sp-img').src = appData.logo;
                 document.getElementById('h-logo').src = appData.logo;
                 document.getElementById('p-logo').src = appData.logo;
@@ -330,7 +340,6 @@
                 const ds = document.getElementById('sel-dept');
                 ds.innerHTML = '<option disabled selected>CHOOSE DEPARTMENT</option>';
                 appData.depts.forEach(d => ds.add(new Option(d, d)));
-                // 3. Automatic Authentication
                 const saved = nameParam || localStorage.getItem('goats_student');
                 if (saved) {
                     await fetchStats(saved);
@@ -338,7 +347,7 @@
                     showView('login');
                 }
             } catch (e) {
-                document.getElementById('sp-status').innerText = "CONNECTION DELAYED. RETRYING...";
+                document.getElementById('sp-status').innerHTML = "CONNECTION FAILED<br><span style='color:#ff375f; font-size:9px;'>" + e.message.toUpperCase() + "</span>";
                 document.getElementById('retry-btn').style.display = "block";
             }
         }
