@@ -1,3 +1,8 @@
+
+index.html
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -234,7 +239,7 @@
                     <div class="flux-ring"></div>
                     <div>
                         <p id="p-house" style="font-weight:900; letter-spacing:6px; color:var(--house-col); font-size:13px; margin-bottom:10px;">HOUSE</p>
-                        <h1 id="p-total" style="font-family:'Bebas Neue'; font-size:110px; line-height:0.8;">000</h1>
+                        <h1 id="p-total" style="font-family:'Bebas Neue', sans-serif; font-size:110px; line-height: 1; color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.2);">0</h1>
                         <p style="font-size:11px; font-weight:900; opacity:0.4; letter-spacing:5px;">POINTS</p>
                     </div>
                 </div>
@@ -383,7 +388,11 @@
             }
         }
         function renderDash(res) {
-            document.getElementById('p-total').innerText = res.total;
+            // Ensure points are shown as a number even if 0
+            const pts = (res.total !== undefined && res.total !== null) ? res.total : 0;
+            const ptEl = document.getElementById('p-total');
+            ptEl.innerText = pts;
+            ptEl.style.display = "block"; // Force visibility
             document.getElementById('p-name').innerText = res.profile.name;
             document.getElementById('p-dept').innerText = res.profile.dept;
             document.getElementById('p-house').innerText = res.profile.house.toUpperCase();
