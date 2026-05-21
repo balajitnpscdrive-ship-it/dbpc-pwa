@@ -1,707 +1,345 @@
-
-index.html
-
-
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>G.O.A.T.S | My Points</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>G.O.A.T.S | Student Nexus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --house-col: #a855f7;
-            --gold: #fbbf24;
+        :root { 
+            --bg: #020617; 
+            --card: rgba(15, 23, 42, 0.7); 
+            --accent: #00f2fe; 
+            --house-col: #00f2fe; 
+            --gold: #fdbb2d; 
+            --rgb-speed: 5s;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Nunito', sans-serif;
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-            background: #0a0a1a;
+        * { box-sizing: border-box; margin: 0; padding: 0; outline:none; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        
+        /* CINEMATIC BACKGROUND */
+        body::before {
+            content: ''; position: fixed; inset: -100px;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(253, 187, 45, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+            filter: blur(60px); z-index: -1; animation: meshFlow 20s infinite alternate;
         }
-        /* ====== RGB ANIMATED BACKGROUND ====== */
-        #rgb-bg {
-            position: fixed; inset: 0; z-index: -1;
-            background: linear-gradient(135deg, #0a0a1a, #0d0d2b);
-            overflow: hidden;
+        @keyframes meshFlow { 0%{transform:scale(1) rotate(0deg)} 100%{transform:scale(1.2) rotate(5deg)} }
+
+        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+
+        /* GLASS CARD SYSTEM */
+        .glass { 
+            background: var(--card); backdrop-filter: blur(20px); border-radius: 30px; padding: 25px; 
+            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        #rgb-bg::before, #rgb-bg::after {
-            content: '';
-            position: absolute;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.5;
-            animation: rgbFloat 8s ease-in-out infinite alternate;
+
+        .btn-elite { 
+            background: linear-gradient(135deg, var(--gold), #fff); color: #000; border: none; padding: 20px; border-radius: 20px; 
+            width: 100%; font-family: 'Bebas Neue'; font-size: 24px; cursor: pointer; position: relative; overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4); font-weight: 900; letter-spacing: 2px;
         }
-        #rgb-bg::before {
-            background: radial-gradient(circle, #ff0080, #7928ca);
-            top: -100px; left: -100px;
+
+        /* FLUX RING (POINTS) */
+        .flux-container { position: relative; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+        .flux-ring { 
+            position: absolute; inset: 0; border-radius: 50%; 
+            border: 2px solid transparent; background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(45deg, var(--house-col), #fff, var(--house-col)) border-box;
+            animation: rotateRGB var(--rgb-speed) linear infinite; box-shadow: 0 0 30px var(--house-col);
         }
-        #rgb-bg::after {
-            background: radial-gradient(circle, #00d2ff, #3a7bd5);
-            bottom: -100px; right: -100px;
-            animation-delay: -4s;
+        @keyframes rotateRGB { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+        /* LOG ITEM DESIGN */
+        .log-item {
+            background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent); padding: 20px;
+            margin-bottom: 15px; border-radius: 0 20px 20px 0; display: flex; flex-direction: column; gap: 8px;
         }
-        .rgb-orb {
-            position: absolute;
-            width: 400px; height: 400px;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.4;
-            background: radial-gradient(circle, #00ff88, #00bfa5);
-            top: 40%; left: 30%;
-            animation: rgbFloat 10s ease-in-out infinite alternate;
-            animation-delay: -2s;
+        .log-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .log-cat { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; }
+        .log-pts { font-family: 'Bebas Neue'; font-size: 28px; }
+        .log-meta { font-size: 9px; font-weight: 900; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+        .log-remarks { font-size: 13px; opacity: 0.8; font-style: italic; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); margin-top: 5px; }
+
+        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s cubic-bezier(1, 0, 0, 1); }
+        .splash-img { width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 50px var(--accent); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1); filter:brightness(1.5);} }
+
+        /* POSTER/CERTIFICATE STYLE */
+        .award-poster {
+            width: 100%; max-width: 350px; min-height: 480px; margin: 0 auto; background: radial-gradient(circle at center, #1b2735 0%, #050b1a 100%);
+            border-radius: 20px; padding: 35px 25px; position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08); text-align: center;
         }
-        @keyframes rgbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(60px, -60px) scale(1.2); }
-        }
-        /* ====== RGB BORDER ANIMATION ====== */
-        @keyframes rgbBorder {
-            0%   { border-color: #ff0080; box-shadow: 0 0 30px #ff008066; }
-            25%  { border-color: #7928ca; box-shadow: 0 0 30px #7928ca66; }
-            50%  { border-color: #00d2ff; box-shadow: 0 0 30px #00d2ff66; }
-            75%  { border-color: #00ff88; box-shadow: 0 0 30px #00ff8866; }
-            100% { border-color: #ff0080; box-shadow: 0 0 30px #ff008066; }
-        }
-        /* ====== CARD SYSTEM ====== */
-        .card {
-            background: rgba(255,255,255,0.07);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 25px;
-            border: 2px solid rgba(255,255,255,0.1);
-            margin-bottom: 20px;
-            animation: rgbBorder 4s linear infinite;
-        }
-        /* ====== SPLASH SCREEN ====== */
-        #splash {
-            position: fixed; inset: 0; background: #000;
-            z-index: 9999; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            transition: transform 1s ease-in-out;
-        }
-        .splash-logo {
-            width: 130px; height: 130px; border-radius: 50%;
-            border: 4px solid transparent;
-            animation: rgbBorder 2s linear infinite, pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%,100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-        }
-        /* ====== BUTTON ====== */
-        .btn {
-            width: 100%; padding: 20px; border: none; border-radius: 20px;
-            font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 900;
-            cursor: pointer; transition: 0.3s; letter-spacing: 1px;
-        }
-        .btn-gold {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #000;
-            box-shadow: 0 10px 30px rgba(251,191,36,0.4);
-        }
-        .btn-gold:active { transform: scale(0.97); }
-        .btn-outline {
-            background: transparent;
-            border: 2px dashed rgba(255,255,255,0.3);
-            color: #fff;
-            animation: rgbBorder 3s linear infinite;
-        }
-        /* ====== SCORE CIRCLE ====== */
-        .score-circle {
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            border: 4px solid transparent;
-            animation: rgbBorder 2s linear infinite;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            margin: 0 auto;
-            background: rgba(0,0,0,0.4);
-            position: relative;
-        }
-        .score-circle::before {
-            content: '';
-            position: absolute; inset: -8px;
-            border-radius: 50%;
-            background: conic-gradient(
-                #ff0080, #7928ca, #00d2ff, #00ff88, #fbbf24, #ff0080
-            );
-            z-index: -1;
-            animation: spin 3s linear infinite;
-            filter: blur(4px);
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .score-number {
-            font-family: 'Nunito', sans-serif;
-            font-size: 70px;
-            font-weight: 900;
-            line-height: 1;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
-        .score-label {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            opacity: 0.7;
-            margin-top: 5px;
-        }
-        .house-badge {
-            font-size: 13px;
-            font-weight: 900;
-            letter-spacing: 3px;
-            color: var(--house-col);
-            margin-bottom: 5px;
-        }
-        /* ====== STARS RANK ====== */
-        .stars { font-size: 28px; letter-spacing: 5px; }
-        /* ====== PROGRESS BAR ====== */
-        .prog-wrap {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px; height: 14px;
-            overflow: hidden; margin: 15px 0;
-        }
-        .prog-fill {
-            height: 100%; width: 0%;
-            border-radius: 20px;
-            background: linear-gradient(90deg, #ff0080, #7928ca, #00d2ff, #00ff88);
-            background-size: 300% 100%;
-            animation: moveGrad 3s linear infinite;
-            transition: width 2s ease;
-        }
-        @keyframes moveGrad { 0%{background-position:0%} 100%{background-position:300%} }
-        /* ====== LOG CARD ====== */
-        .log-card {
-            background: rgba(0,0,0,0.3);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 5px solid #00ff88;
-            animation: slideIn 0.4s ease;
-        }
-        .log-card.negative { border-left-color: #ff4757; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: none; } }
-        .pts-badge {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 36px;
-            min-width: 70px;
-            text-align: right;
-        }
-        /* ====== FLOATING PARTICLES ====== */
-        .particle {
-            position: fixed;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            animation: floatUp linear infinite;
-            opacity: 0.6;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.4; }
-            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
-        }
-        /* ====== SELECT ====== */
-        select {
-            width: 100%; padding: 18px; border-radius: 18px;
-            background: rgba(0,0,0,0.6); color: #fff;
-            border: 2px solid rgba(255,255,255,0.15);
-            font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
-            margin-bottom: 15px; appearance: none;
-        }
-        /* ====== POSTER ====== */
-        .poster {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            border-radius: 20px; padding: 30px;
-            text-align: center; position: relative; overflow: hidden;
-        }
-        .poster::before {
-            content: '';
-            position: absolute; inset: 0;
-            background: conic-gradient(from 0deg at 50% -20%, #ff008033, #00d2ff33, #00ff8833, #ff008033);
-            pointer-events: none;
-        }
-        /* Container */
-        .wrap { max-width: 480px; margin: 0 auto; padding: 20px; }
-        /* Section heading */
-        .sec-head {
-            font-size: 20px; font-weight: 900;
-            letter-spacing: 2px; text-align: center;
-            margin: 40px 0 20px;
-            background: linear-gradient(90deg, #ff0080, #00d2ff, #00ff88);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
+        .clg-title { font-family: 'Bebas Neue'; font-size: 20px; line-height: 1; color: #fff; margin: 15px 0; }
+        .award-title { font-family: 'Bebas Neue'; font-size: 40px; line-height: 0.85; margin: 20px 0 5px 0; color: #fff; }
+        .award-subtitle { color: var(--gold); font-size: 12px; font-weight: 900; letter-spacing: 3px; }
+        .citation { font-size: 11px; line-height: 1.6; margin-top: 25px; opacity: 0.8; color: #fff; font-weight: 300; }
+        .highlight { color: var(--gold); font-weight: 900; text-transform: uppercase; }
+
+        select { width: 100%; padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.8); color: #fff; font-family: 'Outfit'; font-weight: 900; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <div id="rgb-bg"><div class="rgb-orb"></div></div>
-    <!-- SPLASH -->
+
     <div id="splash">
-        <img id="sp-logo" class="splash-logo" src="">
-        <h1 style="font-family:'Bebas Neue'; font-size:52px; letter-spacing:8px; margin-top:25px;">G.O.A.T.S</h1>
-        <p style="font-size:14px; font-weight:700; opacity:0.6; margin-top:10px; letter-spacing:2px;">MY POINTS TRACKER</p>
-        <p id="sp-status" style="font-size:12px; margin-top:30px; opacity:0.5; letter-spacing:1px;">Loading your data...</p>
-        <button id="retry-btn" onclick="init()" style="display:none; margin-top:20px; background:transparent; border:2px solid #fff; color:#fff; padding:10px 25px; border-radius:12px; font-family:'Nunito'; font-weight:900; font-size:14px;">Try Again</button>
+        <img id="sp-img" class="splash-img">
+        <h1 style="font-family:'Bebas Neue'; letter-spacing:8px; margin-top:25px; font-size:40px; text-align:center;">STUDENT NEXUS</h1>
+        <p id="sp-status" style="font-size:9px; font-weight:900; opacity:0.4; letter-spacing:3px; margin-top:15px;">LOADING CORE SYSTEMS...</p>
     </div>
-    <div class="wrap">
-        <!-- ===== LOGIN VIEW ===== -->
-        <div id="view-login" style="display:none; padding-top:50px; text-align:center;">
-            <h1 style="font-family:'Bebas Neue'; font-size:80px; letter-spacing:10px; background:linear-gradient(135deg,#ff0080,#7928ca,#00d2ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">G.O.A.T.S</h1>
-            <p style="font-size:14px; font-weight:700; opacity:0.6; margin-top:-10px; letter-spacing:3px;">CHECK YOUR HOUSE POINTS</p>
+
+    <div class="container">
+        <!-- LOGIN VIEW -->
+        <div id="view-login" style="display:none; text-align:center; padding-top:40px;">
+            <h1 style="font-family:'Bebas Neue'; font-size:80px; letter-spacing:10px; text-shadow: 0 0 30px var(--accent);">G.O.A.T.S</h1>
+            <p style="font-size:10px; font-weight:900; letter-spacing:4px; margin-top:-15px; opacity:0.5;">AUTHENTICATE IDENTITY</p>
+            
             <div style="margin:50px 0;">
-                <button class="btn btn-outline" onclick="startScan()" style="font-size:18px; padding:30px;">
-                    📷 Scan My QR Code
-                </button>
-                <div id="reader" style="display:none; margin-top:20px; border-radius:25px; overflow:hidden; border:3px solid #00d2ff;"></div>
+                <button class="glass" style="width:100%; color:var(--accent); font-weight:900; border:1px dashed var(--accent); padding:40px;" onclick="startScan()">⚡ SCAN STUDENT QR</button>
+                <div id="reader" style="display:none; margin:20px 0; border-radius:30px; overflow:hidden; border:2px solid var(--accent);"></div>
             </div>
-            <div style="display:flex; align-items:center; gap:15px; margin:30px 0; opacity:0.3;">
-                <hr style="flex:1; border-color:rgba(255,255,255,0.3);">
-                <span style="font-size:13px; font-weight:700;">or search manually</span>
-                <hr style="flex:1; border-color:rgba(255,255,255,0.3);">
-            </div>
-            <select id="sel-dept" onchange="loadNames()">
-                <option disabled selected>Select Your Department</option>
-            </select>
+
+            <div style="margin:30px 0; opacity:0.2; display:flex; align-items:center;"><hr style="flex:1;"><span style="padding:0 15px; font-size:10px; font-weight:900;">MANUAL ENTRY</span><hr style="flex:1;"></div>
+            
+            <select id="sel-dept" onchange="loadNames()"></select>
             <div id="name-box" style="display:none;">
-                <select id="sel-name">
-                    <option disabled selected>Select Your Name</option>
-                </select>
-                <button class="btn btn-gold" id="u-btn" onclick="fetchStats()">🚀 See My Points!</button>
+                <select id="sel-name"></select>
+                <button class="btn-elite" id="u-btn" onclick="fetchStats()">ESTABLISH LINK</button>
             </div>
         </div>
-        <!-- ===== DASHBOARD VIEW ===== -->
+
+        <!-- DASHBOARD VIEW -->
         <div id="view-dash" style="display:none;">
-            <!-- HEADER -->
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0 30px 0;">
-                <img id="h-logo" style="height:48px; border-radius:50%; border:2px solid rgba(255,255,255,0.3);">
+            <header style="display:flex; justify-content:space-between; align-items:center; padding:10px 0 30px 0;">
+                <img id="h-logo" style="height:40px; border-radius:50%;">
                 <div style="text-align:right;">
-                    <p style="font-size:11px; opacity:0.5; font-weight:700;">DON BOSCO POLYTECHNIC</p>
-                    <p style="font-size:14px; font-weight:900; color:#00d2ff;">G.O.A.T.S PORTAL</p>
+                    <p style="font-size:8px; opacity:0.4; font-weight:900; letter-spacing:2px;">SECURE ACCESS</p>
+                    <p style="font-family:'Bebas Neue'; font-size:20px; color:var(--accent);">IDENTITY VERIFIED</p>
                 </div>
-            </div>
-            <!-- SCORE CIRCLE -->
-            <div style="text-align:center; padding:30px 0;">
-                <p id="dash-house" class="house-badge" style="margin-bottom:15px; font-size:14px;">🏠 HOUSE</p>
-                <div class="score-circle">
-                    <p id="p-house-inner" style="font-size:10px; font-weight:900; letter-spacing:3px; opacity:0.7; margin-bottom:5px;">MY HOUSE</p>
-                    <div id="p-total" class="score-number">0</div>
-                    <p class="score-label">TOTAL POINTS</p>
-                </div>
-                <h2 id="p-name" style="font-family:'Bebas Neue'; font-size:48px; letter-spacing:5px; margin-top:25px;">STUDENT</h2>
-                <p id="p-dept" style="font-size:13px; font-weight:700; opacity:0.5; letter-spacing:2px; margin-top:5px;"></p>
-                <!-- debug line, remove after fixing -->
-                <p id="debug-pts" style="font-size:10px; color:#ffff00; opacity:0.5; margin-top:5px; font-weight:700;"></p>
-            </div>
-            <!-- RANK CARD -->
-            <div class="card" style="text-align:center;">
-                <p style="font-size:12px; font-weight:700; opacity:0.5; letter-spacing:2px; margin-bottom:10px;">YOUR ACHIEVEMENT LEVEL</p>
-                <div id="stars" class="stars">⭐</div>
-                <h2 id="rank-title" style="font-size:32px; font-weight:900; margin:10px 0;">ROOKIE</h2>
-                <div class="prog-wrap">
-                    <div id="prog-fill" class="prog-fill"></div>
-                </div>
-                <p id="prog-hint" style="font-size:13px; opacity:0.5; font-weight:700;"></p>
-            </div>
-            <!-- QUICK STATS -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
-                <div class="card" style="text-align:center; padding:20px; margin-bottom:0;">
-                    <p style="font-size:11px; font-weight:700; opacity:0.5; letter-spacing:1px;">MY DEPT RANK</p>
-                    <h2 id="rnk-dept" style="font-family:'Bebas Neue'; font-size:48px; color:#00d2ff;">#--</h2>
-                    <p style="font-size:11px; opacity:0.5;">in your department</p>
-                </div>
-                <div class="card" style="text-align:center; padding:20px; margin-bottom:0;">
-                    <p style="font-size:11px; font-weight:700; opacity:0.5; letter-spacing:1px;">TOTAL AWARDS</p>
-                    <h2 id="rnk-house" style="font-family:'Bebas Neue'; font-size:48px; color:#fbbf24;">0</h2>
-                    <p style="font-size:11px; opacity:0.5;">times recognized</p>
-                </div>
-            </div>
-            <!-- OFFICIAL STATEMENT POSTER -->
-            <div class="card">
-                <div id="cap-zone">
-                    <div class="poster">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                            <img id="p-logo" style="height:40px;">
-                            <img id="p-founder" style="height:45px; width:45px; border-radius:50%; border:2px solid #fbbf24;">
-                        </div>
-                        <p style="font-family:'Bebas Neue'; font-size:18px; letter-spacing:3px; opacity:0.8;">DON BOSCO POLYTECHNIC COLLEGE</p>
-                        <h1 style="font-family:'Bebas Neue'; font-size:40px; letter-spacing:3px; color:#fff; margin:10px 0;">MY POINT CARD</h1>
-                        <p style="font-size:11px; color:#fbbf24; font-weight:900; letter-spacing:3px;">G.O.A.T.S CHAMPIONSHIP</p>
-                        <div style="margin-top:25px; font-size:13px; line-height:1.8; opacity:0.85;">
-                            This is to certify that <strong id="c-name" style="color:#fbbf24;">---</strong> has earned
-                            <strong id="c-pts" style="color:#00ff88; font-size:18px;">0</strong> points for the 
-                            <strong id="c-house" style="color:#a855f7;">---</strong> house.
-                        </div>
-                        <div style="margin-top:20px; font-size:10px; opacity:0.4; letter-spacing:2px;">G.O.A.T.S OFFICIAL RECORD</div>
+            </header>
+
+            <!-- TOTAL POINTS -->
+            <div class="glass" style="text-align:center; padding: 40px 20px;">
+                <div class="flux-container">
+                    <div class="flux-ring"></div>
+                    <div>
+                        <p id="p-house" style="font-weight:900; letter-spacing:4px; color:var(--house-col); font-size:11px; margin-bottom:5px;">HOUSE</p>
+                        <h1 id="p-total" style="font-family:'Bebas Neue'; font-size:90px; line-height:0.8;">000</h1>
+                        <p style="font-size:10px; font-weight:900; opacity:0.4; letter-spacing:3px;">TOTAL SCORE</p>
                     </div>
                 </div>
-                <button class="btn btn-gold" style="margin-top:20px; font-size:18px;" onclick="savePoster()">📥 Save My Card</button>
+                <h2 id="p-name" style="font-family:'Bebas Neue'; font-size:42px; letter-spacing:4px; margin-top:35px;">PLAYER NAME</h2>
+                <p id="p-dept" style="font-size:10px; font-weight:900; opacity:0.5; letter-spacing:2px;"></p>
             </div>
-            <!-- POINT HISTORY -->
-            <p class="sec-head">📋 HOW I EARNED MY POINTS</p>
+
+            <!-- RANK SYSTEM -->
+            <div class="glass" style="text-align:center;">
+                <p style="font-weight:900; font-size:10px; color:var(--gold); letter-spacing:3px; margin-bottom:10px;">TIER STATUS</p>
+                <h2 id="r-text" style="font-family:'Bebas Neue'; font-size:36px; line-height:1; margin-bottom:12px;">CALCULATING...</h2>
+                <div style="height:6px; background:rgba(0,0,0,0.5); border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
+                    <div id="r-fill" style="height:100%; width:0%; transition:2s cubic-bezier(0.1, 0, 0, 1); box-shadow: 0 0 15px var(--house-col);"></div>
+                </div>
+                <p id="r-hint" style="font-size:8px; opacity:0.3; margin-top:10px; font-weight:900;"></p>
+            </div>
+
+            <!-- LEADERBOARDS -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div class="glass" style="padding:15px; margin-bottom:0;">
+                    <p style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px;">DEPT RANK</p>
+                    <h3 id="rnk-dept" style="font-family:'Bebas Neue'; font-size:32px; color:var(--accent);">#--</h3>
+                </div>
+                <div class="glass" style="padding:15px; margin-bottom:0;">
+                    <p style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px;">HOUSE SCORE</p>
+                    <h3 id="rnk-house" style="font-family:'Bebas Neue'; font-size:32px; color:var(--gold);">----</h3>
+                </div>
+            </div>
+
+            <!-- THE AWARD POSTER -->
+            <div class="glass" style="padding: 20px; border-color: var(--gold);">
+                <div id="cap-zone">
+                    <div class="award-poster" id="p-bg">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <img id="p-logo" style="height:35px;">
+                            <img id="p-founder" style="height:40px; width:40px; border-radius:50%; border:2px solid var(--gold);">
+                        </div>
+                        <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<br><span style="font-size:8px; letter-spacing:2px; opacity:0.6;">GIVERS OF ALL TALENTS STUDENTS</span></div>
+                        <h1 class="award-title">CHAMPION PORTAL</h1>
+                        <p class="award-subtitle">OFFICIAL POINT STATEMENT</p>
+                        <div class="citation">
+                            Certified that <span id="c-name" class="highlight">----</span> currently holds <span id="c-pts" class="highlight">000</span> career points for the <span id="c-house" class="highlight">----</span> house. This excellence is recorded in the G.O.A.T.S championship records.
+                        </div>
+                        <div style="margin-top:30px; font-size:9px; font-weight:900; letter-spacing:2px; opacity:0.5;">DON BOSCO TECHNOLOGICAL INSTITUTE</div>
+                    </div>
+                </div>
+                <button class="btn-elite" style="margin-top:20px; font-size:18px;" onclick="savePoster()">💾 SAVE STATEMENT</button>
+            </div>
+
+            <!-- BATTLE LOGS (POINT TIMELINE) -->
+            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:28px; margin:40px 0 20px 0; letter-spacing:3px;">📜 POINT LOG (WHO, WHEN, WHY)</h3>
             <div id="log-list"></div>
-            <!-- LOGOUT -->
-            <button class="btn" onclick="logout()" style="background:rgba(255,71,87,0.15); color:#ff4757; border:2px solid #ff4757; margin:60px 0;">
-                🚪 Log Out
-            </button>
+
+            <button class="glass" style="background:#ff375f11; color:#ff375f; border-color:#ff375f55; margin:60px 0; width:100%; font-family:'Bebas Neue'; font-size:20px;" onclick="logout()">TERMINATE SESSION</button>
         </div>
     </div>
+
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxLETI1CPluE7iR21yvRmPP_-JJFdGrE5Rhhd5L8wWsQGN30Q9jTO758lSyDjBEIwSV/exec";
+        const INITIAL_STUDENT = "<?= initialStudent ?>";
         let appData = {};
-        let cachedImages = { logo: null, founder: null }; // stored as base64 strings
-        // Create floating particles
-        (function() {
-            const colors = ['#ff0080','#7928ca','#00d2ff','#00ff88','#fbbf24'];
-            for(let i=0; i<15; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.style.cssText = `
-                    left:${Math.random()*100}vw;
-                    background:${colors[i%5]};
-                    width:${4+Math.random()*6}px;
-                    height:${4+Math.random()*6}px;
-                    animation-duration:${6+Math.random()*8}s;
-                    animation-delay:-${Math.random()*10}s;
-                `;
-                document.body.appendChild(p);
-            }
-        })();
-        async function call(payload) {
-            try {
-                const url = API_URL + "?payload=" + encodeURIComponent(JSON.stringify(payload));
+
+        const API_URL = "https://script.google.com/macros/s/AKfycbzthamCM9Z0iDhvkI3_BV_2h2pqcIOcgdYYmDLcD3yjnfG44Adci-I1OZ5Sm6kErKAs/exec";
+
+        async function call(p) {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                // Inside GAS environment
+                return new Promise((res, rej) => {
+                    google.script.run.withSuccessHandler(res).withFailureHandler(rej).doPost({postData:{contents:JSON.stringify(p)}});
+                });
+            } else {
+                // External environment (e.g. GitHub Pages)
+                const url = API_URL + "?payload=" + encodeURIComponent(JSON.stringify(p));
                 const res = await fetch(url);
-                const text = await res.text();
-                return JSON.parse(text);
-            } catch(e) {
-                console.error(e);
-                throw e;
+                return await res.json();
             }
         }
-        const CACHE_KEY = 'goats_appdata';
-        const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
-        function saveCache(data) {
-            try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-            } catch(e) {} // ignore if storage full
-        }
-        function loadCache() {
-            try {
-                const raw = localStorage.getItem(CACHE_KEY);
-                if (!raw) return null;
-                const { ts, data } = JSON.parse(raw);
-                if (Date.now() - ts > CACHE_TTL) return null; // expired
-                return data;
-            } catch(e) { return null; }
-        }
+
         async function init() {
-            document.getElementById('retry-btn').style.display = 'none';
-            document.getElementById('sp-status').innerHTML = 'Loading...';
             try {
-                const urlName = new URLSearchParams(window.location.search).get('name');
-                // ── Try cache first (saves 1 API call for returning students) ──
-                const cached = loadCache();
-                if (cached) {
-                    appData = cached;
-                    document.getElementById('sp-status').innerHTML =
-                        'Welcome back! ⚡<br><span style="font-size:8px;opacity:0.4;">Data from cache · refreshes every 24h</span>';
-                    applyAppData();
-                    const saved = urlName || localStorage.getItem('goats_s');
-                    if (saved) await fetchStats(saved);
-                    else show('login');
-                    // Refresh cache in background (non-blocking)
-                    refreshCacheInBackground();
-                    return;
-                }
-                // ── Fresh fetch ──
-                document.getElementById('sp-status').innerHTML = 'Connecting to G.O.A.T.S...';
                 appData = await call({action: "getInitialData"});
-                if (!appData || !appData.logo) throw new Error("No data from server.");
-                saveCache(appData);
-                applyAppData();
-                const saved = urlName || localStorage.getItem('goats_s');
-                if (saved) await fetchStats(saved);
-                else show('login');
-            } catch(e) {
-                document.getElementById('sp-status').innerHTML =
-                    'Connection Failed<br><span style="color:#ff4757; font-size:9px;">' + e.message.toUpperCase() + '</span>';
-                document.getElementById('retry-btn').style.display = 'block';
+                document.getElementById('sp-img').src = appData.logoB64 || appData.logo;
+                document.getElementById('h-logo').src = appData.logoB64 || appData.logo;
+                document.getElementById('p-logo').src = appData.logoB64 || appData.logo;
+                document.getElementById('p-founder').src = appData.founderB64 || appData.founder;
+
+                const ds = document.getElementById('sel-dept');
+                ds.innerHTML = '<option disabled selected>CHOOSE DEPARTMENT</option>';
+                appData.depts.forEach(d => ds.add(new Option(d, d)));
+
+                // Check for URL parameter name or localStorage
+                const saved = INITIAL_STUDENT || localStorage.getItem('goats_student');
+                if (saved) {
+                    await fetchStats(saved);
+                } else {
+                    showView('login');
+                }
+            } catch (e) {
+                document.getElementById('sp-status').innerText = "CONNECTION FAILED. RETRYING...";
+                setTimeout(init, 3000);
             }
         }
-        function applyAppData() {
-            cachedImages.logo    = appData.logoB64 || appData.logo;
-            cachedImages.founder = appData.founderB64 || appData.founder;
-            document.getElementById('sp-logo').src  = appData.logo;
-            document.getElementById('h-logo').src   = appData.logo;
-            document.getElementById('p-logo').src   = cachedImages.logo;
-            document.getElementById('p-founder').src = cachedImages.founder;
-            const ds = document.getElementById('sel-dept');
-            ds.innerHTML = '<option disabled selected>Select Your Department</option>';
-            (appData.depts || []).forEach(d => ds.add(new Option(d, d)));
-        }
-        async function refreshCacheInBackground() {
-            try {
-                const fresh = await call({action: "getInitialData"});
-                if (fresh && fresh.logo) saveCache(fresh);
-            } catch(e) { /* silently fail */ }
-        }
-        function show(v) {
-            document.getElementById('view-login').style.display = v==='login' ? 'block' : 'none';
-            document.getElementById('view-dash').style.display  = v==='dash'  ? 'block' : 'none';
+
+        function showView(v) {
+            document.getElementById('view-login').style.display = v === 'login' ? 'block' : 'none';
+            document.getElementById('view-dash').style.display = v === 'dash' ? 'block' : 'none';
             document.getElementById('splash').style.transform = 'translateY(-110%)';
         }
+
         function loadNames() {
             const dept = document.getElementById('sel-dept').value;
             const ns = document.getElementById('sel-name');
-            ns.innerHTML = '<option disabled selected>Select Your Name</option>';
-            (appData.students||[]).filter(s=>s.dept===dept).sort((a,b)=>a.name.localeCompare(b.name)).forEach(s=>ns.add(new Option(s.name,s.name)));
+            ns.innerHTML = '<option disabled selected>SELECT YOUR NAME</option>';
+            const filtered = appData.students.filter(s => s.dept === dept);
+            filtered.forEach(s => ns.add(new Option(s.name, s.name)));
             document.getElementById('name-box').style.display = 'block';
         }
-        async function fetchStats(n=null) {
+
+        async function fetchStats(n = null) {
             const name = n || document.getElementById('sel-name').value;
             if(!name) return;
-            const btn = document.getElementById('u-btn');
-            if(btn) btn.innerText = 'Loading...';
+            
+            if(document.getElementById('u-btn')) document.getElementById('u-btn').innerText = "SYNCING...";
+            
             try {
-                const res = await call({action:"getStudentStats", name});
-                if(!res || !res.success) throw new Error(res?.error||'No data');
-                localStorage.setItem('goats_s', name);
+                const res = await call({action: "getStudentStats", name});
+                if(!res.success) throw new Error();
+
+                localStorage.setItem('goats_student', name);
                 renderDash(res);
-                show('dash');
-            } catch(e) {
-                alert('Could not find your record. Make sure your name is correct.');
-                show('login');
+                showView('dash');
+            } catch (e) {
+                alert("Failed to fetch records. Please try again.");
+                showView('login');
             }
         }
+
         function renderDash(res) {
-            // ---- POINTS (MOST IMPORTANT) ----
-            const pts = Number(res.total) || 0;
-            const ptEl = document.getElementById('p-total');
-            ptEl.innerText = String(pts);
-            ptEl.style.cssText = 'font-size:70px; font-weight:900; color:#fff; line-height:1; font-family:Nunito,Arial,sans-serif;';
-            // Debug line
-            document.getElementById('debug-pts').innerText = `Server value: ${res.total} (${typeof res.total})`;
-            // Profile
+            document.getElementById('p-total').innerText = res.total;
             document.getElementById('p-name').innerText = res.profile.name;
-            document.getElementById('p-dept').innerText = '📚 ' + res.profile.dept;
-            const houseText = '🏠 ' + res.profile.house.toUpperCase() + ' HOUSE';
-            document.getElementById('dash-house').innerText = houseText;
-            document.getElementById('p-house-inner').innerText = res.profile.house.toUpperCase();
-            // Poster
+            document.getElementById('p-dept').innerText = res.profile.dept;
+            document.getElementById('p-house').innerText = res.profile.house.toUpperCase();
+            
+            // Poster updates
             document.getElementById('c-name').innerText = res.profile.name;
-            document.getElementById('c-pts').innerText  = pts;
+            document.getElementById('c-pts').innerText = res.total;
             document.getElementById('c-house').innerText = res.profile.house;
-            // House theme
-            const h = (appData.houses||[]).find(x=>x.name===res.profile.house);
-            if(h) document.documentElement.style.setProperty('--house-col', h.color);
-            // Rank/Stars
-            let rank='ROOKIE', stars='⭐', nxt=100;
-            if(pts>=1000){ rank='PLATINUM LEGEND'; stars='🌟🌟🌟🌟🌟'; nxt=2000; }
-            else if(pts>=500){ rank='GOLD CHAMPION'; stars='⭐⭐⭐⭐⭐'; nxt=1000; }
-            else if(pts>=250){ rank='SILVER STAR'; stars='⭐⭐⭐⭐'; nxt=500; }
-            else if(pts>=100){ rank='BRONZE HERO'; stars='⭐⭐⭐'; nxt=250; }
-            else if(pts>=50){ rank='RISING STAR'; stars='⭐⭐'; nxt=100; }
-            document.getElementById('rank-title').innerText = rank;
-            document.getElementById('stars').innerText = stars;
-            document.getElementById('prog-fill').style.width = Math.min(100,(pts/nxt)*100)+'%';
-            document.getElementById('prog-hint').innerText = pts>=2000 ? '🏆 Maximum Rank!' : `${nxt-pts} more points to reach next level`;
-            // Dept rank
-            const dRank = (res.studentLeaderboard||[]).findIndex(x=>x[0]?.toLowerCase()===res.profile.name?.toLowerCase())+1;
-            document.getElementById('rnk-dept').innerText = dRank ? '#'+dRank : '#--';
-            // Total awards (count of log entries) — always accurate
-            const totalAwards = (res.logs||[]).length;
-            document.getElementById('rnk-house').innerText = totalAwards;
-            // POINT LOG (WHO, WHEN, WHY)
-            const list = document.getElementById('log-list');
-            if(!res.logs || res.logs.length===0) {
-                list.innerHTML = '<div class="card" style="text-align:center; opacity:0.5; font-size:15px;">No points earned yet. Keep going! 💪</div>';
-            } else {
-                list.innerHTML = res.logs.map(l => {
-                    const isPos = l.pts >= 0;
-                    const dateStr = l.date ? new Date(l.date).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) : 'Unknown Date';
-                    const timeStr = l.date ? new Date(l.date).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '';
-                    return `
-                    <div class="log-card ${isPos?'':'negative'}">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                            <div style="flex:1;">
-                                <p style="font-size:16px; font-weight:900; color:${isPos?'#00ff88':'#ff4757'};">${isPos?'✅':'❌'} ${l.cat}</p>
-                                <p style="font-size:12px; opacity:0.5; margin:5px 0;">📅 ${dateStr} at ${timeStr}</p>
-                                <p style="font-size:13px; opacity:0.7;">👨‍🏫 Given by: <strong style="color:#fbbf24;">${l.teacher || 'Staff'}</strong></p>
-                                <div style="margin-top:10px; background:rgba(255,255,255,0.05); border-radius:12px; padding:10px;">
-                                    <p style="font-size:11px; opacity:0.4; font-weight:700; letter-spacing:1px;">📝 REASON:</p>
-                                    <p style="font-size:14px; margin-top:4px; font-style:italic;">"${l.remarks || 'Great performance!'}"</p>
-                                </div>
-                            </div>
-                            <div class="pts-badge" style="color:${isPos?'#00ff88':'#ff4757'};">${isPos?'+':''}${l.pts}</div>
-                        </div>
-                    </div>`;
-                }).join('');
+
+            // Apply house theme
+            const h = appData.houses.find(x => x.name === res.profile.house);
+            if(h) {
+                document.documentElement.style.setProperty('--house-col', h.color);
             }
-            // confetti on entry
-            confetti({particleCount:80, spread:60, origin:{y:0.6}});
+
+            // Rank logic
+            let title = "ROOKIE", nxt = 100, hint = "";
+            if (res.total >= 500) { title = "PLATINUM GOAT"; nxt = 1000; }
+            else if (res.total >= 250) { title = "GOLD ELITE"; nxt = 500; }
+            else if (res.total >= 100) { title = "SILVER PRO"; nxt = 250; }
+            document.getElementById('r-text').innerText = title;
+            document.getElementById('r-fill').style.width = Math.min(100, (res.total/nxt)*100) + "%";
+            document.getElementById('r-hint').innerText = res.total >= 1000 ? "MAX RANK ATTAINED" : `${nxt - res.total} POINTS TO NEXT LEVEL`;
+
+            // Ranks
+            const dRank = res.studentLeaderboard.findIndex(x => x[0] === res.profile.name) + 1;
+            document.getElementById('rnk-dept').innerText = dRank ? `#${dRank}` : "#--";
+            const hScore = res.overallLeaderboard.find(x => x[0] === res.profile.house)?.[1] || 0;
+            document.getElementById('rnk-house').innerText = hScore;
+
+            // Log rendering (Who, When, Why)
+            const list = document.getElementById('log-list');
+            list.innerHTML = res.logs.map(l => `
+                <div class="log-item" style="border-left-color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">
+                    <div class="log-header">
+                        <div>
+                            <div class="log-cat" style="color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">${l.cat}</div>
+                            <div class="log-meta">${new Date(l.date).toLocaleDateString()} • BY ${l.teacher || 'SYSTEM'}</div>
+                        </div>
+                        <div class="log-pts" style="color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">${l.pts >= 0 ? '+' : ''}${l.pts}</div>
+                    </div>
+                    <div class="log-remarks">
+                        <span style="font-weight:900; opacity:0.4; font-size:8px;">REASON:</span><br>
+                        ${l.remarks || 'No specific remarks provided.'}
+                    </div>
+                </div>
+            `).join('');
         }
+
         function savePoster() {
-            const btn = event.target;
-            btn.innerText = 'Saving...'; btn.disabled = true;
-            // Read student data from DOM
-            const name  = document.getElementById('p-name').innerText;
-            const pts   = document.getElementById('p-total').innerText;
-            const house = document.getElementById('c-house').innerText;
-            // Use cached base64 images (avoids all CORS issues)
-            const logoSrc  = cachedImages.logo;
-            const foundSrc = cachedImages.founder;
-            const W = 800, H = 500;
-            const canvas = document.createElement('canvas');
-            canvas.width = W; canvas.height = H;
-            const ctx = canvas.getContext('2d');
-            // Background gradient
-            const bg = ctx.createLinearGradient(0, 0, W, H);
-            bg.addColorStop(0, '#0f0c29');
-            bg.addColorStop(0.5, '#302b63');
-            bg.addColorStop(1, '#24243e');
-            ctx.fillStyle = bg;
-            ctx.roundRect(0, 0, W, H, 30);
-            ctx.fill();
-            // Rainbow border
-            const brd = ctx.createLinearGradient(0, 0, W, H);
-            brd.addColorStop(0,   '#ff0080');
-            brd.addColorStop(0.33,'#7928ca');
-            brd.addColorStop(0.66,'#00d2ff');
-            brd.addColorStop(1,   '#00ff88');
-            ctx.strokeStyle = brd;
-            ctx.lineWidth = 4;
-            ctx.roundRect(2, 2, W-4, H-4, 28);
-            ctx.stroke();
-            // Helper to load an image — do NOT set crossOrigin for base64 data URLs
-            const loadImg = (src) => new Promise((res) => {
-                if (!src || src.length < 5) return res(null);
-                const img = new Image();
-                // crossOrigin only for external http URLs (not data: URLs)
-                if (src.startsWith('http')) img.crossOrigin = 'anonymous';
-                img.onload  = () => res(img);
-                img.onerror = () => {
-                    console.warn('Image load failed:', src.substring(0, 60));
-                    res(null);
-                };
-                img.src = src;
-            });
-            // Helper: draw a circular image or a placeholder ring
-            const drawCircleImg = (img, cx, cy, r, borderColor) => {
-                if (img) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI*2);
-                    ctx.clip();
-                    ctx.drawImage(img, cx-r, cy-r, r*2, r*2);
-                    ctx.restore();
-                } else {
-                    // Draw placeholder circle
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI*2);
-                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-                    ctx.fill();
-                }
-                // Border ring
-                ctx.beginPath();
-                ctx.arc(cx, cy, r, 0, Math.PI*2);
-                ctx.strokeStyle = borderColor;
-                ctx.lineWidth = 3;
-                ctx.stroke();
-            };
-            Promise.all([loadImg(logoSrc), loadImg(foundSrc)]).then(([logo, founder]) => {
-                // Draw logo (circle, top-left)
-                drawCircleImg(logo, 70, 70, 48, 'rgba(255,255,255,0.5)');
-                // Draw founder (circle, top-right)
-                drawCircleImg(founder, W-70, 70, 48, '#fbbf24');
-                // College name
-                ctx.fillStyle = 'rgba(255,255,255,0.7)';
-                ctx.font = 'bold 22px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('DON BOSCO POLYTECHNIC COLLEGE', W/2, 150);
-                // Title
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 52px Arial';
-                ctx.fillText('MY POINT CARD', W/2, 215);
-                // G.O.A.T.S label
-                ctx.fillStyle = '#fbbf24';
-                ctx.font = 'bold 16px Arial';
-                ctx.letterSpacing = '4px';
-                ctx.fillText('G.O.A.T.S CHAMPIONSHIP', W/2, 255);
-                // Divider
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(60, 275); ctx.lineTo(W-60, 275); ctx.stroke();
-                // Certificate text
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                // Line 1
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                ctx.fillText('This is to certify that', W/2, 320);
-                // Student name (highlighted)
-                ctx.fillStyle = '#fbbf24';
-                ctx.font = 'bold 26px Arial';
-                ctx.fillText(name, W/2, 355);
-                // Line 2
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                ctx.font = '20px Arial';
-                ctx.fillText('has earned', W/2, 390);
-                // Points (big green)
-                ctx.fillStyle = '#00ff88';
-                ctx.font = 'bold 36px Arial';
-                ctx.fillText(pts + ' points', W/2, 130 + 300);
-                // House
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                ctx.font = '20px Arial';
-                ctx.fillText('for the', W/2, 465);
-                ctx.fillStyle = '#a855f7';
-                ctx.font = 'bold 22px Arial';
-                ctx.fillText(house + ' HOUSE', W/2, 492);
-                // Footer
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.font = '13px Arial';
-                ctx.fillText('G.O.A.T.S OFFICIAL RECORD', W/2, H - 18);
-                // Download
-                canvas.toBlob(blob => {
-                    const a = document.createElement('a');
-                    a.download = 'GOATS_' + name.replace(/ /g,'_') + '.png';
-                    a.href = URL.createObjectURL(blob);
-                    a.click();
-                    btn.innerText = '📥 Save My Card';
-                    btn.disabled = false;
-                    confetti({particleCount:80, spread:60, origin:{y:0.8}});
-                }, 'image/png');
+            html2canvas(document.querySelector("#cap-zone"), {scale:2}).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `GOATS_Statement_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
             });
         }
+
         function logout() {
             localStorage.clear();
-            const url = new URL(location.href);
-            url.searchParams.delete('name');
-            history.replaceState({}, '', url);
             location.reload();
         }
+
         async function startScan() {
             document.getElementById('reader').style.display = 'block';
-            const scanner = new Html5Qrcode('reader');
-            try {
-                await scanner.start({facingMode:'environment'}, {fps:15}, text=>{
-                    scanner.stop();
-                    document.getElementById('reader').style.display = 'none';
-                    fetchStats(text.split('|')[0].trim());
-                });
-            } catch(e) {
-                alert('Camera not available. Please use manual entry.');
-            }
+            const scanner = new Html5Qrcode("reader");
+            await scanner.start({facingMode: "environment"}, {fps:15}, (text) => {
+                scanner.stop();
+                fetchStats(text.split('|')[0].trim());
+            });
         }
+
         window.onload = init;
     </script>
 </body>
