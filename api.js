@@ -1,25 +1,34 @@
 // api.js – Shared API wrapper for Sports Day Management
-// Replace GAS_URL after deploying your Apps Script web app
+// GAS_URL is read fresh from localStorage on every call
+// so saving the URL on the login page takes effect immediately.
 
-const GAS_URL = localStorage.getItem('GAS_URL') || '';
+function getGasUrl() {
+  const u = localStorage.getItem('GAS_URL') || '';
+  if (!u) throw new Error('Apps Script URL not set. Please save it on the login page.');
+  return u;
+}
 
 // ── Core fetch helpers ────────────────────────────────────────────────────────
 async function apiGet(action, params = {}) {
-  const url = new URL(GAS_URL);
+  const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url.toString(), { method: 'GET' });
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
 async function apiPost(action, payload = {}) {
-  const url = new URL(GAS_URL);
+  const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
+  // ⚠️  DO NOT set Content-Type: application/json — that triggers a CORS
+  // preflight OPTIONS request which Google Apps Script cannot respond to.
+  // Sending without Content-Type defaults to text/plain (a "simple" request)
+  // which skips the preflight. GAS still receives and parses the JSON body.
   const res = await fetch(url.toString(), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    redirect: 'follow'
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
