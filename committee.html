@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sports Committee Dashboard</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img id="sb-logo" src="" alt="Logo" style="height:36px;border-radius:4px;display:none" />
+      <h2>🏆 Committee</h2>
+      <p id="sb-user">Sports Management</p>
+    </div>
+    <nav>
+      <div class="nav-item active" data-section="dashboard">   <span class="icon">📊</span> Dashboard</div>
+      <div class="nav-item" data-section="award">             <span class="icon">🥇</span> Award Points</div>
+      <div class="nav-item" data-section="events">            <span class="icon">🎽</span> Manage Events</div>
+      <div class="nav-item" data-section="houses">            <span class="icon">🏠</span> Manage Houses</div>
+      <div class="nav-item" data-section="points-config">     <span class="icon">⚙️</span> Points Config</div>
+      <div class="nav-item" data-section="committee-users">   <span class="icon">👥</span> Users</div>
+      <div class="nav-item" data-section="students">          <span class="icon">🎓</span> Students</div>
+      <div class="nav-item" data-section="results">           <span class="icon">📋</span> All Results</div>
+      <div class="nav-item" data-section="branding">          <span class="icon">🎨</span> Branding</div>
+      <div class="nav-item" data-section="reports">           <span class="icon">🖨️</span> Reports</div>
+    </nav>
+    <div style="margin-top:auto;padding:1rem">
+      <button class="btn btn-secondary btn-sm w-full" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Dashboard -->
+    <section id="sec-dashboard" class="section-page">
+      <div class="topbar">
+        <div class="topbar-title">Dashboard</div>
+        <button class="btn btn-secondary btn-sm no-print" onclick="location.href='scoreboard.html'">📺 Live Scoreboard</button>
+      </div>
+      <div id="dash-score-cards" class="score-cards mb-3"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="mb-2">House Points Overview</h3>
+          <canvas id="chart-main" height="200"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="mb-2">Recent Awards</h3>
+          <div id="recent-awards" class="table-wrap" style="max-height:300px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Award Points -->
+    <section id="sec-award" class="section-page hidden">
+      <div class="topbar"><div class="topbar-title">Award Points</div></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="mb-2">Select Event &amp; Winner</h3>
+          <div class="form-group">
+            <label>Event</label>
+            <select id="award-event"></select>
+          </div>
+          <div class="form-group">
+            <label>Position</label>
+            <select id="award-position">
+              <option value="1st">1st – Winner</option>
+              <option value="2nd">2nd – Runner Up</option>
+              <option value="3rd">3rd – Second Runner Up</option>
+              <option value="Participation">Participation</option>
+            </select>
+          </div>
+          <div id="award-student-row" class="form-group">
+            <label>Student / House (select or scan QR)</label>
+            <select id="award-student"></select>
+          </div>
+          <div class="form-group">
+            <label>Or Scan QR Code</label>
+            <button class="btn btn-secondary btn-sm" onclick="toggleAwardQR()">📷 Open Camera</button>
+            <div id="award-qr-reader" class="mt-1" style="display:none"></div>
+          </div>
+          <div id="award-scanned" class="card mt-1 hidden" style="padding:.75rem">
+            <strong id="award-scanned-name"></strong>
+            <span class="text-muted" id="award-scanned-meta"></span>
+          </div>
+          <div class="form-group mt-2">
+            <label>Upload Student Photo (optional)</label>
+            <input type="file" id="award-photo" accept="image/*"/>
+          </div>
+          <div id="award-pts-preview" class="mt-1 text-muted" style="font-size:.9rem"></div>
+          <button class="btn btn-primary w-full mt-2" onclick="submitAward()">🥇 Award Points</button>
+        </div>
+        <div class="card">
+          <h3 class="mb-2">Non‑Game Points</h3>
+          <p class="text-muted mb-2" style="font-size:.85rem">House Decoration, March Past, Discipline etc.</p>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="ng-category"></select>
+          </div>
+          <div class="form-group">
+            <label>Position</label>
+            <select id="ng-position">
+              <option value="Winner">Winner</option>
+              <option value="RunnerUp">Runner Up</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>House</label>
+            <select id="ng-house"></select>
+          </div>
+          <button class="btn btn-primary w-full mt-2" onclick="submitNonGame()">✅ Award</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manage Events -->
+    <section id="sec-events" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">Manage Events</div>
+        <button class="btn btn-primary btn-sm" onclick="openEventModal()">+ Add Event</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Event Name</th><th>Type</th><th>Category</th><th>Gender</th><th>Max Participants</th><th>Actions</th></tr></thead>
+            <tbody id="events-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manage Houses -->
+    <section id="sec-houses" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">Manage Houses</div>
+        <button class="btn btn-primary btn-sm" onclick="openHouseModal()">+ Add House</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>House Name</th><th>Color</th><th>Captain</th><th>In‑Charge</th><th>Email</th><th>Actions</th></tr></thead>
+            <tbody id="houses-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Points Config -->
+    <section id="sec-points-config" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">Points Configuration</div>
+        <button class="btn btn-primary btn-sm" onclick="addPointRow()">+ Add Row</button>
+        <button class="btn btn-success btn-sm" onclick="savePointsConfig()">💾 Save All</button>
+      </div>
+      <div class="card">
+        <p class="text-muted mb-2" style="font-size:.85rem">Edit point values for each category and position. Click Save All when done.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Category</th><th>Position</th><th>Points</th><th></th></tr></thead>
+            <tbody id="pc-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Committee Users -->
+    <section id="sec-committee-users" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">Committee Users</div>
+        <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Add User</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Actions</th></tr></thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Students (upload/view) -->
+    <section id="sec-students" class="section-page hidden">
+      <div class="topbar"><div class="topbar-title">Students</div></div>
+      <div class="card mb-2">
+        <h3 class="mb-2">Bulk Upload Students (CSV)</h3>
+        <p class="text-muted mb-2" style="font-size:.85rem">CSV columns: <code>Name,Department,House,RollNo</code></p>
+        <div class="flex gap-2">
+          <input type="file" id="students-csv" accept=".csv"/>
+          <button class="btn btn-primary btn-sm" onclick="uploadStudents()">Upload</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap" style="max-height:450px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Name</th><th>Department</th><th>House</th><th>Roll No</th></tr></thead>
+            <tbody id="students-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- All Results -->
+    <section id="sec-results" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">All Results</div>
+        <div class="flex gap-1">
+          <select id="results-filter-event" onchange="filterResults()"><option value="">All Events</option></select>
+          <select id="results-filter-house" onchange="filterResults()"><option value="">All Houses</option></select>
+          <button class="btn btn-secondary btn-sm" onclick="printResults()">🖨️ Print</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="print-header" id="print-header"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Department</th><th>House</th><th>Points</th><th>Photo</th></tr></thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+        <div class="print-sig">
+          <div><div class="sig-line" id="sig-incharge">Sports Incharge</div></div>
+          <div><div class="sig-line" id="sig-principal">Principal</div></div>
+          <div><div class="sig-line">Stamp</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Branding -->
+    <section id="sec-branding" class="section-page hidden">
+      <div class="topbar"><div class="topbar-title">Branding &amp; Settings</div></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="mb-2">College Information</h3>
+          <div class="form-group">
+            <label>College Name</label>
+            <input type="text" id="s-college-name"/>
+          </div>
+          <div class="form-group">
+            <label>Event Title</label>
+            <input type="text" id="s-event-title"/>
+          </div>
+          <div class="form-group">
+            <label>Principal Name</label>
+            <input type="text" id="s-principal"/>
+          </div>
+          <div class="form-group">
+            <label>Sports Committee In‑Charge Name</label>
+            <input type="text" id="s-incharge"/>
+          </div>
+          <button class="btn btn-primary w-full mt-1" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+        <div class="card">
+          <h3 class="mb-2">Upload Assets</h3>
+          <div class="form-group">
+            <label>College Logo</label>
+            <input type="file" id="up-logo" accept="image/*"/>
+            <img id="preview-logo" src="" alt="Logo Preview" style="margin-top:.5rem;height:60px;display:none;border-radius:6px"/>
+          </div>
+          <div class="form-group">
+            <label>Founder Picture</label>
+            <input type="file" id="up-founder" accept="image/*"/>
+            <img id="preview-founder" src="" alt="Founder Preview" style="margin-top:.5rem;height:80px;display:none;border-radius:6px"/>
+          </div>
+          <button class="btn btn-primary w-full mt-1" onclick="uploadAssets()">☁️ Upload to Drive</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section id="sec-reports" class="section-page hidden">
+      <div class="topbar"><div class="topbar-title">Reports &amp; Print</div></div>
+      <div class="grid-3">
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('house')">
+          <div style="font-size:2rem">🏠</div>
+          <h3 class="mt-1">House‑wise</h3>
+          <p class="text-muted" style="font-size:.85rem">All participants grouped by house</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('game')">
+          <div style="font-size:2rem">🎽</div>
+          <h3 class="mt-1">Game‑wise</h3>
+          <p class="text-muted" style="font-size:.85rem">All participants grouped by event</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('dept')">
+          <div style="font-size:2rem">🏛️</div>
+          <h3 class="mt-1">Department‑wise</h3>
+          <p class="text-muted" style="font-size:.85rem">Participants by department</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('overall')">
+          <div style="font-size:2rem">📋</div>
+          <h3 class="mt-1">Overall</h3>
+          <p class="text-muted" style="font-size:.85rem">Complete results &amp; standings</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('finallist')">
+          <div style="font-size:2rem">✅</div>
+          <h3 class="mt-1">Final Participant List</h3>
+          <p class="text-muted" style="font-size:.85rem">Confirmed final lists</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('scores')">
+          <div style="font-size:2rem">🏅</div>
+          <h3 class="mt-1">Score Summary</h3>
+          <p class="text-muted" style="font-size:.85rem">House points summary</p>
+        </div>
+      </div>
+      <div id="report-output" class="card mt-3 hidden">
+        <div class="print-header" id="report-print-header"></div>
+        <div class="topbar no-print">
+          <div class="topbar-title" id="report-title"></div>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print</button>
+        </div>
+        <div id="report-content"></div>
+        <div class="print-sig">
+          <div><div class="sig-line" id="rep-sig-incharge">Sports Incharge</div></div>
+          <div><div class="sig-line" id="rep-sig-hic">House In‑Charge</div></div>
+          <div><div class="sig-line" id="rep-sig-principal">Principal</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modals -->
+<div id="modal-overlay" class="hidden" style="position:fixed;inset:0;background:hsla(220,15%,5%,.8);z-index:500;display:flex;align-items:center;justify-content:center" onclick="closeModal(event)">
+  <div id="modal-box" class="card" style="min-width:340px;max-width:520px;width:100%;position:relative">
+    <button onclick="closeModal()" style="position:absolute;top:.75rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="toast-container" class="toast-container"></div>
+
+<script src="api.js"></script>
+<script>
+// ── Init ─────────────────────────────────────────────────────────────────────
+let user, eventsData=[], housesData=[], studentsData=[], pointsConfig=[], resultsData=[];
+let awardScanned = null;
+let chartInstance = null;
+
+(async function init() {
+  user = Session.require('committee');
+  if (!user) return;
+  document.getElementById('sb-user').textContent = user.name || 'Admin';
+  initNav();
+  await loadAll();
+  buildDashboard();
+})();
+
+async function loadAll() {
+  [eventsData, housesData, studentsData, pointsConfig, resultsData] = await Promise.all([
+    apiGet('getEvents'), apiGet('getHouses'), apiGet('getStudents'),
+    apiGet('getPointsConfig'), apiGet('getResults')
+  ]);
+  populateSelects();
+  loadSettings();
+}
+
+function populateSelects() {
+  // Award – events
+  const ae = document.getElementById('award-event');
+  ae.innerHTML = '<option value="">Select event…</option>';
+  eventsData.forEach(e => { ae.innerHTML += `<option value="${e.EventID}" data-type="${e.Type}" data-cat="${e.Category}">${e.EventName}</option>`; });
+
+  // Award – students
+  const as = document.getElementById('award-student');
+  as.innerHTML = '<option value="">Select student…</option>';
+  studentsData.forEach(s => { as.innerHTML += `<option value="${s.Name}|${s.Department}|${s.House}">${s.Name} (${s.House})</option>`; });
+
+  // Non‑game house
+  const nh = document.getElementById('ng-house');
+  nh.innerHTML = '';
+  housesData.forEach(h => { nh.innerHTML += `<option>${h.HouseName}</option>`; });
+
+  // Non‑game category
+  const cats = [...new Set(pointsConfig.filter(p => !['Individual','Team'].includes(p.Category)).map(p => p.Category))];
+  const nc = document.getElementById('ng-category');
+  nc.innerHTML = cats.length ? cats.map(c => `<option>${c}</option>`).join('') : '<option>HouseDecoration</option>';
+
+  // Results filters
+  const rfe = document.getElementById('results-filter-event');
+  eventsData.forEach(e => { rfe.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
+  const rfh = document.getElementById('results-filter-house');
+  housesData.forEach(h => { rfh.innerHTML += `<option>${h.HouseName}</option>`; });
+
+  renderEventsTable();
+  renderHousesTable();
+  renderPointsConfig();
+  renderStudents();
+  renderResults();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function buildDashboard() {
+  const scores = await apiGet('getScores');
+  renderScoreCards(scores);
+  renderChart(scores);
+  renderRecentAwards();
+}
+
+function renderScoreCards(scores) {
+  const sorted = [...scores].sort((a,b) => Number(b.Points) - Number(a.Points));
+  const houseMap = {}; housesData.forEach(h => houseMap[h.HouseName] = h.Color || '#f59e0b');
+  document.getElementById('dash-score-cards').innerHTML = sorted.map((s,i) => `
+    <div class="score-card" style="background:linear-gradient(135deg,${houseMap[s.House]||'#f59e0b'}33,${houseMap[s.House]||'#f59e0b'}11);border:1px solid ${houseMap[s.House]||'#f59e0b'}44">
+      <div class="rank">${['🥇','🥈','🥉'][i]||i+1}</div>
+      <div class="house-name">${s.House}</div>
+      <div class="pts">${s.Points}</div>
+      <div class="pts-label">POINTS</div>
+    </div>
+  `).join('');
+}
+
+function renderChart(scores) {
+  const houseMap = {}; housesData.forEach(h => houseMap[h.HouseName] = h.Color || '#f59e0b');
+  const ctx = document.getElementById('chart-main').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: scores.map(s => s.House),
+      datasets: [{ data: scores.map(s => Number(s.Points)), backgroundColor: scores.map(s => (houseMap[s.House]||'#f59e0b')+'aa'), borderColor: scores.map(s => houseMap[s.House]||'#f59e0b'), borderWidth: 2, borderRadius: 8 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,.05)' } }, y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,.05)' } } } }
+  });
+}
+
+function renderRecentAwards() {
+  const recent = [...resultsData].reverse().slice(0,10);
+  document.getElementById('recent-awards').innerHTML = `<table><thead><tr><th>Event</th><th>Student</th><th>House</th><th>Pts</th></tr></thead><tbody>
+    ${recent.map(r => `<tr><td>${r.EventName}</td><td>${r.StudentName}</td><td>${r.House}</td><td><span class="badge badge-gold">${r.Points}</span></td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── Award Points ───────────────────────────────────────────────────────────────
+document.getElementById('award-position').addEventListener('change', previewPoints);
+document.getElementById('award-event').addEventListener('change', previewPoints);
+
+function previewPoints() {
+  const eventSel = document.getElementById('award-event');
+  const opt = eventSel.options[eventSel.selectedIndex];
+  const cat = opt ? opt.getAttribute('data-type') : '';
+  const pos = document.getElementById('award-position').value;
+  const rule = pointsConfig.find(r => r.Category === cat && r.Position === pos);
+  document.getElementById('award-pts-preview').textContent = rule ? `Points to be awarded: ${rule.Points}` : '';
+}
+
+let awardQROpen = false;
+function toggleAwardQR() {
+  const div = document.getElementById('award-qr-reader');
+  if (!awardQROpen) {
+    div.style.display = 'block';
+    startQRScanner('award-qr-reader', data => {
+      awardScanned = data;
+      div.style.display = 'none';
+      awardQROpen = false;
+      document.getElementById('award-scanned').classList.remove('hidden');
+      document.getElementById('award-scanned-name').textContent = data.name;
+      document.getElementById('award-scanned-meta').textContent = ` | ${data.dept} | ${data.house}`;
+    });
+    awardQROpen = true;
+  } else {
+    stopQRScanner(); div.style.display = 'none'; awardQROpen = false;
+  }
+}
+
+async function submitAward() {
+  const eventSel = document.getElementById('award-event');
+  const opt = eventSel.options[eventSel.selectedIndex];
+  if (!opt || !opt.value) { toast('Select an event', 'error'); return; }
+  const eventId = opt.value; const eventName = opt.textContent;
+  const eventType = opt.getAttribute('data-type') || 'Individual';
+  const position = document.getElementById('award-position').value;
+
+  let studentName, dept, house;
+  if (awardScanned) {
+    studentName = awardScanned.name; dept = awardScanned.dept; house = awardScanned.house;
+  } else {
+    const sv = document.getElementById('award-student').value;
+    if (!sv) { toast('Select a student or scan QR', 'error'); return; }
+    [studentName, dept, house] = sv.split('|');
+  }
+
+  const rule = pointsConfig.find(r => r.Category === eventType && r.Position === position);
+  const points = rule ? Number(rule.Points) : 0;
+
+  let photoUrl = '';
+  const photoFile = document.getElementById('award-photo').files[0];
+  if (photoFile) {
+    toast('Uploading photo…', 'info');
+    const b64data = await fileToBase64(photoFile);
+    const uploaded = await apiPost('uploadPhoto', { ...b64data, studentName, house, dept });
+    photoUrl = uploaded.url || '';
+  }
+
+  await apiPost('awardPoints', { eventId, eventName, position, studentName, dept, house, points, photoUrl, isTeam: eventType === 'Team' });
+  toast(`✅ ${points} points awarded to ${studentName} (${house})`, 'success');
+  fireConfetti();
+  awardScanned = null;
+  document.getElementById('award-scanned').classList.add('hidden');
+  document.getElementById('award-photo').value = '';
+  await loadAll();
+  buildDashboard();
+}
+
+async function submitNonGame() {
+  const category = document.getElementById('ng-category').value;
+  const position = document.getElementById('ng-position').value;
+  const house = document.getElementById('ng-house').value;
+  const rule = pointsConfig.find(r => r.Category === category && r.Position === position);
+  const points = rule ? Number(rule.Points) : 0;
+  await apiPost('awardPoints', { eventId: category, eventName: category, position, studentName: house, dept: '', house, points, photoUrl: '', isTeam: true });
+  toast(`✅ ${points} points awarded to ${house} for ${category}`, 'success');
+  fireConfetti();
+  await loadAll();
+  buildDashboard();
+}
+
+// ── Events Table ──────────────────────────────────────────────────────────────
+function renderEventsTable() {
+  document.getElementById('events-body').innerHTML = eventsData.map(e => `
+    <tr>
+      <td>${e.EventID}</td><td>${e.EventName}</td>
+      <td><span class="badge ${e.Type==='Team'?'badge-purple':'badge-gold'}">${e.Type}</span></td>
+      <td>${e.Category||'Individual'}</td><td>${e.Gender||'Open'}</td><td>${e.MaxParticipants||'-'}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="editEvent('${e.EventID}')">Edit</button></td>
+    </tr>`).join('');
+}
+
+function openEventModal(id) {
+  const ev = id ? eventsData.find(e => e.EventID === id) : {};
+  document.getElementById('modal-content').innerHTML = `
+    <h3 class="mb-2">${id ? 'Edit' : 'Add'} Event</h3>
+    <div class="form-group"><label>Event ID</label><input id="ev-id" value="${ev.EventID||''}" ${id?'readonly':''}></div>
+    <div class="form-group"><label>Event Name</label><input id="ev-name" value="${ev.EventName||''}"></div>
+    <div class="form-group"><label>Type</label>
+      <select id="ev-type"><option ${ev.Type==='Individual'?'selected':''}>Individual</option><option ${ev.Type==='Team'?'selected':''}>Team</option></select></div>
+    <div class="form-group"><label>Category</label><input id="ev-cat" value="${ev.Category||'Individual'}"></div>
+    <div class="form-group"><label>Gender</label>
+      <select id="ev-gender"><option>Open</option><option>Boys</option><option>Girls</option></select></div>
+    <div class="form-group"><label>Max Participants</label><input type="number" id="ev-max" value="${ev.MaxParticipants||''}"></div>
+    <button class="btn btn-primary w-full mt-1" onclick="saveEvent()">Save</button>`;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+function editEvent(id) { openEventModal(id); }
+
+async function saveEvent() {
+  const data = { EventID:document.getElementById('ev-id').value, EventName:document.getElementById('ev-name').value, Type:document.getElementById('ev-type').value, Category:document.getElementById('ev-cat').value, Gender:document.getElementById('ev-gender').value, MaxParticipants:document.getElementById('ev-max').value };
+  await apiPost('saveEvent', data);
+  toast('Event saved', 'success');
+  closeModal();
+  eventsData = await apiGet('getEvents');
+  populateSelects();
+}
+
+// ── Houses Table ──────────────────────────────────────────────────────────────
+function renderHousesTable() {
+  document.getElementById('houses-body').innerHTML = housesData.map(h => `
+    <tr>
+      <td><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${h.Color};margin-right:.4rem;vertical-align:middle"></span>${h.HouseName}</td>
+      <td>${h.Color}</td><td>${h.Captain||'-'}</td><td>${h.InChargeName||'-'}</td><td>${h.InChargeEmail||'-'}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="editHouse('${h.HouseName}')">Edit</button></td>
+    </tr>`).join('');
+}
+
+function openHouseModal(name) {
+  const h = name ? housesData.find(h => h.HouseName === name) : {};
+  document.getElementById('modal-content').innerHTML = `
+    <h3 class="mb-2">${name ? 'Edit' : 'Add'} House</h3>
+    <div class="form-group"><label>House Name</label><input id="h-name" value="${h.HouseName||''}" ${name?'readonly':''}></div>
+    <div class="form-group"><label>Color (hex)</label><input type="color" id="h-color" value="${h.Color||'#f59e0b'}"></div>
+    <div class="form-group"><label>Captain</label><input id="h-captain" value="${h.Captain||''}"></div>
+    <div class="form-group"><label>In‑Charge Name</label><input id="h-icname" value="${h.InChargeName||''}"></div>
+    <div class="form-group"><label>In‑Charge Email</label><input id="h-icemail" value="${h.InChargeEmail||''}"></div>
+    <div class="form-group"><label>In‑Charge Password</label><input type="password" id="h-icpwd" value="${h.InChargePassword||''}"></div>
+    <button class="btn btn-primary w-full mt-1" onclick="saveHouse()">Save</button>`;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+function editHouse(name) { openHouseModal(name); }
+
+async function saveHouse() {
+  const data = { HouseName:document.getElementById('h-name').value, Color:document.getElementById('h-color').value, Captain:document.getElementById('h-captain').value, InChargeName:document.getElementById('h-icname').value, InChargeEmail:document.getElementById('h-icemail').value, InChargePassword:document.getElementById('h-icpwd').value };
+  await apiPost('saveHouse', data);
+  toast('House saved', 'success');
+  closeModal();
+  housesData = await apiGet('getHouses');
+  renderHousesTable();
+}
+
+// ── Points Config ─────────────────────────────────────────────────────────────
+function renderPointsConfig() {
+  document.getElementById('pc-body').innerHTML = pointsConfig.map((r,i) => `
+    <tr>
+      <td><input class="pc-cat" value="${r.Category}" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+      <td><input class="pc-pos" value="${r.Position}" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+      <td><input class="pc-pts" type="number" value="${r.Points}" style="width:80px;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>
+    </tr>`).join('');
+}
+
+function addPointRow() {
+  const tbody = document.getElementById('pc-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input class="pc-cat" value="" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+    <td><input class="pc-pos" value="" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+    <td><input class="pc-pts" type="number" value="0" style="width:80px;background:transparent;border:none;color:inherit;font-family:inherit"></td>
+    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+async function savePointsConfig() {
+  const rows = [...document.querySelectorAll('#pc-body tr')].map(tr => ({
+    Category: tr.querySelector('.pc-cat').value,
+    Position: tr.querySelector('.pc-pos').value,
+    Points: tr.querySelector('.pc-pts').value
+  }));
+  await apiPost('savePointsConfig', { rows });
+  pointsConfig = rows;
+  toast('Points config saved', 'success');
+}
+
+// ── Committee Users ───────────────────────────────────────────────────────────
+async function loadUsers() {
+  const users = await apiGet('getCommittee');
+  document.getElementById('users-body').innerHTML = users.map(u => `
+    <tr><td>${u.Name}</td><td>${u.Role}</td><td>${u.Email}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="editUser('${u.Email}')">Edit</button></td></tr>`).join('');
+}
+
+function openUserModal(email) {
+  document.getElementById('modal-content').innerHTML = `
+    <h3 class="mb-2">Add / Edit User</h3>
+    <div class="form-group"><label>Name</label><input id="u-name"></div>
+    <div class="form-group"><label>Role</label><input id="u-role" value="staff"></div>
+    <div class="form-group"><label>Email</label><input id="u-email" value="${email||''}"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="u-pwd"></div>
+    <button class="btn btn-primary w-full mt-1" onclick="saveUser()">Save</button>`;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.getElementById('modal-overlay').style.display='flex';
+}
+
+async function saveUser() {
+  await apiPost('saveCommittee', { Name:document.getElementById('u-name').value, Role:document.getElementById('u-role').value, Email:document.getElementById('u-email').value, Password:document.getElementById('u-pwd').value });
+  toast('User saved', 'success');
+  closeModal();
+  loadUsers();
+}
+
+// ── Students ──────────────────────────────────────────────────────────────────
+function renderStudents() {
+  document.getElementById('students-body').innerHTML = studentsData.map(s => `<tr><td>${s.Name}</td><td>${s.Department}</td><td>${s.House}</td><td>${s.RollNo||''}</td></tr>`).join('');
+}
+
+async function uploadStudents() {
+  const file = document.getElementById('students-csv').files[0];
+  if (!file) { toast('Select a CSV file', 'error'); return; }
+  const text = await file.text();
+  const rows = parseCSV(text);
+  // Use savePointsConfig‑style: replace entire sheet via saveDashboard action with Students tab
+  await apiPost('saveDashboard', { tab: 'Students', data: rows.map(r => ({ Name: r.Name||r.name||r['Student Name']||'', Department: r.Department||r.Dept||r.department||'', House: r.House||r.house||'', RollNo: r.RollNo||r['Roll No']||'' })) });
+  toast(`Uploaded ${rows.length} students`, 'success');
+  studentsData = await apiGet('getStudents');
+  renderStudents();
+}
+
+// ── Results ───────────────────────────────────────────────────────────────────
+function renderResults(data) {
+  const d = data || resultsData;
+  document.getElementById('results-body').innerHTML = d.map(r => `
+    <tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.Department}</td><td>${r.House}</td><td>${r.Points}</td>
+    <td>${r.PhotoUrl ? `<img src="${r.PhotoUrl}" style="height:36px;border-radius:4px">` : '-'}</td></tr>`).join('');
+}
+
+function filterResults() {
+  const evt = document.getElementById('results-filter-event').value;
+  const hse = document.getElementById('results-filter-house').value;
+  let filtered = resultsData;
+  if (evt) filtered = filtered.filter(r => r.EventID === evt);
+  if (hse) filtered = filtered.filter(r => r.House === hse);
+  renderResults(filtered);
+}
+
+function printResults() { printWithHeader('Results Report'); }
+
+// ── Branding / Settings ───────────────────────────────────────────────────────
+async function loadSettings() {
+  const s = await getSettings();
+  document.getElementById('s-college-name').value = s.CollegeName || '';
+  document.getElementById('s-event-title').value   = s.EventTitle  || '';
+  document.getElementById('s-principal').value     = s.PrincipalName || '';
+  document.getElementById('s-incharge').value      = s.CommitteeInChargeName || '';
+  if (s.LogoUrl)    { document.getElementById('preview-logo').src = s.LogoUrl; document.getElementById('preview-logo').style.display='block'; }
+  if (s.FounderUrl) { document.getElementById('preview-founder').src = s.FounderUrl; document.getElementById('preview-founder').style.display='block'; }
+  const sbLogo = document.getElementById('sb-logo');
+  if (s.LogoUrl) { sbLogo.src = s.LogoUrl; sbLogo.style.display='block'; }
+  document.getElementById('sig-incharge').textContent = s.CommitteeInChargeName || 'Sports Incharge';
+  document.getElementById('sig-principal').textContent = s.PrincipalName || 'Principal';
+}
+
+async function saveSettings() {
+  const fields = { CollegeName: 's-college-name', EventTitle: 's-event-title', PrincipalName: 's-principal', CommitteeInChargeName: 's-incharge' };
+  for (const [key, elId] of Object.entries(fields)) {
+    await apiPost('saveSetting', { Key: key, Value: document.getElementById(elId).value });
+  }
+  _settings = null; // bust cache
+  toast('Settings saved', 'success');
+}
+
+async function uploadAssets() {
+  const logo    = document.getElementById('up-logo').files[0];
+  const founder = document.getElementById('up-founder').files[0];
+  if (logo) {
+    const b = await fileToBase64(logo);
+    const r = await apiPost('uploadPhoto', { ...b, studentName:'logo', house:'', dept:'' });
+    await apiPost('saveSetting', { Key:'LogoUrl', Value: r.url });
+    document.getElementById('preview-logo').src = r.url; document.getElementById('preview-logo').style.display='block';
+  }
+  if (founder) {
+    const b = await fileToBase64(founder);
+    const r = await apiPost('uploadPhoto', { ...b, studentName:'founder', house:'', dept:'' });
+    await apiPost('saveSetting', { Key:'FounderUrl', Value: r.url });
+    document.getElementById('preview-founder').src = r.url; document.getElementById('preview-founder').style.display='block';
+  }
+  _settings = null;
+  toast('Assets uploaded', 'success');
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+async function openReport(type) {
+  const s = await getSettings();
+  const output = document.getElementById('report-output');
+  const title  = document.getElementById('report-title');
+  const content= document.getElementById('report-content');
+  const hdr    = document.getElementById('report-print-header');
+
+  hdr.innerHTML = `
+    <img src="${s.LogoUrl||''}" onerror="this.style.display='none'" style="height:60px">
+    <div style="flex:1;text-align:center">
+      <div style="font-size:1.1rem;font-weight:700">${s.CollegeName||''}</div>
+      <div style="font-size:.9rem">${s.EventTitle||''}</div>
+    </div>
+    <img src="${s.FounderUrl||''}" onerror="this.style.display='none'" style="height:60px;border-radius:50%">`;
+
+  document.getElementById('rep-sig-incharge').textContent = s.CommitteeInChargeName || 'Sports Incharge';
+  document.getElementById('rep-sig-principal').textContent = s.PrincipalName || 'Principal';
+
+  const entries = await apiGet('getEntries');
+  const finalList = await apiGet('getFinalList');
+  const scores = await apiGet('getScores');
+
+  let html = '', ttl = '';
+  if (type === 'house') {
+    ttl = 'House‑wise Participant List';
+    housesData.forEach(h => {
+      const stu = finalList.filter(f => f.House === h.HouseName);
+      html += `<h3 style="margin-top:1.5rem;color:${h.Color}">${h.HouseName}</h3><table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>Department</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.EventName}</td><td>${s.Department}</td></tr>`).join('')}</tbody></table>`;
+    });
+  } else if (type === 'game') {
+    ttl = 'Game‑wise Participant List';
+    eventsData.forEach(ev => {
+      const stu = finalList.filter(f => f.EventID === ev.EventID);
+      html += `<h3 style="margin-top:1.5rem">${ev.EventName}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Department</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.Department}</td></tr>`).join('')}</tbody></table>`;
+    });
+  } else if (type === 'dept') {
+    ttl = 'Department‑wise Participant List';
+    const depts = [...new Set(finalList.map(f => f.Department))];
+    depts.forEach(d => {
+      const stu = finalList.filter(f => f.Department === d);
+      html += `<h3 style="margin-top:1.5rem">${d||'Unknown'}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Event</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.EventName}</td></tr>`).join('')}</tbody></table>`;
+    });
+  } else if (type === 'overall') {
+    ttl = 'Overall Results';
+    html = `<table><thead><tr><th>Event</th><th>Position</th><th>Student</th><th>House</th><th>Dept</th><th>Points</th></tr></thead><tbody>${resultsData.map(r=>`<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td></tr>`).join('')}</tbody></table>`;
+  } else if (type === 'finallist') {
+    ttl = 'Final Participant List';
+    html = `<table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>House</th><th>Department</th></tr></thead><tbody>${finalList.map((f,i)=>`<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.EventName}</td><td>${f.House}</td><td>${f.Department}</td></tr>`).join('')}</tbody></table>`;
+  } else if (type === 'scores') {
+    ttl = 'House Score Summary';
+    const sorted = [...scores].sort((a,b)=>Number(b.Points)-Number(a.Points));
+    html = `<table><thead><tr><th>Rank</th><th>House</th><th>Points</th></tr></thead><tbody>${sorted.map((s,i)=>`<tr><td>${i+1}</td><td>${s.House}</td><td><strong>${s.Points}</strong></td></tr>`).join('')}</tbody></table>`;
+  }
+
+  title.textContent = ttl;
+  content.innerHTML = html;
+  output.classList.remove('hidden');
+  output.scrollIntoView({ behavior:'smooth' });
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').style.display='none';
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+function logout() { Session.clear(); location.href='index.html'; }
+</script>
+</body>
+</html>
