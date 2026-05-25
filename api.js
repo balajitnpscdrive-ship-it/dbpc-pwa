@@ -54,13 +54,23 @@ const Session = {
   set(data) { sessionStorage.setItem('sportsUser', JSON.stringify(data)); },
   get()     { return JSON.parse(sessionStorage.getItem('sportsUser') || 'null'); },
   clear()   { sessionStorage.removeItem('sportsUser'); },
+
+  // role = 'committee' | 'house'
+  // We check loginRole (the tab clicked at login), NOT u.role (the sheet value like 'admin').
   require(role) {
     const u = Session.get();
     if (!u) { location.href = 'index.html'; return null; }
-    if (role && u.role !== role && !(role === 'house' && u.houseName)) { location.href = 'index.html'; return null; }
+    // Determine actual login role from session
+    const storedRole = u.loginRole || (u.houseName ? 'house' : 'committee');
+    if (role && storedRole !== role) {
+      // Wrong role for this page — go back to login
+      location.href = 'index.html';
+      return null;
+    }
     return u;
   }
 };
+
 
 // ── QR Scanner (html5-qrcode) ─────────────────────────────────────────────────
 let qrScanner = null;
