@@ -79,9 +79,9 @@
       if (s.LogoUrl)     document.getElementById('school-logo').src = s.LogoUrl;
     } catch(e) {}
 
-    // If already logged in, redirect
+    // If already logged in, redirect using stored loginRole
     const u = Session.get();
-    if (u) redirect(u);
+    if (u) redirect(u.loginRole || (u.houseName ? 'house' : 'committee'), u);
   })();
 
   function switchRole(r) {
@@ -123,9 +123,11 @@
     try {
       const res = await apiPost('login', { role: currentRole, email, password: pass });
       if (res.ok) {
-        Session.set({ ...res, role: currentRole });
+        // Merge server response + the tab role the user selected
+        const sessionData = { ...res, loginRole: currentRole };
+        Session.set(sessionData);
         toast('Welcome, ' + (res.name || res.houseName) + '!', 'success');
-        setTimeout(() => redirect(res), 600);
+        setTimeout(() => redirect(currentRole, res), 600);
       } else {
         errEl.textContent = res.error || 'Login failed';
         errEl.style.display = 'block';
@@ -139,9 +141,14 @@
     }
   }
 
-  function redirect(u) {
-    if (u.role === 'committee') location.href = 'committee.html';
-    else if (u.houseName || u.role === 'house') location.href = 'house.html';
+  // redirect(role, data) — role is always the tab that was selected at login
+  function redirect(role, data) {
+    data = data || {};
+    if (role === 'committee') {
+      location.href = 'committee.html';
+    } else if (role === 'house' || data.houseName) {
+      location.href = 'house.html';
+    }
   }
 </script>
 </body>
