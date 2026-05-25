@@ -1,346 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>G.O.A.T.S | Student Nexus</title>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        :root { 
-            --bg: #020617; 
-            --card: rgba(15, 23, 42, 0.7); 
-            --accent: #00f2fe; 
-            --house-col: #00f2fe; 
-            --gold: #fdbb2d; 
-            --rgb-speed: 5s;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; outline:none; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-        
-        /* CINEMATIC BACKGROUND */
-        body::before {
-            content: ''; position: fixed; inset: -100px;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(253, 187, 45, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
-            filter: blur(60px); z-index: -1; animation: meshFlow 20s infinite alternate;
-        }
-        @keyframes meshFlow { 0%{transform:scale(1) rotate(0deg)} 100%{transform:scale(1.2) rotate(5deg)} }
-
-        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
-
-        /* GLASS CARD SYSTEM */
-        .glass { 
-            background: var(--card); backdrop-filter: blur(20px); border-radius: 30px; padding: 25px; 
-            border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .btn-elite { 
-            background: linear-gradient(135deg, var(--gold), #fff); color: #000; border: none; padding: 20px; border-radius: 20px; 
-            width: 100%; font-family: 'Bebas Neue'; font-size: 24px; cursor: pointer; position: relative; overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4); font-weight: 900; letter-spacing: 2px;
-        }
-
-        /* FLUX RING (POINTS) */
-        .flux-container { position: relative; width: 200px; height: 200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
-        .flux-ring { 
-            position: absolute; inset: 0; border-radius: 50%; 
-            border: 2px solid transparent; background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(45deg, var(--house-col), #fff, var(--house-col)) border-box;
-            animation: rotateRGB var(--rgb-speed) linear infinite; box-shadow: 0 0 30px var(--house-col);
-        }
-        @keyframes rotateRGB { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-
-        /* LOG ITEM DESIGN */
-        .log-item {
-            background: rgba(0,0,0,0.3); border-left: 5px solid var(--accent); padding: 20px;
-            margin-bottom: 15px; border-radius: 0 20px 20px 0; display: flex; flex-direction: column; gap: 8px;
-        }
-        .log-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .log-cat { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; }
-        .log-pts { font-family: 'Bebas Neue'; font-size: 28px; }
-        .log-meta { font-size: 9px; font-weight: 900; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
-        .log-remarks { font-size: 13px; opacity: 0.8; font-style: italic; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); margin-top: 5px; }
-
-        #splash { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 1s cubic-bezier(1, 0, 0, 1); }
-        .splash-img { width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 50px var(--accent); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1); filter:brightness(1.5);} }
-
-        /* POSTER/CERTIFICATE STYLE */
-        .award-poster {
-            width: 100%; max-width: 350px; min-height: 480px; margin: 0 auto; background: radial-gradient(circle at center, #1b2735 0%, #050b1a 100%);
-            border-radius: 20px; padding: 35px 25px; position: relative; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.08); text-align: center;
-        }
-        .clg-title { font-family: 'Bebas Neue'; font-size: 20px; line-height: 1; color: #fff; margin: 15px 0; }
-        .award-title { font-family: 'Bebas Neue'; font-size: 40px; line-height: 0.85; margin: 20px 0 5px 0; color: #fff; }
-        .award-subtitle { color: var(--gold); font-size: 12px; font-weight: 900; letter-spacing: 3px; }
-        .citation { font-size: 11px; line-height: 1.6; margin-top: 25px; opacity: 0.8; color: #fff; font-weight: 300; }
-        .highlight { color: var(--gold); font-weight: 900; text-transform: uppercase; }
-
-        select { width: 100%; padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.8); color: #fff; font-family: 'Outfit'; font-weight: 900; margin-bottom: 15px; }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sports Day – Login</title>
+  <meta name="description" content="Sports Day Management System – Login"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
 </head>
 <body>
-
-    <div id="splash">
-        <img id="sp-img" class="splash-img">
-        <h1 style="font-family:'Bebas Neue'; letter-spacing:8px; margin-top:25px; font-size:40px; text-align:center;">STUDENT NEXUS</h1>
-        <p id="sp-status" style="font-size:9px; font-weight:900; opacity:0.4; letter-spacing:3px; margin-top:15px;">LOADING CORE SYSTEMS...</p>
+<div class="login-bg">
+  <div class="login-box card">
+    <div class="login-logo">
+      <img id="school-logo" class="school-logo" src="" alt="Logo" onerror="this.style.display='none'" />
+      <h1 id="college-name">Sports Day</h1>
+      <p id="event-title">Management System</p>
     </div>
 
-    <div class="container">
-        <!-- LOGIN VIEW -->
-        <div id="view-login" style="display:none; text-align:center; padding-top:40px;">
-            <h1 style="font-family:'Bebas Neue'; font-size:80px; letter-spacing:10px; text-shadow: 0 0 30px var(--accent);">G.O.A.T.S</h1>
-            <p style="font-size:10px; font-weight:900; letter-spacing:4px; margin-top:-15px; opacity:0.5;">AUTHENTICATE IDENTITY</p>
-            
-            <div style="margin:50px 0;">
-                <button class="glass" style="width:100%; color:var(--accent); font-weight:900; border:1px dashed var(--accent); padding:40px;" onclick="startScan()">⚡ SCAN STUDENT QR</button>
-                <div id="reader" style="display:none; margin:20px 0; border-radius:30px; overflow:hidden; border:2px solid var(--accent);"></div>
-            </div>
-
-            <div style="margin:30px 0; opacity:0.2; display:flex; align-items:center;"><hr style="flex:1;"><span style="padding:0 15px; font-size:10px; font-weight:900;">MANUAL ENTRY</span><hr style="flex:1;"></div>
-            
-            <select id="sel-dept" onchange="loadNames()"></select>
-            <div id="name-box" style="display:none;">
-                <select id="sel-name"></select>
-                <button class="btn-elite" id="u-btn" onclick="fetchStats()">ESTABLISH LINK</button>
-            </div>
-        </div>
-
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dash" style="display:none;">
-            <header style="display:flex; justify-content:space-between; align-items:center; padding:10px 0 30px 0;">
-                <img id="h-logo" style="height:40px; border-radius:50%;">
-                <div style="text-align:right;">
-                    <p style="font-size:8px; opacity:0.4; font-weight:900; letter-spacing:2px;">SECURE ACCESS</p>
-                    <p style="font-family:'Bebas Neue'; font-size:20px; color:var(--accent);">IDENTITY VERIFIED</p>
-                </div>
-            </header>
-
-            <!-- TOTAL POINTS -->
-            <div class="glass" style="text-align:center; padding: 40px 20px;">
-                <div class="flux-container">
-                    <div class="flux-ring"></div>
-                    <div>
-                        <p id="p-house" style="font-weight:900; letter-spacing:4px; color:var(--house-col); font-size:11px; margin-bottom:5px;">HOUSE</p>
-                        <h1 id="p-total" style="font-family:'Bebas Neue'; font-size:90px; line-height:0.8;">000</h1>
-                        <p style="font-size:10px; font-weight:900; opacity:0.4; letter-spacing:3px;">TOTAL SCORE</p>
-                    </div>
-                </div>
-                <h2 id="p-name" style="font-family:'Bebas Neue'; font-size:42px; letter-spacing:4px; margin-top:35px;">PLAYER NAME</h2>
-                <p id="p-dept" style="font-size:10px; font-weight:900; opacity:0.5; letter-spacing:2px;"></p>
-            </div>
-
-            <!-- RANK SYSTEM -->
-            <div class="glass" style="text-align:center;">
-                <p style="font-weight:900; font-size:10px; color:var(--gold); letter-spacing:3px; margin-bottom:10px;">TIER STATUS</p>
-                <h2 id="r-text" style="font-family:'Bebas Neue'; font-size:36px; line-height:1; margin-bottom:12px;">CALCULATING...</h2>
-                <div style="height:6px; background:rgba(0,0,0,0.5); border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
-                    <div id="r-fill" style="height:100%; width:0%; transition:2s cubic-bezier(0.1, 0, 0, 1); box-shadow: 0 0 15px var(--house-col);"></div>
-                </div>
-                <p id="r-hint" style="font-size:8px; opacity:0.3; margin-top:10px; font-weight:900;"></p>
-            </div>
-
-            <!-- LEADERBOARDS -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
-                <div class="glass" style="padding:15px; margin-bottom:0;">
-                    <p style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px;">DEPT RANK</p>
-                    <h3 id="rnk-dept" style="font-family:'Bebas Neue'; font-size:32px; color:var(--accent);">#--</h3>
-                </div>
-                <div class="glass" style="padding:15px; margin-bottom:0;">
-                    <p style="font-size:8px; font-weight:900; opacity:0.4; letter-spacing:1px;">HOUSE SCORE</p>
-                    <h3 id="rnk-house" style="font-family:'Bebas Neue'; font-size:32px; color:var(--gold);">----</h3>
-                </div>
-            </div>
-
-            <!-- THE AWARD POSTER -->
-            <div class="glass" style="padding: 20px; border-color: var(--gold);">
-                <div id="cap-zone">
-                    <div class="award-poster" id="p-bg">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <img id="p-logo" style="height:35px;">
-                            <img id="p-founder" style="height:40px; width:40px; border-radius:50%; border:2px solid var(--gold);">
-                        </div>
-                        <div class="clg-title">DON BOSCO POLYTECHNIC COLLEGE<br><span style="font-size:8px; letter-spacing:2px; opacity:0.6;">GIVERS OF ALL TALENTS STUDENTS</span></div>
-                        <h1 class="award-title">CHAMPION PORTAL</h1>
-                        <p class="award-subtitle">OFFICIAL POINT STATEMENT</p>
-                        <div class="citation">
-                            Certified that <span id="c-name" class="highlight">----</span> currently holds <span id="c-pts" class="highlight">000</span> career points for the <span id="c-house" class="highlight">----</span> house. This excellence is recorded in the G.O.A.T.S championship records.
-                        </div>
-                        <div style="margin-top:30px; font-size:9px; font-weight:900; letter-spacing:2px; opacity:0.5;">DON BOSCO TECHNOLOGICAL INSTITUTE</div>
-                    </div>
-                </div>
-                <button class="btn-elite" style="margin-top:20px; font-size:18px;" onclick="savePoster()">💾 SAVE STATEMENT</button>
-            </div>
-
-            <!-- BATTLE LOGS (POINT TIMELINE) -->
-            <h3 style="font-family:'Bebas Neue'; text-align:center; font-size:28px; margin:40px 0 20px 0; letter-spacing:3px;">📜 POINT LOG (WHO, WHEN, WHY)</h3>
-            <div id="log-list"></div>
-
-            <button class="glass" style="background:#ff375f11; color:#ff375f; border-color:#ff375f55; margin:60px 0; width:100%; font-family:'Bebas Neue'; font-size:20px;" onclick="logout()">TERMINATE SESSION</button>
-        </div>
+    <!-- Role Tabs -->
+    <div class="role-tabs">
+      <div class="role-tab active" id="tab-committee" onclick="switchRole('committee')">🏆 Committee</div>
+      <div class="role-tab" id="tab-house" onclick="switchRole('house')">🏠 House In‑Charge</div>
+      <div class="role-tab" id="tab-scoreboard" onclick="goScoreboard()">📊 Scoreboard</div>
     </div>
 
-    <script>
-        const INITIAL_STUDENT = "<?= initialStudent ?>";
-        let appData = {};
+    <!-- GAS URL setup (first time) -->
+    <div id="gas-setup" class="mb-2" style="display:none">
+      <div class="form-group">
+        <label>Apps Script Web App URL</label>
+        <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec"/>
+      </div>
+      <button class="btn btn-secondary btn-sm w-full" onclick="saveGasUrl()">Save URL</button>
+      <hr style="border-color:var(--glass-border);margin:1rem 0"/>
+    </div>
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbzthamCM9Z0iDhvkI3_BV_2h2pqcIOcgdYYmDLcD3yjnfG44Adci-I1OZ5Sm6kErKAs/exec";
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>Email / Username</label>
+        <input type="text" id="login-email" required autocomplete="username" placeholder="Enter email"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter password"/>
+      </div>
+      <div id="login-error" class="text-muted mb-1" style="color:var(--danger);font-size:.85rem;display:none"></div>
+      <button type="submit" class="btn btn-primary w-full" id="login-btn">
+        <span id="login-btn-text">Sign In</span>
+        <span id="login-loader" class="loader hidden"></span>
+      </button>
+    </form>
 
-        async function call(p) {
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                // Inside GAS environment
-                return new Promise((res, rej) => {
-                    google.script.run.withSuccessHandler(res).withFailureHandler(rej).doPost({postData:{contents:JSON.stringify(p)}});
-                });
-            } else {
-                // External environment (e.g. GitHub Pages)
-                const url = API_URL + "?payload=" + encodeURIComponent(JSON.stringify(p));
-                const res = await fetch(url);
-                return await res.json();
-            }
-        }
+    <div class="text-center mt-2">
+      <small class="text-muted">
+        Need to set your Apps Script URL?
+        <span style="color:var(--accent);cursor:pointer" onclick="toggleGasSetup()">Click here</span>
+      </small>
+    </div>
+  </div>
+</div>
 
-        async function init() {
-            try {
-                appData = await call({action: "getInitialData"});
-                document.getElementById('sp-img').src = appData.logoB64 || appData.logo;
-                document.getElementById('h-logo').src = appData.logoB64 || appData.logo;
-                document.getElementById('p-logo').src = appData.logoB64 || appData.logo;
-                document.getElementById('p-founder').src = appData.founderB64 || appData.founder;
+<div id="toast-container" class="toast-container"></div>
+<script src="api.js"></script>
+<script>
+  let currentRole = 'committee';
 
-                const ds = document.getElementById('sel-dept');
-                ds.innerHTML = '<option disabled selected>CHOOSE DEPARTMENT</option>';
-                appData.depts.forEach(d => ds.add(new Option(d, d)));
+  (async function init() {
+    // Show GAS setup if URL not set
+    const url = localStorage.getItem('GAS_URL') || '';
+    if (!url) { document.getElementById('gas-setup').style.display = 'block'; }
+    else { document.getElementById('gas-url-input').value = url; }
 
-                // Check for URL parameter name or localStorage
-                const saved = INITIAL_STUDENT || localStorage.getItem('goats_student');
-                if (saved) {
-                    await fetchStats(saved);
-                } else {
-                    showView('login');
-                }
-            } catch (e) {
-                document.getElementById('sp-status').innerText = "CONNECTION FAILED. RETRYING...";
-                setTimeout(init, 3000);
-            }
-        }
+    // Load settings for branding
+    try {
+      const s = await getSettings();
+      if (s.CollegeName) document.getElementById('college-name').textContent = s.CollegeName;
+      if (s.EventTitle)  document.getElementById('event-title').textContent = s.EventTitle;
+      if (s.LogoUrl)     document.getElementById('school-logo').src = s.LogoUrl;
+    } catch(e) {}
 
-        function showView(v) {
-            document.getElementById('view-login').style.display = v === 'login' ? 'block' : 'none';
-            document.getElementById('view-dash').style.display = v === 'dash' ? 'block' : 'none';
-            document.getElementById('splash').style.transform = 'translateY(-110%)';
-        }
+    // If already logged in, redirect
+    const u = Session.get();
+    if (u) redirect(u);
+  })();
 
-        function loadNames() {
-            const dept = document.getElementById('sel-dept').value;
-            const ns = document.getElementById('sel-name');
-            ns.innerHTML = '<option disabled selected>SELECT YOUR NAME</option>';
-            const filtered = appData.students.filter(s => s.dept === dept);
-            filtered.forEach(s => ns.add(new Option(s.name, s.name)));
-            document.getElementById('name-box').style.display = 'block';
-        }
+  function switchRole(r) {
+    currentRole = r;
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + r).classList.add('active');
+  }
 
-        async function fetchStats(n = null) {
-            const name = n || document.getElementById('sel-name').value;
-            if(!name) return;
-            
-            if(document.getElementById('u-btn')) document.getElementById('u-btn').innerText = "SYNCING...";
-            
-            try {
-                const res = await call({action: "getStudentStats", name});
-                if(!res.success) throw new Error();
+  function goScoreboard() { location.href = 'scoreboard.html'; }
 
-                localStorage.setItem('goats_student', name);
-                renderDash(res);
-                showView('dash');
-            } catch (e) {
-                alert("Failed to fetch records. Please try again.");
-                showView('login');
-            }
-        }
+  function toggleGasSetup() {
+    const el = document.getElementById('gas-setup');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
 
-        function renderDash(res) {
-            document.getElementById('p-total').innerText = res.total;
-            document.getElementById('p-name').innerText = res.profile.name;
-            document.getElementById('p-dept').innerText = res.profile.dept;
-            document.getElementById('p-house').innerText = res.profile.house.toUpperCase();
-            
-            // Poster updates
-            document.getElementById('c-name').innerText = res.profile.name;
-            document.getElementById('c-pts').innerText = res.total;
-            document.getElementById('c-house').innerText = res.profile.house;
+  function saveGasUrl() {
+    const val = document.getElementById('gas-url-input').value.trim();
+    if (!val) return toast('Please enter the URL', 'error');
+    localStorage.setItem('GAS_URL', val);
+    toast('URL saved!', 'success');
+    document.getElementById('gas-setup').style.display = 'none';
+  }
 
-            // Apply house theme
-            const h = appData.houses.find(x => x.name === res.profile.house);
-            if(h) {
-                document.documentElement.style.setProperty('--house-col', h.color);
-            }
+  async function doLogin(e) {
+    e.preventDefault();
+    const url = localStorage.getItem('GAS_URL') || '';
+    if (!url) { toast('Please set your Apps Script URL first', 'error'); toggleGasSetup(); return; }
 
-            // Rank logic
-            let title = "ROOKIE", nxt = 100, hint = "";
-            if (res.total >= 500) { title = "PLATINUM GOAT"; nxt = 1000; }
-            else if (res.total >= 250) { title = "GOLD ELITE"; nxt = 500; }
-            else if (res.total >= 100) { title = "SILVER PRO"; nxt = 250; }
-            document.getElementById('r-text').innerText = title;
-            document.getElementById('r-fill').style.width = Math.min(100, (res.total/nxt)*100) + "%";
-            document.getElementById('r-hint').innerText = res.total >= 1000 ? "MAX RANK ATTAINED" : `${nxt - res.total} POINTS TO NEXT LEVEL`;
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-password').value.trim();
+    const errEl = document.getElementById('login-error');
+    const loader = document.getElementById('login-loader');
+    const btnTxt = document.getElementById('login-btn-text');
 
-            // Ranks
-            const dRank = res.studentLeaderboard.findIndex(x => x[0] === res.profile.name) + 1;
-            document.getElementById('rnk-dept').innerText = dRank ? `#${dRank}` : "#--";
-            const hScore = res.overallLeaderboard.find(x => x[0] === res.profile.house)?.[1] || 0;
-            document.getElementById('rnk-house').innerText = hScore;
+    errEl.style.display = 'none';
+    loader.classList.remove('hidden');
+    btnTxt.textContent = 'Signing in…';
 
-            // Log rendering (Who, When, Why)
-            const list = document.getElementById('log-list');
-            list.innerHTML = res.logs.map(l => `
-                <div class="log-item" style="border-left-color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">
-                    <div class="log-header">
-                        <div>
-                            <div class="log-cat" style="color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">${l.cat}</div>
-                            <div class="log-meta">${new Date(l.date).toLocaleDateString()} • BY ${l.teacher || 'SYSTEM'}</div>
-                        </div>
-                        <div class="log-pts" style="color: ${l.pts >= 0 ? '#32d74b' : '#ff375f'}">${l.pts >= 0 ? '+' : ''}${l.pts}</div>
-                    </div>
-                    <div class="log-remarks">
-                        <span style="font-weight:900; opacity:0.4; font-size:8px;">REASON:</span><br>
-                        ${l.remarks || 'No specific remarks provided.'}
-                    </div>
-                </div>
-            `).join('');
-        }
+    try {
+      const res = await apiPost('login', { role: currentRole, email, password: pass });
+      if (res.ok) {
+        Session.set({ ...res, role: currentRole });
+        toast('Welcome, ' + (res.name || res.houseName) + '!', 'success');
+        setTimeout(() => redirect(res), 600);
+      } else {
+        errEl.textContent = res.error || 'Login failed';
+        errEl.style.display = 'block';
+      }
+    } catch(err) {
+      errEl.textContent = 'Connection error. Check your Apps Script URL.';
+      errEl.style.display = 'block';
+    } finally {
+      loader.classList.add('hidden');
+      btnTxt.textContent = 'Sign In';
+    }
+  }
 
-        function savePoster() {
-            html2canvas(document.querySelector("#cap-zone"), {scale:2}).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `GOATS_Statement_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
-
-        async function startScan() {
-            document.getElementById('reader').style.display = 'block';
-            const scanner = new Html5Qrcode("reader");
-            await scanner.start({facingMode: "environment"}, {fps:15}, (text) => {
-                scanner.stop();
-                fetchStats(text.split('|')[0].trim());
-            });
-        }
-
-        window.onload = init;
-    </script>
+  function redirect(u) {
+    if (u.role === 'committee') location.href = 'committee.html';
+    else if (u.houseName || u.role === 'house') location.href = 'house.html';
+  }
+</script>
 </body>
 </html>
