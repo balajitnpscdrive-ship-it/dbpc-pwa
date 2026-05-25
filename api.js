@@ -9,6 +9,8 @@ function getGasUrl() {
 }
 
 // ── Core fetch helpers ────────────────────────────────────────────────────────
+// All requests use GET to avoid CORS preflight issues with GAS.
+// Write operations encode their payload as ?data=<JSON> in the URL.
 async function apiGet(action, params = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
@@ -18,18 +20,12 @@ async function apiGet(action, params = {}) {
   return res.json();
 }
 
+// apiPost sends as GET with payload encoded in ?data= to avoid all CORS issues.
 async function apiPost(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
-  // ⚠️  DO NOT set Content-Type: application/json — that triggers a CORS
-  // preflight OPTIONS request which Google Apps Script cannot respond to.
-  // Sending without Content-Type defaults to text/plain (a "simple" request)
-  // which skips the preflight. GAS still receives and parses the JSON body.
-  const res = await fetch(url.toString(), {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    redirect: 'follow'
-  });
+  url.searchParams.set('data', JSON.stringify(payload));
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
