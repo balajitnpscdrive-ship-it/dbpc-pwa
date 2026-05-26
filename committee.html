@@ -192,16 +192,22 @@
       <div class="topbar"><div class="topbar-title">Students</div></div>
       <div class="card mb-2">
         <h3 class="mb-2">Bulk Upload Students (CSV)</h3>
-        <p class="text-muted mb-2" style="font-size:.85rem">CSV columns: <code>Name,Department,House,RollNo</code></p>
-        <div class="flex gap-2">
+        <p class="text-muted mb-2" style="font-size:.85rem">CSV columns: <code>Name,Department,House,RollNo</code> &nbsp;(StudentID is auto-generated)</p>
+        <div class="flex gap-2" style="align-items:center">
           <input type="file" id="students-csv" accept=".csv"/>
-          <button class="btn btn-primary btn-sm" onclick="uploadStudents()">Upload</button>
+          <button class="btn btn-primary btn-sm" id="upload-btn" onclick="uploadStudents()">⬆️ Upload</button>
+        </div>
+        <div id="upload-progress" style="display:none;margin-top:.75rem">
+          <div style="background:var(--glass-border);border-radius:99px;height:8px;overflow:hidden">
+            <div id="upload-bar" style="height:100%;width:0%;background:var(--accent);transition:width .3s;border-radius:99px"></div>
+          </div>
+          <p id="upload-status" class="text-muted mt-1" style="font-size:.82rem"></p>
         </div>
       </div>
       <div class="card">
         <div class="table-wrap" style="max-height:450px;overflow-y:auto">
           <table>
-            <thead><tr><th>Name</th><th>Department</th><th>House</th><th>Roll No</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>House</th><th>Roll No</th></tr></thead>
             <tbody id="students-body"></tbody>
           </table>
         </div>
@@ -650,6 +656,8 @@ function openUserModal(email) {
   document.getElementById('modal-overlay').style.display='flex';
 }
 
+function editUser(email) { openUserModal(email); }
+
 async function saveUser() {
   await apiPost('saveCommittee', { Name:document.getElementById('u-name').value, Role:document.getElementById('u-role').value, Email:document.getElementById('u-email').value, Password:document.getElementById('u-pwd').value });
   toast('User saved', 'success');
@@ -659,19 +667,57 @@ async function saveUser() {
 
 // ── Students ──────────────────────────────────────────────────────────────────
 function renderStudents() {
-  document.getElementById('students-body').innerHTML = studentsData.map(s => `<tr><td>${s.Name}</td><td>${s.Department}</td><td>${s.House}</td><td>${s.RollNo||''}</td></tr>`).join('');
+  document.getElementById('students-body').innerHTML = studentsData.map(s =>
+    `<tr><td>${s.StudentID||'-'}</td><td>${s.Name}</td><td>${s.Department}</td><td>${s.House}</td><td>${s.RollNo||''}</td></tr>`
+  ).join('');
 }
 
 async function uploadStudents() {
   const file = document.getElementById('students-csv').files[0];
-  if (!file) { toast('Select a CSV file', 'error'); return; }
+  if (!file) { toast('Select a CSV file first', 'error'); return; }
+
   const text = await file.text();
-  const rows = parseCSV(text);
-  // Use savePointsConfig‑style: replace entire sheet via saveDashboard action with Students tab
-  await apiPost('saveDashboard', { tab: 'Students', data: rows.map(r => ({ Name: r.Name||r.name||r['Student Name']||'', Department: r.Department||r.Dept||r.department||'', House: r.House||r.house||'', RollNo: r.RollNo||r['Roll No']||'' })) });
-  toast(`Uploaded ${rows.length} students`, 'success');
-  studentsData = await apiGet('getStudents');
-  renderStudents();
+  const rows = parseCSV(text).map(r => ({
+    Name:       r.Name       || r.name        || r['Student Name'] || '',
+    Department: r.Department || r.Dept        || r.department      || '',
+    House:      r.House      || r.house       || '',
+    RollNo:     r.RollNo     || r['Roll No']  || r.rollno          || ''
+  })).filter(r => r.Name);
+
+  if (!rows.length) { toast('No valid rows found in CSV', 'error'); return; }
+
+  const btn = document.getElementById('upload-btn');
+  const bar = document.getElementById('upload-bar');
+  const status = document.getElementById('upload-status');
+  const prog = document.getElementById('upload-progress');
+  btn.disabled = true;
+  prog.style.display = 'block';
+  bar.style.width = '0%';
+
+  try {
+    status.textContent = 'Clearing existing data...';
+    await apiPost('clearStudents', {});
+
+    const BATCH = 20;
+    for (let i = 0; i < rows.length; i += BATCH) {
+      const chunk = rows.slice(i, i + BATCH);
+      const pct = Math.round(((i + chunk.length) / rows.length) * 100);
+      status.textContent = `Uploading... ${i + chunk.length} / ${rows.length} students`;
+      bar.style.width = pct + '%';
+      await apiPost('saveStudents', { rows: chunk, startId: i + 1 });
+    }
+
+    bar.style.width = '100%';
+    status.textContent = `✅ Done! ${rows.length} students uploaded with IDs STU0001–STU${String(rows.length).padStart(4,'0')}`;
+    toast(`${rows.length} students uploaded successfully`, 'success');
+    studentsData = await apiGet('getStudents');
+    renderStudents();
+  } catch(err) {
+    toast('Upload failed: ' + err.message, 'error');
+    status.textContent = '❌ Upload failed. Check console.';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── Results ───────────────────────────────────────────────────────────────────
@@ -720,21 +766,44 @@ async function saveSettings() {
 async function uploadAssets() {
   const logo    = document.getElementById('up-logo').files[0];
   const founder = document.getElementById('up-founder').files[0];
-  if (logo) {
-    const b = await fileToBase64(logo);
-    const r = await apiPost('uploadPhoto', { ...b, studentName:'logo', house:'', dept:'' });
-    await apiPost('saveSetting', { Key:'LogoUrl', Value: r.url });
-    document.getElementById('preview-logo').src = r.url; document.getElementById('preview-logo').style.display='block';
+  if (!logo && !founder) { toast('Select at least one image to upload', 'error'); return; }
+
+  const btn = document.querySelector('[onclick="uploadAssets()"]');
+  if (btn) btn.disabled = true;
+
+  try {
+    if (logo) {
+      toast('Uploading college logo…', 'info');
+      const b = await fileToBase64(logo);
+      // Use apiUpload (POST body) — image base64 is too large for a GET URL
+      const r = await apiUpload('uploadPhoto', { ...b, studentName: 'logo', house: '', dept: '' });
+      if (!r.url) throw new Error('No URL returned for logo');
+      await apiPost('saveSetting', { Key: 'LogoUrl', Value: r.url });
+      document.getElementById('preview-logo').src = r.url;
+      document.getElementById('preview-logo').style.display = 'block';
+      toast('✅ College logo uploaded!', 'success');
+    }
+
+    if (founder) {
+      toast('Uploading founder picture…', 'info');
+      const b = await fileToBase64(founder);
+      const r = await apiUpload('uploadPhoto', { ...b, studentName: 'founder', house: '', dept: '' });
+      if (!r.url) throw new Error('No URL returned for founder picture');
+      await apiPost('saveSetting', { Key: 'FounderUrl', Value: r.url });
+      document.getElementById('preview-founder').src = r.url;
+      document.getElementById('preview-founder').style.display = 'block';
+      toast('✅ Founder picture uploaded!', 'success');
+    }
+
+    _settings = null; // bust cache so new images appear in reports immediately
+  } catch(err) {
+    toast('Upload failed: ' + err.message, 'error');
+    console.error('uploadAssets error:', err);
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  if (founder) {
-    const b = await fileToBase64(founder);
-    const r = await apiPost('uploadPhoto', { ...b, studentName:'founder', house:'', dept:'' });
-    await apiPost('saveSetting', { Key:'FounderUrl', Value: r.url });
-    document.getElementById('preview-founder').src = r.url; document.getElementById('preview-founder').style.display='block';
-  }
-  _settings = null;
-  toast('Assets uploaded', 'success');
 }
+
 
 // ── Reports ───────────────────────────────────────────────────────────────────
 async function openReport(type) {
@@ -744,13 +813,20 @@ async function openReport(type) {
   const content= document.getElementById('report-content');
   const hdr    = document.getElementById('report-print-header');
 
+  // Convert images to base64 so they reliably show in print
+  const [logoSrc, founderSrc] = await Promise.all([
+    imgToDataUrl(s.LogoUrl || ''),
+    imgToDataUrl(s.FounderUrl || '')
+  ]);
+
   hdr.innerHTML = `
-    <img src="${s.LogoUrl||''}" onerror="this.style.display='none'" style="height:60px">
+    ${logoSrc ? `<img src="${logoSrc}" alt="Logo" style="height:60px">` : ''}
     <div style="flex:1;text-align:center">
-      <div style="font-size:1.1rem;font-weight:700">${s.CollegeName||''}</div>
-      <div style="font-size:.9rem">${s.EventTitle||''}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#000">${s.CollegeName||''}</div>
+      <div style="font-size:.9rem;color:#555">${s.EventTitle||''}</div>
     </div>
-    <img src="${s.FounderUrl||''}" onerror="this.style.display='none'" style="height:60px;border-radius:50%">`;
+    ${founderSrc ? `<img src="${founderSrc}" alt="Founder" style="height:60px;border-radius:50%">` : ''}`;
+
 
   document.getElementById('rep-sig-incharge').textContent = s.CommitteeInChargeName || 'Sports Incharge';
   document.getElementById('rep-sig-principal').textContent = s.PrincipalName || 'Principal';
