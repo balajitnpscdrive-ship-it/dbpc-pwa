@@ -53,8 +53,8 @@
 
     <div class="text-center mt-2">
       <small class="text-muted">
-        Need to set your Apps Script URL?
-        <span style="color:var(--accent);cursor:pointer" onclick="toggleGasSetup()">Click here</span>
+        Advanced: 
+        <span style="color:var(--accent);cursor:pointer" onclick="toggleGasSetup()">Override Apps Script URL</span>
       </small>
     </div>
   </div>
@@ -66,10 +66,9 @@
   let currentRole = 'committee';
 
   (async function init() {
-    // Show GAS setup if URL not set
+    // URL is now hardcoded in api.js — show setup only if user manually toggles it
     const url = localStorage.getItem('GAS_URL') || '';
-    if (!url) { document.getElementById('gas-setup').style.display = 'block'; }
-    else { document.getElementById('gas-url-input').value = url; }
+    if (url) { document.getElementById('gas-url-input').value = url; }
 
     // Load settings for branding
     try {
@@ -79,9 +78,14 @@
       if (s.LogoUrl)     document.getElementById('school-logo').src = s.LogoUrl;
     } catch(e) {}
 
-    // If already logged in, redirect using stored loginRole
+    // If already logged in with a valid session, redirect
     const u = Session.get();
-    if (u) redirect(u.loginRole || (u.houseName ? 'house' : 'committee'), u);
+    if (u && u.loginRole) {
+      redirect(u.loginRole, u);
+    } else if (u && !u.loginRole) {
+      // Stale session from old broken format — clear it
+      Session.clear();
+    }
   })();
 
   function switchRole(r) {
@@ -107,8 +111,7 @@
 
   async function doLogin(e) {
     e.preventDefault();
-    const url = localStorage.getItem('GAS_URL') || '';
-    if (!url) { toast('Please set your Apps Script URL first', 'error'); toggleGasSetup(); return; }
+    const url = getGasUrl();
 
     const email = document.getElementById('login-email').value.trim();
     const pass  = document.getElementById('login-password').value.trim();
