@@ -2,7 +2,7 @@
 // DEFAULT_GAS_URL is the hardcoded fallback.
 // localStorage('GAS_URL') can still override it if needed.
 
-const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwJehyY-F1KFmVfV6N3fzH_Nkco1M1bmOaLLhq0aAWDeu82I6M9j_jrQ_51NNHhRo05dA/exec';
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbxJgm1RkjEYngdZvDeDuFZLJ-Jufdnkdrz04cjj7Lth91w5kUlJnLzYQ93gz-1GF0snHA/exec';
 
 function getGasUrl() {
   return localStorage.getItem('GAS_URL') || DEFAULT_GAS_URL;
