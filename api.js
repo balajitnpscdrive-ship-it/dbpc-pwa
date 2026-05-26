@@ -55,6 +55,7 @@ async function apiGet(action, params = {}) {
 }
 
 // apiPost sends as GET with payload encoded in ?data= to avoid all CORS issues.
+// Use only for small payloads (text, settings, etc.) — URL limit is ~2KB.
 async function apiPost(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
@@ -63,6 +64,24 @@ async function apiPost(action, payload = {}) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
+
+// apiUpload sends the payload as a POST body (bypasses URL length limits).
+// Use for large payloads like base64-encoded images.
+// Uses text/plain Content-Type so the browser skips the CORS preflight check.
+async function apiUpload(action, payload = {}) {
+  const url = new URL(getGasUrl());
+  url.searchParams.set('action', action);
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    redirect: 'follow'
+    // No Content-Type header → browser defaults to text/plain for string body,
+    // which is a "simple request" → no CORS preflight → GAS responds fine.
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 
 // ── Toast notifications ───────────────────────────────────────────────────────
 function toast(msg, type = 'info') {
@@ -141,6 +160,25 @@ function fileToBase64(file) {
   });
 }
 
+// Fetches a URL and converts it to a base64 data URL so images print reliably.
+// Falls back to the original URL on CORS/network error.
+async function imgToDataUrl(url) {
+  if (!url) return '';
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) return url;
+    const blob = await res.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve(url);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return url; // fallback to original on CORS failure
+  }
+}
+
 // ── Confetti ──────────────────────────────────────────────────────────────────
 function fireConfetti() {
   if (!window.confetti) return;
@@ -196,14 +234,19 @@ async function printWithHeader(title) {
   const s = await getSettings();
   const header = document.getElementById('print-header');
   if (header) {
+    // Convert images to base64 so they always show in print (external URLs can be blocked)
+    const [logoSrc, founderSrc] = await Promise.all([
+      imgToDataUrl(s.LogoUrl || ''),
+      imgToDataUrl(s.FounderUrl || '')
+    ]);
     header.innerHTML = `
-      <img src="${s.LogoUrl || ''}" onerror="this.style.display='none'" alt="Logo" />
-      <div style="flex:1">
-        <div style="font-size:1.2rem;font-weight:700">${s.CollegeName || ''}</div>
+      ${logoSrc ? `<img src="${logoSrc}" alt="Logo" style="height:60px" />` : ''}
+      <div style="flex:1;text-align:center">
+        <div style="font-size:1.2rem;font-weight:700;color:#000">${s.CollegeName || ''}</div>
         <div style="font-size:0.9rem;color:#555">${s.EventTitle || ''}</div>
-        <div style="font-size:1rem;font-weight:600;margin-top:.3rem">${title}</div>
+        <div style="font-size:1rem;font-weight:600;margin-top:.3rem;color:#000">${title}</div>
       </div>
-      <img src="${s.FounderUrl || ''}" onerror="this.style.display='none'" alt="Founder" style="height:60px;border-radius:50%;" />
+      ${founderSrc ? `<img src="${founderSrc}" alt="Founder" style="height:60px;border-radius:50%" />` : ''}
     `;
   }
   window.print();
