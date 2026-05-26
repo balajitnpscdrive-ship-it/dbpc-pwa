@@ -51,23 +51,26 @@ async function apiGet(action, params = {}) {
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  if (json && json.error) throw new Error('Server: ' + json.error);
+  return json;
 }
 
-// apiPost sends as GET with payload encoded in ?data= to avoid all CORS issues.
-// Use only for small payloads (text, settings, etc.) — URL limit is ~2KB.
+// apiPost sends as GET with payload encoded in ?data= — only for SMALL payloads.
+// URL limit on GAS is ~2 KB. Use apiUpload for images / large data.
 async function apiPost(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
   url.searchParams.set('data', JSON.stringify(payload));
   const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  if (json && json.error) throw new Error('Server: ' + json.error);
+  return json;
 }
 
-// apiUpload sends the payload as a POST body (bypasses URL length limits).
-// Use for large payloads like base64-encoded images.
-// Uses text/plain Content-Type so the browser skips the CORS preflight check.
+// apiUpload sends the payload as a POST body — for large payloads (images, bulk data).
+// text/plain Content-Type avoids CORS preflight so GAS responds without issues.
 async function apiUpload(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
@@ -75,11 +78,11 @@ async function apiUpload(action, payload = {}) {
     method: 'POST',
     body: JSON.stringify(payload),
     redirect: 'follow'
-    // No Content-Type header → browser defaults to text/plain for string body,
-    // which is a "simple request" → no CORS preflight → GAS responds fine.
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  if (json && json.error) throw new Error('Server: ' + json.error);
+  return json;
 }
 
 
