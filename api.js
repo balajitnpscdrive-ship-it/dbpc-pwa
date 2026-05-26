@@ -1,12 +1,46 @@
 // api.js – Shared API wrapper for Sports Day Management
-// GAS_URL is read fresh from localStorage on every call
-// so saving the URL on the login page takes effect immediately.
+// DEFAULT_GAS_URL is the hardcoded fallback.
+// localStorage('GAS_URL') can still override it if needed.
+
+const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwJehyY-F1KFmVfV6N3fzH_Nkco1M1bmOaLLhq0aAWDeu82I6M9j_jrQ_51NNHhRo05dA/exec';
 
 function getGasUrl() {
-  const u = localStorage.getItem('GAS_URL') || '';
-  if (!u) throw new Error('Apps Script URL not set. Please save it on the login page.');
-  return u;
+  return localStorage.getItem('GAS_URL') || DEFAULT_GAS_URL;
 }
+
+// ── QR Code generator ─────────────────────────────────────────────────────────
+// Requires qrcodejs loaded via CDN (added to each HTML page that shows lists/reports).
+// Returns a base64 PNG <img> string for embedding in table cells and print reports.
+function makeQRDataUrl(text, size) {
+  size = size || 72;
+  if (!window.QRCode) return '';
+  try {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+    document.body.appendChild(div);
+    new QRCode(div, {
+      text: text || ' ',
+      width: size,
+      height: size,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const canvas = div.querySelector('canvas');
+    const url = canvas ? canvas.toDataURL('image/png') : '';
+    document.body.removeChild(div);
+    return url;
+  } catch(e) {
+    return '';
+  }
+}
+
+// Returns a ready-to-embed <img> HTML string of the QR code
+function qrImg(text, size) {
+  const url = makeQRDataUrl(text, size || 72);
+  return url
+    ? `<img src="${url}" alt="QR" style="width:${size||72}px;height:${size||72}px;display:block;image-rendering:pixelated" />`
+    : '';
+}
+
 
 // ── Core fetch helpers ────────────────────────────────────────────────────────
 // All requests use GET to avoid CORS preflight issues with GAS.
