@@ -276,7 +276,15 @@
             <input type="file" id="up-founder" accept="image/*"/>
             <img id="preview-founder" src="" alt="Founder Preview" style="margin-top:.5rem;height:80px;display:none;border-radius:6px"/>
           </div>
+          <div class="form-group">
+            <label>🎵 Scoreboard Background Music (MP3)</label>
+            <input type="file" id="up-music" accept="audio/*"/>
+            <div id="preview-music" style="margin-top:.5rem;display:none">
+              <audio id="audio-preview" controls style="width:100%;margin-top:.3rem"></audio>
+            </div>
+          </div>
           <button class="btn btn-primary w-full mt-1" onclick="uploadAssets()">☁️ Upload to Drive</button>
+
         </div>
       </div>
     </section>
@@ -696,7 +704,10 @@ async function uploadStudents() {
 
   try {
     status.textContent = 'Clearing existing data...';
-    await apiPost('clearStudents', {});
+    // Use apiUpload (POST body) — clearStudents/saveStudents are new actions
+    // that require Code.gs to be redeployed. If you see "Server: Unknown action"
+    // errors, go to Extensions → Apps Script → Deploy → New version.
+    await apiUpload('clearStudents', {});
 
     const BATCH = 20;
     for (let i = 0; i < rows.length; i += BATCH) {
@@ -704,7 +715,7 @@ async function uploadStudents() {
       const pct = Math.round(((i + chunk.length) / rows.length) * 100);
       status.textContent = `Uploading... ${i + chunk.length} / ${rows.length} students`;
       bar.style.width = pct + '%';
-      await apiPost('saveStudents', { rows: chunk, startId: i + 1 });
+      await apiUpload('saveStudents', { rows: chunk, startId: i + 1 });
     }
 
     bar.style.width = '100%';
@@ -713,12 +724,18 @@ async function uploadStudents() {
     studentsData = await apiGet('getStudents');
     renderStudents();
   } catch(err) {
-    toast('Upload failed: ' + err.message, 'error');
-    status.textContent = '❌ Upload failed. Check console.';
+    const msg = err.message || 'Unknown error';
+    const isNotDeployed = msg.includes('Unknown action');
+    toast('Upload failed: ' + msg, 'error');
+    status.textContent = isNotDeployed
+      ? '❌ Code.gs not redeployed! Go to Extensions → Apps Script → Deploy → New version'
+      : '❌ ' + msg;
   } finally {
     btn.disabled = false;
   }
 }
+
+
 
 // ── Results ───────────────────────────────────────────────────────────────────
 function renderResults(data) {
@@ -766,7 +783,8 @@ async function saveSettings() {
 async function uploadAssets() {
   const logo    = document.getElementById('up-logo').files[0];
   const founder = document.getElementById('up-founder').files[0];
-  if (!logo && !founder) { toast('Select at least one image to upload', 'error'); return; }
+  const music   = document.getElementById('up-music').files[0];
+  if (!logo && !founder && !music) { toast('Select at least one file to upload', 'error'); return; }
 
   const btn = document.querySelector('[onclick="uploadAssets()"]');
   if (btn) btn.disabled = true;
@@ -775,7 +793,6 @@ async function uploadAssets() {
     if (logo) {
       toast('Uploading college logo…', 'info');
       const b = await fileToBase64(logo);
-      // Use apiUpload (POST body) — image base64 is too large for a GET URL
       const r = await apiUpload('uploadPhoto', { ...b, studentName: 'logo', house: '', dept: '' });
       if (!r.url) throw new Error('No URL returned for logo');
       await apiPost('saveSetting', { Key: 'LogoUrl', Value: r.url });
@@ -795,7 +812,21 @@ async function uploadAssets() {
       toast('✅ Founder picture uploaded!', 'success');
     }
 
-    _settings = null; // bust cache so new images appear in reports immediately
+    if (music) {
+      toast('Uploading background music…', 'info');
+      const b = await fileToBase64(music);
+      const r = await apiUpload('uploadPhoto', { ...b, studentName: 'music', house: '', dept: '' });
+      if (!r.url) throw new Error('No URL returned for music');
+      // Convert Drive view URL to direct streaming URL
+      const streamUrl = r.url.replace('export=view', 'export=download');
+      await apiPost('saveSetting', { Key: 'MusicUrl', Value: streamUrl });
+      const audioEl = document.getElementById('audio-preview');
+      audioEl.src = streamUrl;
+      document.getElementById('preview-music').style.display = 'block';
+      toast('✅ Background music uploaded!', 'success');
+    }
+
+    _settings = null;
   } catch(err) {
     toast('Upload failed: ' + err.message, 'error');
     console.error('uploadAssets error:', err);
@@ -803,6 +834,7 @@ async function uploadAssets() {
     if (btn) btn.disabled = false;
   }
 }
+
 
 
 // ── Reports ───────────────────────────────────────────────────────────────────
