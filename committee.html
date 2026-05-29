@@ -10,6 +10,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <!-- QR Code Scanner & Generator -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
 <div class="app-shell">
@@ -204,14 +207,14 @@
           <p id="upload-status" class="text-muted mt-1" style="font-size:.82rem"></p>
         </div>
       </div>
-      <div class="card">
-        <div class="table-wrap" style="max-height:450px;overflow-y:auto">
-          <table>
-            <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>House</th><th>Roll No</th></tr></thead>
-            <tbody id="students-body"></tbody>
-          </table>
-        </div>
+    <div class="card">
+      <div class="table-wrap" style="max-height:450px;overflow-y:auto">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>House</th><th>Roll No</th><th>QR Code</th></tr></thead>
+          <tbody id="students-body"></tbody>
+        </table>
       </div>
+    </div>
     </section>
 
     <!-- All Results -->
@@ -228,7 +231,7 @@
         <div class="print-header" id="print-header"></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Department</th><th>House</th><th>Points</th><th>Photo</th></tr></thead>
+            <thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Department</th><th>House</th><th>Points</th><th>Photo</th><th>QR Code</th></tr></thead>
             <tbody id="results-body"></tbody>
           </table>
         </div>
@@ -373,11 +376,11 @@ async function loadAll() {
     apiGet('getEvents'), apiGet('getHouses'), apiGet('getStudents'),
     apiGet('getPointsConfig'), apiGet('getResults')
   ]);
-  populateSelects();
+  await populateSelects();
   loadSettings();
 }
 
-function populateSelects() {
+async function populateSelects() {
   // Award – events
   const ae = document.getElementById('award-event');
   ae.innerHTML = '<option value="">Select event…</option>';
@@ -407,8 +410,8 @@ function populateSelects() {
   renderEventsTable();
   renderHousesTable();
   renderPointsConfig();
-  renderStudents();
-  renderResults();
+  await renderStudents();
+  await renderResults();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -674,10 +677,12 @@ async function saveUser() {
 }
 
 // ── Students ──────────────────────────────────────────────────────────────────
-function renderStudents() {
-  document.getElementById('students-body').innerHTML = studentsData.map(s =>
-    `<tr><td>${s.StudentID||'-'}</td><td>${s.Name}</td><td>${s.Department}</td><td>${s.House}</td><td>${s.RollNo||''}</td></tr>`
-  ).join('');
+async function renderStudents() {
+  const rows = await Promise.all(studentsData.map(async s => {
+    const qrImg = await studentQRImg(s.Name, s.Department, s.House, 50);
+    return `<tr><td>${s.StudentID||'-'}</td><td>${s.Name}</td><td>${s.Department}</td><td>${s.House}</td><td>${s.RollNo||''}</td><td>${qrImg}</td></tr>`;
+  }));
+  document.getElementById('students-body').innerHTML = rows.join('');
 }
 
 async function uploadStudents() {
@@ -738,20 +743,24 @@ async function uploadStudents() {
 
 
 // ── Results ───────────────────────────────────────────────────────────────────
-function renderResults(data) {
+async function renderResults(data) {
   const d = data || resultsData;
-  document.getElementById('results-body').innerHTML = d.map(r => `
-    <tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.Department}</td><td>${r.House}</td><td>${r.Points}</td>
-    <td>${r.PhotoUrl ? `<img src="${r.PhotoUrl}" style="height:36px;border-radius:4px">` : '-'}</td></tr>`).join('');
+  const rows = await Promise.all(d.map(async r => {
+    const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
+    const qrImg = (isTeamResult || !r.StudentName) ? '' : await studentQRImg(r.StudentName, r.Department, r.House, 50);
+    return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.Department}</td><td>${r.House}</td><td>${r.Points}</td>
+    <td>${r.PhotoUrl ? `<img src="${r.PhotoUrl}" style="height:36px;border-radius:4px">` : '-'}</td><td>${qrImg}</td></tr>`;
+  }));
+  document.getElementById('results-body').innerHTML = rows.join('');
 }
 
-function filterResults() {
+async function filterResults() {
   const evt = document.getElementById('results-filter-event').value;
   const hse = document.getElementById('results-filter-house').value;
   let filtered = resultsData;
   if (evt) filtered = filtered.filter(r => r.EventID === evt);
   if (hse) filtered = filtered.filter(r => r.House === hse);
-  renderResults(filtered);
+  await renderResults(filtered);
 }
 
 function printResults() { printWithHeader('Results Report'); }
@@ -870,29 +879,50 @@ async function openReport(type) {
   let html = '', ttl = '';
   if (type === 'house') {
     ttl = 'House‑wise Participant List';
-    housesData.forEach(h => {
+    for (const h of housesData) {
       const stu = finalList.filter(f => f.House === h.HouseName);
-      html += `<h3 style="margin-top:1.5rem;color:${h.Color}">${h.HouseName}</h3><table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>Department</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.EventName}</td><td>${s.Department}</td></tr>`).join('')}</tbody></table>`;
-    });
+      const rows = await Promise.all(stu.map(async (s, i) => {
+        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+        return `<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.EventName}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
+      }));
+      html += `<h3 style="margin-top:1.5rem;color:${h.Color}">${h.HouseName}</h3><table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+    }
   } else if (type === 'game') {
     ttl = 'Game‑wise Participant List';
-    eventsData.forEach(ev => {
+    for (const ev of eventsData) {
       const stu = finalList.filter(f => f.EventID === ev.EventID);
-      html += `<h3 style="margin-top:1.5rem">${ev.EventName}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Department</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.Department}</td></tr>`).join('')}</tbody></table>`;
-    });
+      const rows = await Promise.all(stu.map(async (s, i) => {
+        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+        return `<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
+      }));
+      html += `<h3 style="margin-top:1.5rem">${ev.EventName}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+    }
   } else if (type === 'dept') {
     ttl = 'Department‑wise Participant List';
     const depts = [...new Set(finalList.map(f => f.Department))];
-    depts.forEach(d => {
+    for (const d of depts) {
       const stu = finalList.filter(f => f.Department === d);
-      html += `<h3 style="margin-top:1.5rem">${d||'Unknown'}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Event</th></tr></thead><tbody>${stu.map((s,i)=>`<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.EventName}</td></tr>`).join('')}</tbody></table>`;
-    });
+      const rows = await Promise.all(stu.map(async (s, i) => {
+        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+        return `<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.House}</td><td>${s.EventName}</td><td>${qrImg}</td></tr>`;
+      }));
+      html += `<h3 style="margin-top:1.5rem">${d||'Unknown'}</h3><table><thead><tr><th>#</th><th>Name</th><th>House</th><th>Event</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+    }
   } else if (type === 'overall') {
     ttl = 'Overall Results';
-    html = `<table><thead><tr><th>Event</th><th>Position</th><th>Student</th><th>House</th><th>Dept</th><th>Points</th></tr></thead><tbody>${resultsData.map(r=>`<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td></tr>`).join('')}</tbody></table>`;
+    const rows = await Promise.all(resultsData.map(async r => {
+      const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
+      const qrImg = (isTeamResult || !r.StudentName) ? '' : await studentQRImg(r.StudentName, r.Department, r.House, 50);
+      return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td><td>${qrImg}</td></tr>`;
+    }));
+    html = `<table><thead><tr><th>Event</th><th>Position</th><th>Student</th><th>House</th><th>Dept</th><th>Points</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   } else if (type === 'finallist') {
     ttl = 'Final Participant List';
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>House</th><th>Department</th></tr></thead><tbody>${finalList.map((f,i)=>`<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.EventName}</td><td>${f.House}</td><td>${f.Department}</td></tr>`).join('')}</tbody></table>`;
+    const rows = await Promise.all(finalList.map(async (f, i) => {
+      const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
+      return `<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.EventName}</td><td>${f.House}</td><td>${f.Department}</td><td>${qrImg}</td></tr>`;
+    }));
+    html = `<table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>House</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   } else if (type === 'scores') {
     ttl = 'House Score Summary';
     const sorted = [...scores].sort((a,b)=>Number(b.Points)-Number(a.Points));
