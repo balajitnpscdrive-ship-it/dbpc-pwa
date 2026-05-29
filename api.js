@@ -18,12 +18,23 @@ async function apiGet(action, params = {}) {
   return res.json();
 }
 
-// apiPost: sends POST request to avoid URL length limits.
-// To avoid CORS preflight, we send it with method: 'POST', redirect: 'follow',
-// and Content-Type: 'text/plain;charset=utf-8' (simple request format).
+// apiPost: sends POST request for large payloads to avoid URL length limits,
+// and GET request for small payloads (<1500 chars) for maximum reliability and to prevent redirect method loss.
 async function apiPost(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
+  
+  const payloadStr = JSON.stringify(payload);
+  
+  // If payload is small, send as GET (which is 100% reliable for redirects)
+  if (payloadStr.length < 1500) {
+    url.searchParams.set('data', payloadStr);
+    const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+  
+  // If payload is large, send as POST
   const res = await fetch(url.toString(), {
     method: 'POST',
     mode: 'cors',
@@ -31,7 +42,7 @@ async function apiPost(action, payload = {}) {
     headers: {
       'Content-Type': 'text/plain;charset=utf-8'
     },
-    body: JSON.stringify(payload)
+    body: payloadStr
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
