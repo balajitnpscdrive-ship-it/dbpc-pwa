@@ -714,7 +714,7 @@ async function uploadStudents() {
     // errors, go to Extensions → Apps Script → Deploy → New version.
     await apiUpload('clearStudents', {});
 
-    const BATCH = 20;
+    const BATCH = 10;
     for (let i = 0; i < rows.length; i += BATCH) {
       const chunk = rows.slice(i, i + BATCH);
       const pct = Math.round(((i + chunk.length) / rows.length) * 100);
