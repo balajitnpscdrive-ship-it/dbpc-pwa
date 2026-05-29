@@ -338,7 +338,14 @@ async function submitBulk() {
   const evOpt = evSel.options[evSel.selectedIndex];
   if (!evOpt || !evOpt.value) { toast('Select an event', 'error'); return; }
   if (!bulkTemp.length) { toast('No students to add', 'error'); return; }
-  await apiPost('bulkUpload', { eventId:evOpt.value, eventName:evOpt.textContent, rows:bulkTemp });
+  
+  toast('Uploading bulk entries…', 'info');
+  const BATCH = 10;
+  for (let i = 0; i < bulkTemp.length; i += BATCH) {
+    const chunk = bulkTemp.slice(i, i + BATCH);
+    await apiPost('bulkUpload', { eventId:evOpt.value, eventName:evOpt.textContent, rows:chunk });
+  }
+  
   toast(`${bulkTemp.length} students added`, 'success');
   bulkTemp=[]; renderBulkTemp();
   shortListData = await apiGet('getEntries');
