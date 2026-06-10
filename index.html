@@ -67,7 +67,8 @@
 
   (async function init() {
     // URL is now hardcoded in api.js — show setup only if user manually toggles it
-    const url = localStorage.getItem('GAS_URL') || '';
+    let url = '';
+    try { url = localStorage.getItem('GAS_URL') || ''; } catch(e) {}
     if (url) { document.getElementById('gas-url-input').value = url; }
 
     // Load settings for branding
@@ -75,13 +76,20 @@
       const s = await getSettings();
       if (s.CollegeName) document.getElementById('college-name').textContent = s.CollegeName;
       if (s.EventTitle)  document.getElementById('event-title').textContent = s.EventTitle;
-      if (s.LogoUrl)     document.getElementById('school-logo').src = s.LogoUrl;
+      if (s.LogoUrl)     document.getElementById('school-logo').src = getGoogleDriveThumbUrl(s.LogoUrl);
     } catch(e) {}
 
-    // If already logged in with a valid session, redirect
+    // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
     const u = Session.get();
-    if (u && u.loginRole) {
+    const isRedirected = window.location.search.includes('from=');
+    if (u && u.loginRole && !isRedirected) {
       redirect(u.loginRole, u);
+    } else if (isRedirected) {
+      // If we were redirected back, the session might be stale or unshared (e.g. file:/// origin issues)
+      Session.clear();
+      try {
+        history.replaceState(null, '', window.location.pathname);
+      } catch(e) {}
     } else if (u && !u.loginRole) {
       // Stale session from old broken format — clear it
       Session.clear();
@@ -104,26 +112,31 @@
   function saveGasUrl() {
     const val = document.getElementById('gas-url-input').value.trim();
     if (!val) return toast('Please enter the URL', 'error');
-    localStorage.setItem('GAS_URL', val);
+    try {
+      localStorage.setItem('GAS_URL', val);
+    } catch(e) {
+      toast('Failed to save to local storage, using this session only.', 'warning');
+    }
     toast('URL saved!', 'success');
     document.getElementById('gas-setup').style.display = 'none';
   }
 
   async function doLogin(e) {
     e.preventDefault();
-    const url = getGasUrl();
-
-    const email = document.getElementById('login-email').value.trim();
-    const pass  = document.getElementById('login-password').value.trim();
     const errEl = document.getElementById('login-error');
     const loader = document.getElementById('login-loader');
     const btnTxt = document.getElementById('login-btn-text');
 
     errEl.style.display = 'none';
-    loader.classList.remove('hidden');
-    btnTxt.textContent = 'Signing in…';
 
     try {
+      const url = getGasUrl(); // Move inside try to catch missing URL errors cleanly
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-password').value.trim();
+
+      loader.classList.remove('hidden');
+      btnTxt.textContent = 'Signing in…';
+
       const res = await apiPost('login', { role: currentRole, email, password: pass });
       if (res.ok) {
         // Merge server response + the tab role the user selected
@@ -136,7 +149,7 @@
         errEl.style.display = 'block';
       }
     } catch(err) {
-      errEl.textContent = 'Connection error. Check your Apps Script URL.';
+      errEl.textContent = err.message || 'Connection error. Check your Apps Script URL.';
       errEl.style.display = 'block';
     } finally {
       loader.classList.add('hidden');
