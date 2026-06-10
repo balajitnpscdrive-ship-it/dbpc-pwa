@@ -1,10 +1,18 @@
 // api.js – Shared API wrapper for Sports Day Management
 // GAS_URL is read fresh from localStorage on every call
 
+const DEFAULT_GAS_URL = "";
+
 function getGasUrl() {
-  const u = localStorage.getItem('GAS_URL') || '';
-  if (!u) throw new Error('Apps Script URL not set. Please save it on the login page.');
-  return u;
+  let u = '';
+  try {
+    u = localStorage.getItem('GAS_URL');
+  } catch(e) {}
+  const url = u || DEFAULT_GAS_URL;
+  if (!url || !url.startsWith('https://')) {
+    throw new Error('Apps Script Web App URL is not set or invalid. Please save your correct Web App URL at the bottom of the login page.');
+  }
+  return url;
 }
 
 // ── Core fetch helpers ─────────────────────────────────────────────────────────
@@ -87,9 +95,26 @@ function toast(msg, type = 'info') {
 
 // ── Session helpers ────────────────────────────────────────────────────────────
 const Session = {
-  set(data) { sessionStorage.setItem('sportsUser', JSON.stringify(data)); },
-  get()     { return JSON.parse(sessionStorage.getItem('sportsUser') || 'null'); },
-  clear()   { sessionStorage.removeItem('sportsUser'); },
+  set(data) {
+    try {
+      sessionStorage.setItem('sportsUser', JSON.stringify(data));
+    } catch(e) {
+      window.sportsUserSession = data;
+    }
+  },
+  get() {
+    try {
+      return JSON.parse(sessionStorage.getItem('sportsUser') || 'null') || window.sportsUserSession || null;
+    } catch(e) {
+      return window.sportsUserSession || null;
+    }
+  },
+  clear() {
+    try {
+      sessionStorage.removeItem('sportsUser');
+    } catch(e) {}
+    window.sportsUserSession = null;
+  },
 
   // role = 'committee' | 'house'
   // Check loginRole (tab selected), NOT u.role (sheet value like 'admin')
@@ -152,6 +177,21 @@ function stopQRScanner() {
 }
 
 // ── Image → base64 ────────────────────────────────────────────────────────────
+function getGoogleDriveThumbUrl(url) {
+  if (!url) return '';
+  const dRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+  const dMatch = url.match(dRegex);
+  if (dMatch && dMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${dMatch[1]}&sz=w600`;
+  }
+  const idRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+  const idMatch = url.match(idRegex);
+  if (idMatch && idMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w600`;
+  }
+  return url;
+}
+
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
@@ -200,10 +240,31 @@ function initNav() {
       item.classList.add('active');
       const sec = document.getElementById('sec-' + item.dataset.section);
       if (sec) sec.classList.remove('hidden');
+      
+      // Close mobile sidebar if open
+      const sb = document.querySelector('.sidebar');
+      if (sb) sb.classList.remove('open');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (backdrop) backdrop.classList.add('hidden');
     });
   });
   const first = document.querySelector('.nav-item[data-section]');
   if (first) first.click();
+}
+
+function toggleMobileSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (sb) {
+    sb.classList.toggle('open');
+    if (backdrop) {
+      if (sb.classList.contains('open')) {
+        backdrop.classList.remove('hidden');
+      } else {
+        backdrop.classList.add('hidden');
+      }
+    }
+  }
 }
 
 // ── CSV parser (for bulk upload) ──────────────────────────────────────────────
@@ -250,14 +311,16 @@ async function printWithHeader(title) {
   ]);
   const header = document.getElementById('print-header');
   if (header) {
+    const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl);
+    const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl);
     header.innerHTML = `
-      ${logoSrc ? `<img src="${logoSrc}" style="height:60px" alt="Logo">` : ''}
+      ${finalLogo ? `<img src="${finalLogo}" style="height:60px" alt="Logo">` : ''}
       <div style="flex:1;text-align:center">
         <div style="font-size:1.1rem;font-weight:700;color:#000">${s.CollegeName || ''}</div>
         <div style="font-size:.85rem;color:#555">${s.EventTitle || ''}</div>
         <div style="font-size:.95rem;font-weight:600;margin-top:.2rem">${title}</div>
       </div>
-      ${founderSrc ? `<img src="${founderSrc}" style="height:60px;border-radius:50%" alt="Founder">` : ''}
+      ${finalFounder ? `<img src="${finalFounder}" style="height:60px;border-radius:50%" alt="Founder">` : ''}
     `;
   }
   window.print();
