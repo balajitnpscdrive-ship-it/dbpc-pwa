@@ -3,510 +3,162 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>House In‑Charge Dashboard</title>
+  <title>Sports Day – Login</title>
+  <meta name="description" content="Sports Day Management System – Login"/>
   <link rel="stylesheet" href="styles.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
-<button class="mobile-menu-btn no-print" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">☰</button>
-<div id="sidebar-backdrop" class="sidebar-backdrop hidden no-print" onclick="toggleMobileSidebar()"></div>
-<div class="app-shell">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <img id="sb-logo" src="" alt="Logo" style="height:36px;border-radius:4px;display:none"/>
-      <h2 id="sb-house-name">House Dashboard</h2>
-      <p id="sb-user">In‑Charge</p>
+<div class="login-bg">
+  <div class="login-box card">
+    <div class="login-logo">
+      <img id="school-logo" class="school-logo" src="" alt="Logo" onerror="this.style.display='none'" />
+      <h1 id="college-name">Sports Day</h1>
+      <p id="event-title">Management System</p>
     </div>
-    <nav>
-      <div class="nav-item active" data-section="entry">    <span class="icon">📝</span> Entry Form</div>
-      <div class="nav-item" data-section="shortlist">       <span class="icon">📋</span> Short List</div>
-      <div class="nav-item" data-section="finallist">       <span class="icon">✅</span> Final List</div>
-      <div class="nav-item" data-section="print-reports">  <span class="icon">🖨️</span> Print Reports</div>
-    </nav>
-    <div style="margin-top:auto;padding:1rem">
-      <button class="btn btn-secondary btn-sm w-full" onclick="logout()">Logout</button>
+
+    <!-- Role Tabs -->
+    <div class="role-tabs">
+      <div class="role-tab active" id="tab-committee" onclick="switchRole('committee')">🏆 Committee</div>
+      <div class="role-tab" id="tab-house" onclick="switchRole('house')">🏠 House In‑Charge</div>
+      <div class="role-tab" id="tab-scoreboard" onclick="goScoreboard()">📊 Scoreboard</div>
     </div>
-  </aside>
 
-  <!-- Main -->
-  <main class="main-content">
+    <!-- GAS URL setup (first time) -->
+    <div id="gas-setup" class="mb-2" style="display:none">
+      <div class="form-group">
+        <label>Apps Script Web App URL</label>
+        <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec"/>
+      </div>
+      <button class="btn btn-secondary btn-sm w-full" onclick="saveGasUrl()">Save URL</button>
+      <hr style="border-color:var(--glass-border);margin:1rem 0"/>
+    </div>
 
-    <!-- Entry Form -->
-    <section id="sec-entry" class="section-page">
-      <div class="topbar">
-        <div class="topbar-title">Add Participants</div>
-        <span class="badge badge-gold" id="entry-house-badge">House</span>
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label>Email / Username</label>
+        <input type="text" id="login-email" required autocomplete="username" placeholder="Enter email"/>
       </div>
-      <div class="grid-2">
-        <div class="card">
-          <h3 class="mb-2">Individual Entry</h3>
-          <div class="form-group">
-            <label>Select Event</label>
-            <select id="ind-event"></select>
-          </div>
-          <div class="form-group">
-            <label>Select Student from List</label>
-            <select id="ind-student"></select>
-          </div>
-          <div class="form-group mt-1">
-            <label>—— OR Scan QR Code ——</label>
-            <button class="btn btn-secondary btn-sm" onclick="toggleIndQR()">📷 Camera</button>
-            <div id="ind-qr-reader" style="display:none;margin-top:.5rem"></div>
-          </div>
-          <div id="ind-scanned" class="card hidden mt-1" style="padding:.75rem">
-            <strong id="ind-scanned-name"></strong>
-            <span class="text-muted" id="ind-scanned-meta"></span>
-          </div>
-          <button class="btn btn-primary w-full mt-2" onclick="addIndEntry()">+ Add to Short List</button>
-        </div>
-        <div class="card">
-          <h3 class="mb-2">Team / Bulk Entry</h3>
-          <div class="form-group">
-            <label>Select Event (Team)</label>
-            <select id="bulk-event"></select>
-          </div>
-          <div class="form-group">
-            <label>Upload CSV &nbsp;<small class="text-muted">(Name,Department,House)</small></label>
-            <input type="file" id="bulk-csv" accept=".csv"/>
-          </div>
-          <button class="btn btn-secondary w-full mt-1" onclick="bulkCSV()">📤 Upload CSV</button>
-          <div class="mt-2">
-            <label class="mb-1" style="display:block">— Or add individually —</label>
-            <div class="flex gap-1">
-              <select id="bulk-student" style="flex:1"></select>
-              <button class="btn btn-secondary btn-sm" onclick="bulkAddOne()">Add</button>
-            </div>
-          </div>
-          <div id="bulk-list" class="mt-2" style="max-height:180px;overflow-y:auto"></div>
-          <button class="btn btn-primary w-full mt-1" onclick="submitBulk()">Submit Team List</button>
-        </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter password"/>
       </div>
-    </section>
+      <div id="login-error" class="text-muted mb-1" style="color:var(--danger);font-size:.85rem;display:none"></div>
+      <button type="submit" class="btn btn-primary w-full" id="login-btn">
+        <span id="login-btn-text">Sign In</span>
+        <span id="login-loader" class="loader hidden"></span>
+      </button>
+    </form>
 
-    <!-- Short List -->
-    <section id="sec-shortlist" class="section-page hidden">
-      <div class="topbar">
-        <div class="topbar-title">Short Listed Candidates</div>
-        <div class="flex gap-1">
-          <select id="sl-filter-event" onchange="renderShortList()"><option value="">All Events</option></select>
-          <button class="btn btn-secondary btn-sm" onclick="printWithHeader('Short List')">🖨️ Print</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="print-header" id="sl-print-header"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Student</th><th>Dept</th><th>Event</th><th>QR Code</th><th>Action</th></tr></thead>
-            <tbody id="shortlist-body"></tbody>
-          </table>
-        </div>
-        <div class="print-sig">
-          <div><div class="sig-line" id="sl-sig-ic">House In‑Charge</div></div>
-          <div><div class="sig-line" id="sl-sig-principal">Principal</div></div>
-          <div><div class="sig-line" id="sl-sig-sincharge">Sports Incharge</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Final List -->
-    <section id="sec-finallist" class="section-page hidden">
-      <div class="topbar">
-        <div class="topbar-title">Final Participant List</div>
-        <div class="flex gap-1">
-          <select id="fl-filter-event" onchange="renderFinalList()"><option value="">All Events</option></select>
-          <button class="btn btn-secondary btn-sm" onclick="printWithHeader('Final List')">🖨️ Print</button>
-        </div>
-      </div>
-      <div class="card mb-2">
-        <h3 class="mb-2">Move from Short List to Final List</h3>
-        <div class="form-group">
-          <label>Select Event</label>
-          <select id="fl-event-sel" onchange="loadShortForFinal()"></select>
-        </div>
-        <div id="fl-short-pick" class="table-wrap" style="max-height:200px;overflow-y:auto">
-          <p class="text-muted">Select an event above to pick students</p>
-        </div>
-        <button class="btn btn-primary mt-2" onclick="submitFinal()">✅ Save Final List</button>
-      </div>
-      <div class="card">
-        <h3 class="mb-2">Current Final List</h3>
-        <div class="print-header" id="fl-print-header"></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Student</th><th>House</th><th>Dept</th><th>Event</th><th>QR Code</th></tr></thead>
-            <tbody id="finallist-body"></tbody>
-          </table>
-        </div>
-        <div class="print-sig">
-          <div><div class="sig-line" id="fl-sig-ic">House In‑Charge</div></div>
-          <div><div class="sig-line" id="fl-sig-principal">Principal</div></div>
-          <div><div class="sig-line" id="fl-sig-sincharge">Sports Incharge</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Print Reports -->
-    <section id="sec-print-reports" class="section-page hidden">
-      <div class="topbar"><div class="topbar-title">Print Reports</div></div>
-      <div class="grid-3 no-print">
-        <div class="card text-center" style="cursor:pointer" onclick="printReport('house')">
-          <div style="font-size:2.5rem">🏠</div>
-          <h3 class="mt-1">House‑wise List</h3>
-          <p class="text-muted" style="font-size:.85rem">All my house participants</p>
-        </div>
-        <div class="card text-center" style="cursor:pointer" onclick="printReport('game')">
-          <div style="font-size:2.5rem">🎽</div>
-          <h3 class="mt-1">Game‑wise List</h3>
-          <p class="text-muted" style="font-size:.85rem">Participants by event</p>
-        </div>
-        <div class="card text-center" style="cursor:pointer" onclick="printReport('all')">
-          <div style="font-size:2.5rem">📋</div>
-          <h3 class="mt-1">Overall List</h3>
-          <p class="text-muted" style="font-size:.85rem">All events combined</p>
-        </div>
-      </div>
-      <div id="pr-output" class="card mt-3 hidden">
-        <div class="print-header" id="pr-header"></div>
-        <div class="topbar no-print">
-          <div class="topbar-title" id="pr-title"></div>
-          <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print</button>
-        </div>
-        <div id="pr-content"></div>
-        <div class="print-sig">
-          <div><div class="sig-line" id="pr-sig-ic">House In‑Charge</div></div>
-          <div><div class="sig-line" id="pr-sig-principal">Principal</div></div>
-          <div><div class="sig-line" id="pr-sig-sincharge">Sports Incharge</div></div>
-        </div>
-      </div>
-    </section>
-  </main>
+    <div class="text-center mt-2">
+      <small class="text-muted">
+        Advanced: 
+        <span style="color:var(--accent);cursor:pointer" onclick="toggleGasSetup()">Override Apps Script URL</span>
+      </small>
+    </div>
+  </div>
 </div>
 
 <div id="toast-container" class="toast-container"></div>
-
 <script src="api.js"></script>
 <script>
-function isHouseMatch(h1, h2) {
-  return String(h1 || '').trim().toLowerCase() === String(h2 || '').trim().toLowerCase();
-}
-let user, myHouse, eventsData=[], studentsData=[], myStudents=[], shortListData=[], finalListData=[];
-let indScanned=null, bulkTemp=[];
-let qrOpen=false;
+  let currentRole = 'committee';
 
-(async function init() {
-  user = Session.require('house');
-  if (!user) return;
-  myHouse = user.houseName;
-  document.getElementById('sb-house-name').textContent = myHouse;
-  document.getElementById('sb-user').textContent = user.name || 'In‑Charge';
-  document.getElementById('entry-house-badge').textContent = myHouse;
+  (async function init() {
+    // URL is now hardcoded in api.js — show setup only if user manually toggles it
+    let url = '';
+    try { url = localStorage.getItem('GAS_URL') || ''; } catch(e) {}
+    if (url) { document.getElementById('gas-url-input').value = url; }
 
-  const s = await getSettings();
-  if (s.LogoUrl) { const l=document.getElementById('sb-logo'); l.src=getGoogleDriveThumbUrl(s.LogoUrl); l.style.display='block'; }
+    // Load settings for branding
+    try {
+      const s = await getSettings();
+      if (s.CollegeName) document.getElementById('college-name').textContent = s.CollegeName;
+      if (s.EventTitle)  document.getElementById('event-title').textContent = s.EventTitle;
+      if (s.LogoUrl)     document.getElementById('school-logo').src = getGoogleDriveThumbUrl(s.LogoUrl);
+    } catch(e) {}
 
-  // Sig lines
-  ['sl','fl','pr'].forEach(p => {
-    const ic = document.getElementById(`${p}-sig-ic`);
-    const pr = document.getElementById(`${p}-sig-principal`);
-    const si = document.getElementById(`${p}-sig-sincharge`);
-    if (ic) ic.textContent = user.name + ' (House In‑Charge)';
-    if (pr) pr.textContent = s.PrincipalName || 'Principal';
-    if (si) si.textContent = s.CommitteeInChargeName || 'Sports Incharge';
-  });
-
-  initNav();
-  await loadAll();
-})();
-
-async function loadAll() {
-  [eventsData, studentsData, shortListData, finalListData] = await Promise.all([
-    apiGet('getEvents'),
-    apiGet('getStudents'),
-    apiGet('getEntries'),
-    apiGet('getFinalList')
-  ]);
-  myStudents = studentsData.filter(s => isHouseMatch(s.House, myHouse));
-  populateSelects();
-  await renderShortList();
-  await renderFinalList();
-}
-
-function populateSelects() {
-  // Individual event
-  const ie = document.getElementById('ind-event');
-  ie.innerHTML = '<option value="">Select event…</option>';
-  eventsData.filter(e=>e.Type!=='Team').forEach(e => { ie.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
-
-  // Bulk event (team)
-  const be = document.getElementById('bulk-event');
-  be.innerHTML = '<option value="">Select event…</option>';
-  eventsData.forEach(e => { be.innerHTML += `<option value="${e.EventID}" data-name="${e.EventName}">${e.EventName}</option>`; });
-
-  // Student dropdowns
-  const makeOpts = () => myStudents.map(s => `<option value="${s.Name}|${s.Department}|${s.House}">${s.Name} (${s.Department})</option>`).join('');
-  document.getElementById('ind-student').innerHTML = '<option value="">Select student…</option>' + makeOpts();
-  document.getElementById('bulk-student').innerHTML = '<option value="">Select student…</option>' + makeOpts();
-
-  // Shortlist filter
-  const slf = document.getElementById('sl-filter-event');
-  slf.innerHTML = '<option value="">All Events</option>';
-  eventsData.forEach(e => { slf.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
-
-  // Final list selectors
-  const fle = document.getElementById('fl-event-sel');
-  fle.innerHTML = '<option value="">Select event…</option>';
-  eventsData.forEach(e => { fle.innerHTML += `<option value="${e.EventID}" data-name="${e.EventName}">${e.EventName}</option>`; });
-  const flf = document.getElementById('fl-filter-event');
-  flf.innerHTML = '<option value="">All Events</option>';
-  eventsData.forEach(e => { flf.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
-}
-
-// ── Individual Entry ──────────────────────────────────────────────────────────
-function toggleIndQR() {
-  const div = document.getElementById('ind-qr-reader');
-  if (!qrOpen) {
-    div.style.display='block';
-    startQRScanner('ind-qr-reader', data => {
-      indScanned = data;
-      div.style.display='none'; qrOpen=false;
-      document.getElementById('ind-scanned').classList.remove('hidden');
-      document.getElementById('ind-scanned-name').textContent = data.name;
-      document.getElementById('ind-scanned-meta').textContent = ` | ${data.dept} | ${data.house}`;
-    });
-    qrOpen=true;
-  } else {
-    stopQRScanner(); div.style.display='none'; qrOpen=false;
-  }
-}
-
-async function addIndEntry() {
-  const evSel = document.getElementById('ind-event');
-  const evOpt = evSel.options[evSel.selectedIndex];
-  if (!evOpt || !evOpt.value) { toast('Select an event', 'error'); return; }
-
-  let studentName, dept, house;
-  if (indScanned) {
-    studentName=indScanned.name; dept=indScanned.dept; house=indScanned.house;
-  } else {
-    const sv = document.getElementById('ind-student').value;
-    if (!sv) { toast('Select a student or scan QR', 'error'); return; }
-    [studentName, dept, house] = sv.split('|');
-  }
-
-  // Verify house
-  if (!isHouseMatch(house, myHouse)) { toast(`Student house (${house}) does not match your house (${myHouse})`, 'error'); return; }
-
-  await apiPost('addEntry', { eventId: evOpt.value, eventName: evOpt.textContent, studentName, department: dept, house, listType:'shortlist' });
-  toast(`${studentName} added to shortlist`, 'success');
-  indScanned=null;
-  document.getElementById('ind-scanned').classList.add('hidden');
-  shortListData = await apiGet('getEntries');
-  await renderShortList();
-}
-
-// ── Bulk Entry ────────────────────────────────────────────────────────────────
-function bulkAddOne() {
-  const sv = document.getElementById('bulk-student').value;
-  if (!sv) return;
-  const [name, dept, house] = sv.split('|');
-  if (!bulkTemp.find(b=>b.studentName===name)) {
-    bulkTemp.push({studentName:name, department:dept, house});
-    renderBulkTemp();
-  }
-}
-
-function renderBulkTemp() {
-  document.getElementById('bulk-list').innerHTML = bulkTemp.map((b,i)=>`
-    <div class="flex gap-1" style="padding:.4rem 0;border-bottom:1px solid var(--glass-border)">
-      <span style="flex:1">${b.studentName}</span>
-      <button class="btn btn-danger btn-sm" onclick="bulkRemove(${i})">✕</button>
-    </div>`).join('');
-}
-
-function bulkRemove(i) { bulkTemp.splice(i,1); renderBulkTemp(); }
-
-async function bulkCSV() {
-  const file = document.getElementById('bulk-csv').files[0];
-  if (!file) { toast('Select a CSV file', 'error'); return; }
-  const text = await file.text();
-  const rows = parseCSV(text);
-  bulkTemp = rows.map(r => ({ studentName: r.Name||r.name||'', department: r.Department||r.Dept||'', house: r.House||myHouse }));
-  renderBulkTemp();
-  toast(`${bulkTemp.length} students loaded`, 'success');
-}
-
-async function submitBulk() {
-  const evSel = document.getElementById('bulk-event');
-  const evOpt = evSel.options[evSel.selectedIndex];
-  if (!evOpt || !evOpt.value) { toast('Select an event', 'error'); return; }
-  if (!bulkTemp.length) { toast('No students to add', 'error'); return; }
-  
-  toast('Uploading bulk entries…', 'info');
-  const BATCH = 10;
-  for (let i = 0; i < bulkTemp.length; i += BATCH) {
-    const chunk = bulkTemp.slice(i, i + BATCH);
-    await apiPost('bulkUpload', { eventId:evOpt.value, eventName:evOpt.textContent, rows:chunk });
-  }
-  
-  toast(`${bulkTemp.length} students added`, 'success');
-  bulkTemp=[]; renderBulkTemp();
-  shortListData = await apiGet('getEntries');
-  await renderShortList();
-}
-
-// ── Short List ────────────────────────────────────────────────────────────────
-async function renderShortList() {
-  const filter = document.getElementById('sl-filter-event').value;
-  let data = shortListData.filter(e => isHouseMatch(e.House, myHouse) && e.ListType === 'shortlist');
-  if (filter) data = data.filter(e => e.EventID === filter);
-  if (!data.length) {
-    document.getElementById('shortlist-body').innerHTML = '<tr><td colspan="6" class="text-muted text-center">No entries yet</td></tr>';
-    return;
-  }
-  const rows = await Promise.all(data.map(async (e, i) => {
-    const qrImg = await studentQRImg(e.StudentName, e.Department, e.House, 50);
-    return `<tr><td>${i+1}</td><td>${e.StudentName}</td><td>${e.Department}</td><td>${e.EventName}</td><td>${qrImg}</td>
-    <td><button class="btn btn-success btn-sm" onclick="promoteToFinal('${e.StudentName}','${e.EventID}','${e.EventName}','${e.Department}','${e.House}')">→ Final</button></td>
-    </tr>`;
-  }));
-  document.getElementById('shortlist-body').innerHTML = rows.join('');
-}
-
-async function promoteToFinal(name, evId, evName, dept, house) {
-  await apiPost('saveFinalList', { eventId:evId, eventName:evName, students:[{studentName:name, department:dept, house}] });
-  toast(`${name} moved to final list`, 'success');
-  finalListData = await apiGet('getFinalList');
-  await renderFinalList();
-}
-
-// ── Final List ────────────────────────────────────────────────────────────────
-let finalSelected = [];
-
-function loadShortForFinal() {
-  const evId = document.getElementById('fl-event-sel').value;
-  if (!evId) { document.getElementById('fl-short-pick').innerHTML = '<p class="text-muted">Select an event</p>'; return; }
-  const data = shortListData.filter(e => isHouseMatch(e.House, myHouse) && e.EventID === evId);
-  finalSelected = [];
-  document.getElementById('fl-short-pick').innerHTML = data.length
-    ? `<table><thead><tr><th><input type="checkbox" onchange="toggleAllFinal(this)"></th><th>Student</th><th>Dept</th></tr></thead><tbody>
-        ${data.map(s=>`<tr><td><input type="checkbox" class="final-chk" data-name="${s.StudentName}" data-dept="${s.Department}" data-house="${s.House}" data-evid="${s.EventID}" data-evname="${s.EventName}"></td><td>${s.StudentName}</td><td>${s.Department}</td></tr>`).join('')}
-      </tbody></table>`
-    : '<p class="text-muted">No shortlisted students for this event</p>';
-}
-
-function toggleAllFinal(master) {
-  document.querySelectorAll('.final-chk').forEach(c => { c.checked = master.checked; });
-}
-
-async function submitFinal() {
-  const checked = [...document.querySelectorAll('.final-chk:checked')];
-  if (!checked.length) { toast('Select at least one student', 'error'); return; }
-  const eventId = checked[0].dataset.evid;
-  const eventName = checked[0].dataset.evname;
-  const students = checked.map(c=>({ studentName:c.dataset.name, department:c.dataset.dept, house:c.dataset.house }));
-  await apiPost('saveFinalList', { eventId, eventName, students });
-  toast(`${students.length} students saved to final list`, 'success');
-  finalListData = await apiGet('getFinalList');
-  await renderFinalList();
-}
-
-async function renderFinalList() {
-  const filter = document.getElementById('fl-filter-event').value;
-  let data = finalListData.filter(f => isHouseMatch(f.House, myHouse));
-  if (filter) data = data.filter(f => f.EventID === filter);
-  if (!data.length) {
-    document.getElementById('finallist-body').innerHTML = '<tr><td colspan="6" class="text-muted text-center">No final list yet</td></tr>';
-    return;
-  }
-  const rows = await Promise.all(data.map(async (f, i) => {
-    const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
-    return `<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.House}</td><td>${f.Department}</td><td>${f.EventName}</td><td>${qrImg}</td></tr>`;
-  }));
-  document.getElementById('finallist-body').innerHTML = rows.join('');
-}
-
-function getStudentRoll(name) {
-  const s = studentsData.find(x => isHouseMatch(x.Name, name));
-  return s ? (s.RollNo || '-') : '-';
-}
-
-// ── Print Reports ─────────────────────────────────────────────────────────────
-async function printReport(type) {
-  const s = await getSettings();
-  const output = document.getElementById('pr-output');
-  const hdr    = document.getElementById('pr-header');
-  const title  = document.getElementById('pr-title');
-  const content= document.getElementById('pr-content');
-
-  // Convert images to base64 so they reliably show in print
-  const [logoSrc, founderSrc] = await Promise.all([
-    imgToDataUrl(s.LogoUrl || ''),
-    imgToDataUrl(s.FounderUrl || '')
-  ]);
-
-  const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl || '');
-  const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl || '');
-
-  hdr.innerHTML = `
-    ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
-    <div style="flex:1;text-align:center">
-      <div style="font-size:1.4rem;font-weight:800;color:#000;text-transform:uppercase;letter-spacing:1px;font-family:'Outfit',sans-serif">${s.CollegeName||''}</div>
-      <div style="font-size:0.95rem;font-weight:600;color:#333;margin-top:0.25rem">${s.EventTitle||''}</div>
-      <div style="font-size:0.9rem;font-weight:700;color:#555;margin-top:0.25rem;text-transform:uppercase;letter-spacing:1px">${myHouse} House</div>
-    </div>
-    ${finalFounder ? `<div class="print-hdr-thumb circular"><img src="${finalFounder}" alt="Founder"><small style="display:block;font-size:8px;font-weight:bold;margin-top:2px;color:#333">FOUNDER</small></div>` : ''}`;
-
-
-  const data = finalListData.filter(f => isHouseMatch(f.House, myHouse));
-  let html='', ttl='';
-
-  if (type==='house') {
-    ttl = `${myHouse} House – Participant List`;
-    const rows = await Promise.all(data.map(async (f, i) => {
-      const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
-      const roll = getStudentRoll(f.StudentName);
-      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.Department}</td><td>${f.EventName}</td><td>${qrImg}</td></tr>`;
-    }));
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Department</th><th>Event</th><th>QR Code</th></tr></thead><tbody>
-      ${rows.join('')}
-    </tbody></table>`;
-  } else if (type==='game') {
-    ttl = `${myHouse} House – Game‑wise List`;
-    const events = [...new Set(data.map(f=>f.EventName))];
-    for (const ev of events) {
-      const stu = data.filter(f=>f.EventName===ev);
-      const rows = await Promise.all(stu.map(async (s, i) => {
-        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
-        const roll = getStudentRoll(s.StudentName);
-        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
-      }));
-      html += `<h3 style="margin-top:1.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem;">${ev}</h3>
-      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Dept</th><th>QR Code</th></tr></thead><tbody>
-        ${rows.join('')}
-      </tbody></table>`;
+    // If already logged in with a valid session, redirect
+    const u = Session.get();
+    if (u && u.loginRole) {
+      redirect(u.loginRole, u);
+    } else if (u && !u.loginRole) {
+      // Stale session from old broken format — clear it
+      Session.clear();
     }
-  } else {
-    ttl = `${myHouse} House – Overall List`;
-    const rows = await Promise.all(data.map(async (f, i) => {
-      const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
-      const roll = getStudentRoll(f.StudentName);
-      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.Department}</td><td>${f.EventName}</td><td>${qrImg}</td></tr>`;
-    }));
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Department</th><th>Event</th><th>QR Code</th></tr></thead><tbody>
-      ${rows.join('')}
-    </tbody></table>`;
+  })();
+
+  function switchRole(r) {
+    currentRole = r;
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + r).classList.add('active');
   }
 
-  title.textContent = ttl;
-  content.innerHTML = html;
-  output.classList.remove('hidden');
-  output.scrollIntoView({behavior:'smooth'});
-}
+  function goScoreboard() { location.href = 'scoreboard.html'; }
 
-function logout() { Session.clear(); location.href='index.html'; }
+  function toggleGasSetup() {
+    const el = document.getElementById('gas-setup');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function saveGasUrl() {
+    const val = document.getElementById('gas-url-input').value.trim();
+    if (!val) return toast('Please enter the URL', 'error');
+    try {
+      localStorage.setItem('GAS_URL', val);
+    } catch(e) {
+      toast('Failed to save to local storage, using this session only.', 'warning');
+    }
+    toast('URL saved!', 'success');
+    document.getElementById('gas-setup').style.display = 'none';
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    const errEl = document.getElementById('login-error');
+    const loader = document.getElementById('login-loader');
+    const btnTxt = document.getElementById('login-btn-text');
+
+    errEl.style.display = 'none';
+
+    try {
+      const url = getGasUrl(); // Move inside try to catch missing URL errors cleanly
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-password').value.trim();
+
+      loader.classList.remove('hidden');
+      btnTxt.textContent = 'Signing in…';
+
+      const res = await apiPost('login', { role: currentRole, email, password: pass });
+      if (res.ok) {
+        // Merge server response + the tab role the user selected
+        const sessionData = { ...res, loginRole: currentRole };
+        Session.set(sessionData);
+        toast('Welcome, ' + (res.name || res.houseName) + '!', 'success');
+        setTimeout(() => redirect(currentRole, res), 600);
+      } else {
+        errEl.textContent = res.error || 'Login failed';
+        errEl.style.display = 'block';
+      }
+    } catch(err) {
+      errEl.textContent = err.message || 'Connection error. Check your Apps Script URL.';
+      errEl.style.display = 'block';
+    } finally {
+      loader.classList.add('hidden');
+      btnTxt.textContent = 'Sign In';
+    }
+  }
+
+  // redirect(role, data) — role is always the tab that was selected at login
+  function redirect(role, data) {
+    data = data || {};
+    if (role === 'committee') {
+      location.href = 'committee.html';
+    } else if (role === 'house' || data.houseName) {
+      location.href = 'house.html';
+    }
+  }
 </script>
 </body>
 </html>
