@@ -205,7 +205,7 @@ let qrOpen=false;
   document.getElementById('entry-house-badge').textContent = myHouse;
 
   const s = await getSettings();
-  if (s.LogoUrl) { const l=document.getElementById('sb-logo'); l.src=s.LogoUrl; l.style.display='block'; }
+  if (s.LogoUrl) { const l=document.getElementById('sb-logo'); l.src=getGoogleDriveThumbUrl(s.LogoUrl); l.style.display='block'; }
 
   // Sig lines
   ['sl','fl','pr'].forEach(p => {
@@ -447,8 +447,8 @@ async function printReport(type) {
     imgToDataUrl(s.FounderUrl || '')
   ]);
 
-  const finalLogo = logoSrc || s.LogoUrl || '';
-  const finalFounder = founderSrc || s.FounderUrl || '';
+  const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl || '');
+  const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl || '');
 
   hdr.innerHTML = `
     ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
