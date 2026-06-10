@@ -68,16 +68,30 @@
   (async function init() {
     // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
     const u = Session.get();
+    
+    let lastRedirect = 0;
+    try {
+      lastRedirect = Number(sessionStorage.getItem('lastRedirect') || localStorage.getItem('lastRedirect') || 0);
+    } catch(e) {}
+    
     const isRedirected = window.location.search.includes('from=') || 
                          document.referrer.includes('committee.html') || 
-                         document.referrer.includes('house.html');
+                         document.referrer.includes('house.html') ||
+                         (Date.now() - lastRedirect < 3000);
+                         
     if (u && u.loginRole && !isRedirected) {
+      try {
+        sessionStorage.setItem('lastRedirect', Date.now());
+        localStorage.setItem('lastRedirect', Date.now());
+      } catch(e) {}
       redirect(u.loginRole, u);
       return;
     } else if (isRedirected) {
-      // If we were redirected back, the session might be stale or unshared (e.g. file:/// origin issues)
+      // If we were redirected back, clear the session to break any redirect loops
       Session.clear();
       try {
+        sessionStorage.removeItem('lastRedirect');
+        localStorage.removeItem('lastRedirect');
         history.replaceState(null, '', window.location.pathname);
       } catch(e) {}
     } else if (u && !u.loginRole) {
