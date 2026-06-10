@@ -66,6 +66,13 @@
   let currentRole = 'committee';
 
   (async function init() {
+    // If the browser loaded index.html's content on a different page (e.g. due to a service worker hijack), do not run redirect checks!
+    const pathname = window.location.pathname;
+    if (!pathname.endsWith('index.html') && !pathname.endsWith('/') && pathname !== '') {
+      console.warn('[LoginInit] Bypassing login init because pathname is:', pathname);
+      return;
+    }
+
     // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
     const u = Session.get();
     
