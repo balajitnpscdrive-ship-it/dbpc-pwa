@@ -1,7 +1,25 @@
 // api.js – Shared API wrapper for Sports Day Management
 // GAS_URL is read fresh from localStorage on every call
 
-const DEFAULT_GAS_URL = "";
+// Unregister any active service worker (useful to clean up old PWA cache/service workers from other apps on the same domain)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    if (registrations && registrations.length) {
+      for (var i = 0; i < registrations.length; i++) {
+        registrations[i].unregister().then(function(success) {
+          if (success) {
+            console.log('[SW] Service Worker unregistered successfully. Reloading page...');
+            location.reload();
+          }
+        });
+      }
+    }
+  }).catch(function(err) {
+    console.warn('[SW] Failed to get registrations:', err);
+  });
+}
+
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwK5fcRnlJmYvZkjMvKXXWemzKpWzGdkmy77sa_uuX3TwRhvs29DtV25if0DBNG2CA_2g/exec";
 
 function getGasUrl() {
   let u = '';
