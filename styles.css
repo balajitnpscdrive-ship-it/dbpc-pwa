@@ -248,11 +248,21 @@ tbody tr:hover { background: hsla(255,100%,100%,.03); }
 /* ── Print Styles ─────────────────────────────────── */
 @media print {
   .sidebar, .topbar, .no-print, .btn { display: none !important; }
-  .main-content { margin-left: 0; padding: 0; }
-  body { background: #fff; color: #000; }
-  .print-header { display: flex !important; }
-  table { font-size: 12px; }
-  thead th { background: #f0f0f0; color: #000; }
+  .main-content { margin-left: 0; padding: 0 !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .print-header { display: flex !important; border-bottom: 2px solid #000 !important; margin-bottom: 1.5rem !important; }
+  .card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 1rem; }
+  thead th { background: #f2f2f2 !important; color: #000 !important; border: 1px solid #ccc !important; font-weight: 700; }
+  tbody td { border-bottom: 1px solid #ddd !important; border-left: 1px solid #eee !important; border-right: 1px solid #eee !important; color: #000 !important; }
+  tbody tr:hover { background: transparent !important; }
 }
 .print-header {
   display: none;
@@ -305,11 +315,38 @@ tbody tr:hover { background: hsla(255,100%,100%,.03); }
 /* ── Confetti Canvas ──────────────────────────────── */
 #confetti-canvas { position:fixed; inset:0; pointer-events:none; z-index:1999; }
 
+/* ── Mobile Navigation Toggles ────────────────────── */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 0.5rem 0.8rem;
+  font-size: 1.2rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 98;
+  backdrop-filter: blur(2px);
+  transition: opacity 0.3s;
+}
+
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
+  .mobile-menu-btn { display: block; }
   .sidebar { transform: translateX(-100%); transition: transform .3s; }
   .sidebar.open { transform: translateX(0); }
-  .main-content { margin-left: 0; padding: 1rem; }
+  .main-content { margin-left: 0; padding: 4.5rem 1rem 1rem 1rem; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .score-cards { grid-template-columns: 1fr 1fr; }
 }
