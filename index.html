@@ -79,6 +79,7 @@
                          document.referrer.includes('house.html') ||
                          (Date.now() - lastRedirect < 3000);
                          
+    console.log('[LoginInit] Session:', u, 'isRedirected:', isRedirected, 'lastRedirectDiff:', (lastRedirect ? Date.now() - lastRedirect : 'N/A'));
     if (u && u.loginRole && !isRedirected) {
       try {
         sessionStorage.setItem('lastRedirect', Date.now());
