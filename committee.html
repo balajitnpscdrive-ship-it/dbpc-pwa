@@ -754,7 +754,7 @@ async function renderResults(data) {
     const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
     const qrImg = (isTeamResult || !r.StudentName) ? '' : await studentQRImg(r.StudentName, r.Department, r.House, 50);
     return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.Department}</td><td>${r.House}</td><td>${r.Points}</td>
-    <td>${r.PhotoUrl ? `<img src="${r.PhotoUrl}" style="height:36px;border-radius:4px">` : '-'}</td><td>${qrImg}</td></tr>`;
+    <td>${r.PhotoUrl ? `<img src="${getGoogleDriveThumbUrl(r.PhotoUrl)}" style="height:36px;border-radius:4px">` : '-'}</td><td>${qrImg}</td></tr>`;
   }));
   document.getElementById('results-body').innerHTML = rows.join('');
 }
@@ -777,10 +777,10 @@ async function loadSettings() {
   document.getElementById('s-event-title').value   = s.EventTitle  || '';
   document.getElementById('s-principal').value     = s.PrincipalName || '';
   document.getElementById('s-incharge').value      = s.CommitteeInChargeName || '';
-  if (s.LogoUrl)    { document.getElementById('preview-logo').src = s.LogoUrl; document.getElementById('preview-logo').style.display='block'; }
-  if (s.FounderUrl) { document.getElementById('preview-founder').src = s.FounderUrl; document.getElementById('preview-founder').style.display='block'; }
+  if (s.LogoUrl)    { document.getElementById('preview-logo').src = getGoogleDriveThumbUrl(s.LogoUrl); document.getElementById('preview-logo').style.display='block'; }
+  if (s.FounderUrl) { document.getElementById('preview-founder').src = getGoogleDriveThumbUrl(s.FounderUrl); document.getElementById('preview-founder').style.display='block'; }
   const sbLogo = document.getElementById('sb-logo');
-  if (s.LogoUrl) { sbLogo.src = s.LogoUrl; sbLogo.style.display='block'; }
+  if (s.LogoUrl) { sbLogo.src = getGoogleDriveThumbUrl(s.LogoUrl); sbLogo.style.display='block'; }
   document.getElementById('sig-incharge').textContent = s.CommitteeInChargeName || 'Sports Incharge';
   document.getElementById('sig-principal').textContent = s.PrincipalName || 'Principal';
 }
@@ -810,7 +810,7 @@ async function uploadAssets() {
       const r = await apiUpload('uploadPhoto', { ...b, studentName: 'logo', house: '', dept: '' });
       if (!r.url) throw new Error('No URL returned for logo');
       await apiPost('saveSetting', { Key: 'LogoUrl', Value: r.url });
-      document.getElementById('preview-logo').src = r.url;
+      document.getElementById('preview-logo').src = getGoogleDriveThumbUrl(r.url);
       document.getElementById('preview-logo').style.display = 'block';
       toast('✅ College logo uploaded!', 'success');
     }
@@ -821,7 +821,7 @@ async function uploadAssets() {
       const r = await apiUpload('uploadPhoto', { ...b, studentName: 'founder', house: '', dept: '' });
       if (!r.url) throw new Error('No URL returned for founder picture');
       await apiPost('saveSetting', { Key: 'FounderUrl', Value: r.url });
-      document.getElementById('preview-founder').src = r.url;
+      document.getElementById('preview-founder').src = getGoogleDriveThumbUrl(r.url);
       document.getElementById('preview-founder').style.display = 'block';
       toast('✅ Founder picture uploaded!', 'success');
     }
@@ -870,8 +870,8 @@ async function openReport(type) {
     imgToDataUrl(s.FounderUrl || '')
   ]);
 
-  const finalLogo = logoSrc || s.LogoUrl || '';
-  const finalFounder = founderSrc || s.FounderUrl || '';
+  const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl || '');
+  const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl || '');
 
   hdr.innerHTML = `
     ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
