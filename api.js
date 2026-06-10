@@ -120,10 +120,10 @@ const Session = {
   // Check loginRole (tab selected), NOT u.role (sheet value like 'admin')
   require(role) {
     const u = Session.get();
-    if (!u) { location.href = 'index.html'; return null; }
+    if (!u) { location.href = 'index.html?from=' + role; return null; }
     const storedRole = u.loginRole || (u.houseName ? 'house' : 'committee');
     if (role && storedRole !== role) {
-      location.href = 'index.html';
+      location.href = 'index.html?from=' + role;
       return null;
     }
     return u;
