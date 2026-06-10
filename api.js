@@ -1,7 +1,8 @@
-// api.js – Shared API wrapper for Sports Day Management
-// GAS_URL is read fresh from localStorage on every call
+// ============================================================
+// api.js – Shared API & Utility Layer | Sports Day Management
+// ============================================================
 
-// Unregister any active service worker (useful to clean up old PWA cache/service workers from other apps on the same domain)
+// 1. Unregister active service workers to clean up old PWA cache overrides on the same domain
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function(registrations) {
     if (registrations && registrations.length) {
@@ -19,7 +20,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwK5fcRnlJmYvZkjMvKXXWemzKpWzGdkmy77sa_uuX3TwRhvs29DtV25if0DBNG2CA_2g/exec";
+const DEFAULT_GAS_URL = "";
 
 function getGasUrl() {
   let u = '';
@@ -33,8 +34,8 @@ function getGasUrl() {
   return url;
 }
 
-// ── Core fetch helpers ─────────────────────────────────────────────────────────
-// All requests use GET with ?data=JSON to avoid CORS preflight issues.
+// ── Core Fetch Helpers ─────────────────────────────────────────────────────────
+// All requests use GET with ?data=JSON for small payloads to bypass CORS preflights.
 async function apiGet(action, params = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
@@ -44,15 +45,11 @@ async function apiGet(action, params = {}) {
   return res.json();
 }
 
-// apiPost: sends POST request for large payloads to avoid URL length limits,
-// and GET request for small payloads (<1500 chars) for maximum reliability and to prevent redirect method loss.
 async function apiPost(action, payload = {}) {
   const url = new URL(getGasUrl());
   url.searchParams.set('action', action);
-  
   const payloadStr = JSON.stringify(payload);
   
-  // If payload is small, send as GET (which is 100% reliable for redirects)
   if (payloadStr.length < 1500) {
     url.searchParams.set('data', payloadStr);
     const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
@@ -60,22 +57,17 @@ async function apiPost(action, payload = {}) {
     return res.json();
   }
   
-  // If payload is large, send as POST
   const res = await fetch(url.toString(), {
     method: 'POST',
     mode: 'cors',
     redirect: 'follow',
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8'
-    },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: payloadStr
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
-// apiBatch: sends rows in small chunks using apiPost
-// Used for large CSV uploads
 async function apiBatch(action, rows, chunkSize = 15, onProgress) {
   const results = [];
   for (let i = 0; i < rows.length; i += chunkSize) {
@@ -87,12 +79,27 @@ async function apiBatch(action, rows, chunkSize = 15, onProgress) {
   return results;
 }
 
-// apiUpload: used for large binary payloads (images, audio)
 async function apiUpload(action, payload = {}) {
   return apiPost(action, payload);
 }
 
-// ── Toast notifications ────────────────────────────────────────────────────────
+// ── Google Drive Thumbnail Converter ───────────────────────────────────────────
+function getGoogleDriveThumbUrl(url) {
+  if (!url) return '';
+  const dRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+  const dMatch = url.match(dRegex);
+  if (dMatch && dMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${dMatch[1]}&sz=w600`;
+  }
+  const idRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+  const idMatch = url.match(idRegex);
+  if (idMatch && idMatch[1]) {
+    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w600`;
+  }
+  return url;
+}
+
+// ── Toast Notifications ────────────────────────────────────────────────────────
 function toast(msg, type = 'info') {
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -111,7 +118,8 @@ function toast(msg, type = 'info') {
   }, 3500);
 }
 
-// ── Session helpers ────────────────────────────────────────────────────────────
+// ── Session Manager ────────────────────────────────────────────────────────────
+// Stores session in sessionStorage, localStorage, and window.name fallback for file:/// compatibility
 const Session = {
   set(data) {
     console.log('[Session] Setting session data:', data);
@@ -119,38 +127,30 @@ const Session = {
       sessionStorage.setItem('sportsUser', JSON.stringify(data));
       localStorage.setItem('sportsUser', JSON.stringify(data));
     } catch(e) {
-      console.warn('[Session] Failed to write to storage:', e);
+      console.warn('[Session] Storage set failed:', e);
     }
     try {
       window.name = JSON.stringify(data);
-      console.log('[Session] Saved to window.name successfully');
-    } catch(e) {
-      console.warn('[Session] Failed to write to window.name:', e);
-    }
+    } catch(e) {}
   },
   get() {
     let data = null;
     try {
       data = sessionStorage.getItem('sportsUser') || localStorage.getItem('sportsUser');
       if (data) console.log('[Session] Read from storage:', data);
-    } catch(e) {
-      console.warn('[Session] Failed to read from storage:', e);
-    }
+    } catch(e) {}
     if (!data) {
       try {
         if (window.name && window.name.startsWith('{')) {
           data = window.name;
           console.log('[Session] Read from window.name fallback:', data);
         }
-      } catch(e) {
-        console.warn('[Session] Failed to read from window.name:', e);
-      }
+      } catch(e) {}
     }
     try {
-      const parsed = data ? JSON.parse(data) : null;
-      return parsed;
+      return data ? JSON.parse(data) : null;
     } catch(e) {
-      console.error('[Session] JSON parse failed for session data:', data, e);
+      console.error('[Session] JSON parse failed:', data, e);
       return null;
     }
   },
@@ -164,9 +164,6 @@ const Session = {
       window.name = '';
     } catch(e) {}
   },
-
-  // role = 'committee' | 'house'
-  // Check loginRole (tab selected), NOT u.role (sheet value like 'admin')
   require(role) {
     const u = Session.get();
     console.log('[Session] Require role:', role, 'Current session:', u);
@@ -188,8 +185,6 @@ const Session = {
 };
 
 // ── QR Code generation (qrcode.js) ────────────────────────────────────────────
-// Generates QR code as data URL for a student
-// Format encoded: Name|Department|House
 async function generateQRDataUrl(text, size = 80) {
   return new Promise((resolve) => {
     if (!window.QRCode) { resolve(''); return; }
@@ -199,7 +194,6 @@ async function generateQRDataUrl(text, size = 80) {
   });
 }
 
-// Generates inline QR <img> tag for a student row
 async function studentQRImg(name, dept, house, size = 70) {
   const text = `${name}|${dept}|${house}`;
   const url = await generateQRDataUrl(text, size);
@@ -221,7 +215,6 @@ function startQRScanner(elementId, onDecode) {
     decoded => {
       qrScanner.stop().catch(() => {});
       qrScanner = null;
-      // Expected format: Name|Department|House
       const parts = decoded.split('|');
       onDecode({ name: parts[0]||'', dept: parts[1]||'', house: parts[2]||'', raw: decoded });
     },
@@ -233,35 +226,16 @@ function stopQRScanner() {
   if (qrScanner) { qrScanner.stop().catch(() => {}); qrScanner = null; }
 }
 
-// ── Image → base64 ────────────────────────────────────────────────────────────
-function getGoogleDriveThumbUrl(url) {
-  if (!url) return '';
-  const dRegex = /\/d\/([a-zA-Z0-9_-]+)/;
-  const dMatch = url.match(dRegex);
-  if (dMatch && dMatch[1]) {
-    return `https://drive.google.com/thumbnail?id=${dMatch[1]}&sz=w600`;
-  }
-  const idRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
-  const idMatch = url.match(idRegex);
-  if (idMatch && idMatch[1]) {
-    return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w600`;
-  }
-  return url;
-}
-
+// ── Image Helpers ─────────────────────────────────────────────────────────────
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const b64 = reader.result.split(',')[1];
-      res({ base64: b64, mimeType: file.type, fileName: file.name });
-    };
+    reader.onload = () => res({ base64: reader.result.split(',')[1], mimeType: file.type, fileName: file.name });
     reader.onerror = rej;
     reader.readAsDataURL(file);
   });
 }
 
-// ── Image URL → base64 dataURL (for printing) ─────────────────────────────────
 async function imgToDataUrl(src) {
   if (!src) return '';
   try {
@@ -288,7 +262,7 @@ function fireConfetti() {
   })();
 }
 
-// ── Sidebar navigation helper ─────────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────────────
 function initNav() {
   document.querySelectorAll('.nav-item[data-section]').forEach(item => {
     item.addEventListener('click', () => {
@@ -298,7 +272,6 @@ function initNav() {
       const sec = document.getElementById('sec-' + item.dataset.section);
       if (sec) sec.classList.remove('hidden');
       
-      // Close mobile sidebar if open
       const sb = document.querySelector('.sidebar');
       if (sb) sb.classList.remove('open');
       const backdrop = document.getElementById('sidebar-backdrop');
@@ -324,9 +297,8 @@ function toggleMobileSidebar() {
   }
 }
 
-// ── CSV parser (for bulk upload) ──────────────────────────────────────────────
+// ── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSV(text) {
-  // Strip UTF-8 Byte Order Mark (BOM) if present (common when exporting from Excel)
   if (text.startsWith('\ufeff')) {
     text = text.substring(1);
   }
@@ -334,7 +306,6 @@ function parseCSV(text) {
   if (!lines.length) return [];
   const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   return lines.slice(1).filter(l => l.trim()).map(line => {
-    // Handle quoted CSV values
     const vals = [];
     let cur = '', inQ = false;
     for (let c of line) {
@@ -349,7 +320,7 @@ function parseCSV(text) {
   });
 }
 
-// ── Settings cache ────────────────────────────────────────────────────────────
+// ── Settings Cache ────────────────────────────────────────────────────────────
 let _settings = null;
 async function getSettings() {
   if (_settings) return _settings;
@@ -359,7 +330,7 @@ async function getSettings() {
   return _settings;
 }
 
-// ── Print helper ──────────────────────────────────────────────────────────────
+// ── Print Helper ──────────────────────────────────────────────────────────────
 async function printWithHeader(title) {
   const s = await getSettings();
   const [logoSrc, founderSrc] = await Promise.all([
