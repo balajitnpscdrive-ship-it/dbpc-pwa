@@ -24,7 +24,7 @@
       <div class="role-tab" id="tab-scoreboard" onclick="goScoreboard()">📊 Scoreboard</div>
     </div>
 
-    <!-- GAS URL setup (first time) -->
+    <!-- GAS URL setup (first time setup or override) -->
     <div id="gas-setup" class="mb-2" style="display:none">
       <div class="form-group">
         <label>Apps Script Web App URL</label>
@@ -66,16 +66,15 @@
   let currentRole = 'committee';
 
   (async function init() {
-    // If the browser loaded index.html's content on a different page (e.g. due to a service worker hijack), do not run redirect checks!
+    // 1. Pathname safety check – exit immediately if cached index.html loaded on dashboard URL
     const pathname = window.location.pathname;
     if (!pathname.endsWith('index.html') && !pathname.endsWith('/') && pathname !== '') {
       console.warn('[LoginInit] Bypassing login init because pathname is:', pathname);
       return;
     }
 
-    // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
+    // 2. Synchronous Redirect Loop Prevention
     const u = Session.get();
-    
     let lastRedirect = 0;
     try {
       lastRedirect = Number(sessionStorage.getItem('lastRedirect') || localStorage.getItem('lastRedirect') || 0);
@@ -87,6 +86,7 @@
                          (Date.now() - lastRedirect < 3000);
                          
     console.log('[LoginInit] Session:', u, 'isRedirected:', isRedirected, 'lastRedirectDiff:', (lastRedirect ? Date.now() - lastRedirect : 'N/A'));
+    
     if (u && u.loginRole && !isRedirected) {
       try {
         sessionStorage.setItem('lastRedirect', Date.now());
@@ -95,7 +95,7 @@
       redirect(u.loginRole, u);
       return;
     } else if (isRedirected) {
-      // If we were redirected back, clear the session to break any redirect loops
+      // Clear session to break loop
       Session.clear();
       try {
         sessionStorage.removeItem('lastRedirect');
@@ -103,16 +103,15 @@
         history.replaceState(null, '', window.location.pathname);
       } catch(e) {}
     } else if (u && !u.loginRole) {
-      // Stale session from old broken format — clear it
       Session.clear();
     }
 
-    // URL is now hardcoded in api.js — show setup only if user manually toggles it
+    // 3. Load GAS Web App URL
     let url = '';
     try { url = localStorage.getItem('GAS_URL') || ''; } catch(e) {}
     if (url) { document.getElementById('gas-url-input').value = url; }
 
-    // Load settings for branding
+    // 4. Load Branding Settings
     try {
       const s = await getSettings();
       if (s.CollegeName) document.getElementById('college-name').textContent = s.CollegeName;
@@ -155,7 +154,6 @@
     errEl.style.display = 'none';
 
     try {
-      const url = getGasUrl(); // Move inside try to catch missing URL errors cleanly
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-password').value.trim();
 
@@ -164,7 +162,6 @@
 
       const res = await apiPost('login', { role: currentRole, email, password: pass });
       if (res.ok) {
-        // Merge server response + the tab role the user selected
         const sessionData = { ...res, loginRole: currentRole };
         Session.set(sessionData);
         toast('Welcome, ' + (res.name || res.houseName) + '!', 'success');
@@ -182,7 +179,6 @@
     }
   }
 
-  // redirect(role, data) — role is always the tab that was selected at login
   function redirect(role, data) {
     data = data || {};
     if (role === 'committee') {
