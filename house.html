@@ -10,6 +10,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
+<button class="mobile-menu-btn no-print" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">☰</button>
+<div id="sidebar-backdrop" class="sidebar-backdrop hidden no-print" onclick="toggleMobileSidebar()"></div>
 <div class="app-shell">
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -149,7 +151,7 @@
     <!-- Print Reports -->
     <section id="sec-print-reports" class="section-page hidden">
       <div class="topbar"><div class="topbar-title">Print Reports</div></div>
-      <div class="grid-3">
+      <div class="grid-3 no-print">
         <div class="card text-center" style="cursor:pointer" onclick="printReport('house')">
           <div style="font-size:2.5rem">🏠</div>
           <h3 class="mt-1">House‑wise List</h3>
@@ -187,6 +189,9 @@
 
 <script src="api.js"></script>
 <script>
+function isHouseMatch(h1, h2) {
+  return String(h1 || '').trim().toLowerCase() === String(h2 || '').trim().toLowerCase();
+}
 let user, myHouse, eventsData=[], studentsData=[], myStudents=[], shortListData=[], finalListData=[];
 let indScanned=null, bulkTemp=[];
 let qrOpen=false;
@@ -223,7 +228,7 @@ async function loadAll() {
     apiGet('getEntries'),
     apiGet('getFinalList')
   ]);
-  myStudents = studentsData.filter(s => s.House === myHouse);
+  myStudents = studentsData.filter(s => isHouseMatch(s.House, myHouse));
   populateSelects();
   await renderShortList();
   await renderFinalList();
@@ -292,7 +297,7 @@ async function addIndEntry() {
   }
 
   // Verify house
-  if (house !== myHouse) { toast(`Student house (${house}) does not match your house (${myHouse})`, 'error'); return; }
+  if (!isHouseMatch(house, myHouse)) { toast(`Student house (${house}) does not match your house (${myHouse})`, 'error'); return; }
 
   await apiPost('addEntry', { eventId: evOpt.value, eventName: evOpt.textContent, studentName, department: dept, house, listType:'shortlist' });
   toast(`${studentName} added to shortlist`, 'success');
@@ -355,7 +360,7 @@ async function submitBulk() {
 // ── Short List ────────────────────────────────────────────────────────────────
 async function renderShortList() {
   const filter = document.getElementById('sl-filter-event').value;
-  let data = shortListData.filter(e => e.House === myHouse && e.ListType === 'shortlist');
+  let data = shortListData.filter(e => isHouseMatch(e.House, myHouse) && e.ListType === 'shortlist');
   if (filter) data = data.filter(e => e.EventID === filter);
   if (!data.length) {
     document.getElementById('shortlist-body').innerHTML = '<tr><td colspan="6" class="text-muted text-center">No entries yet</td></tr>';
@@ -383,7 +388,7 @@ let finalSelected = [];
 function loadShortForFinal() {
   const evId = document.getElementById('fl-event-sel').value;
   if (!evId) { document.getElementById('fl-short-pick').innerHTML = '<p class="text-muted">Select an event</p>'; return; }
-  const data = shortListData.filter(e => e.House === myHouse && e.EventID === evId);
+  const data = shortListData.filter(e => isHouseMatch(e.House, myHouse) && e.EventID === evId);
   finalSelected = [];
   document.getElementById('fl-short-pick').innerHTML = data.length
     ? `<table><thead><tr><th><input type="checkbox" onchange="toggleAllFinal(this)"></th><th>Student</th><th>Dept</th></tr></thead><tbody>
@@ -410,7 +415,7 @@ async function submitFinal() {
 
 async function renderFinalList() {
   const filter = document.getElementById('fl-filter-event').value;
-  let data = finalListData.filter(f => f.House === myHouse);
+  let data = finalListData.filter(f => isHouseMatch(f.House, myHouse));
   if (filter) data = data.filter(f => f.EventID === filter);
   if (!data.length) {
     document.getElementById('finallist-body').innerHTML = '<tr><td colspan="6" class="text-muted text-center">No final list yet</td></tr>';
@@ -447,7 +452,7 @@ async function printReport(type) {
     ${founderSrc ? `<img src="${founderSrc}" alt="Founder" style="height:60px;border-radius:50%">` : ''}`;
 
 
-  const data = finalListData.filter(f=>f.House===myHouse);
+  const data = finalListData.filter(f => isHouseMatch(f.House, myHouse));
   let html='', ttl='';
 
   if (type==='house') {
