@@ -96,33 +96,48 @@ function toast(msg, type = 'info') {
 // ── Session helpers ────────────────────────────────────────────────────────────
 const Session = {
   set(data) {
+    console.log('[Session] Setting session data:', data);
     try {
       sessionStorage.setItem('sportsUser', JSON.stringify(data));
       localStorage.setItem('sportsUser', JSON.stringify(data));
-    } catch(e) {}
+    } catch(e) {
+      console.warn('[Session] Failed to write to storage:', e);
+    }
     try {
       window.name = JSON.stringify(data);
-    } catch(e) {}
+      console.log('[Session] Saved to window.name successfully');
+    } catch(e) {
+      console.warn('[Session] Failed to write to window.name:', e);
+    }
   },
   get() {
     let data = null;
     try {
       data = sessionStorage.getItem('sportsUser') || localStorage.getItem('sportsUser');
-    } catch(e) {}
+      if (data) console.log('[Session] Read from storage:', data);
+    } catch(e) {
+      console.warn('[Session] Failed to read from storage:', e);
+    }
     if (!data) {
       try {
         if (window.name && window.name.startsWith('{')) {
           data = window.name;
+          console.log('[Session] Read from window.name fallback:', data);
         }
-      } catch(e) {}
+      } catch(e) {
+        console.warn('[Session] Failed to read from window.name:', e);
+      }
     }
     try {
-      return data ? JSON.parse(data) : null;
+      const parsed = data ? JSON.parse(data) : null;
+      return parsed;
     } catch(e) {
+      console.error('[Session] JSON parse failed for session data:', data, e);
       return null;
     }
   },
   clear() {
+    console.log('[Session] Clearing session');
     try {
       sessionStorage.removeItem('sportsUser');
       localStorage.removeItem('sportsUser');
@@ -136,12 +151,20 @@ const Session = {
   // Check loginRole (tab selected), NOT u.role (sheet value like 'admin')
   require(role) {
     const u = Session.get();
-    if (!u) { location.href = 'index.html?from=' + role; return null; }
-    const storedRole = u.loginRole || (u.houseName ? 'house' : 'committee');
-    if (role && storedRole !== role) {
+    console.log('[Session] Require role:', role, 'Current session:', u);
+    if (!u) {
+      console.warn('[Session] Verification failed: No active session. Redirecting to login.');
       location.href = 'index.html?from=' + role;
       return null;
     }
+    const storedRole = u.loginRole || (u.houseName ? 'house' : 'committee');
+    console.log('[Session] Stored role:', storedRole, 'Required role:', role);
+    if (role && storedRole !== role) {
+      console.warn('[Session] Verification failed: Role mismatch. Redirecting to login.');
+      location.href = 'index.html?from=' + role;
+      return null;
+    }
+    console.log('[Session] Verification succeeded');
     return u;
   }
 };
