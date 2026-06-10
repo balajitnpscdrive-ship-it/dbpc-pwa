@@ -66,6 +66,25 @@
   let currentRole = 'committee';
 
   (async function init() {
+    // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
+    const u = Session.get();
+    const isRedirected = window.location.search.includes('from=') || 
+                         document.referrer.includes('committee.html') || 
+                         document.referrer.includes('house.html');
+    if (u && u.loginRole && !isRedirected) {
+      redirect(u.loginRole, u);
+      return;
+    } else if (isRedirected) {
+      // If we were redirected back, the session might be stale or unshared (e.g. file:/// origin issues)
+      Session.clear();
+      try {
+        history.replaceState(null, '', window.location.pathname);
+      } catch(e) {}
+    } else if (u && !u.loginRole) {
+      // Stale session from old broken format — clear it
+      Session.clear();
+    }
+
     // URL is now hardcoded in api.js — show setup only if user manually toggles it
     let url = '';
     try { url = localStorage.getItem('GAS_URL') || ''; } catch(e) {}
@@ -78,22 +97,6 @@
       if (s.EventTitle)  document.getElementById('event-title').textContent = s.EventTitle;
       if (s.LogoUrl)     document.getElementById('school-logo').src = getGoogleDriveThumbUrl(s.LogoUrl);
     } catch(e) {}
-
-    // If already logged in with a valid session, redirect (unless just redirected back due to a failure)
-    const u = Session.get();
-    const isRedirected = window.location.search.includes('from=');
-    if (u && u.loginRole && !isRedirected) {
-      redirect(u.loginRole, u);
-    } else if (isRedirected) {
-      // If we were redirected back, the session might be stale or unshared (e.g. file:/// origin issues)
-      Session.clear();
-      try {
-        history.replaceState(null, '', window.location.pathname);
-      } catch(e) {}
-    } else if (u && !u.loginRole) {
-      // Stale session from old broken format — clear it
-      Session.clear();
-    }
   })();
 
   function switchRole(r) {
