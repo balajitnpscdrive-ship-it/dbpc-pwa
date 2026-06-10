@@ -428,6 +428,11 @@ async function renderFinalList() {
   document.getElementById('finallist-body').innerHTML = rows.join('');
 }
 
+function getStudentRoll(name) {
+  const s = studentsData.find(x => isHouseMatch(x.Name, name));
+  return s ? (s.RollNo || '-') : '-';
+}
+
 // ── Print Reports ─────────────────────────────────────────────────────────────
 async function printReport(type) {
   const s = await getSettings();
@@ -442,14 +447,17 @@ async function printReport(type) {
     imgToDataUrl(s.FounderUrl || '')
   ]);
 
+  const finalLogo = logoSrc || s.LogoUrl || '';
+  const finalFounder = founderSrc || s.FounderUrl || '';
+
   hdr.innerHTML = `
-    ${logoSrc ? `<img src="${logoSrc}" alt="Logo" style="height:60px">` : ''}
+    ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
     <div style="flex:1;text-align:center">
-      <div style="font-size:1.1rem;font-weight:700;color:#000">${s.CollegeName||''}</div>
-      <div style="color:#555">${s.EventTitle||''}</div>
-      <div style="font-weight:600;color:#000">${myHouse} House</div>
+      <div style="font-size:1.4rem;font-weight:800;color:#000;text-transform:uppercase;letter-spacing:1px;font-family:'Outfit',sans-serif">${s.CollegeName||''}</div>
+      <div style="font-size:0.95rem;font-weight:600;color:#333;margin-top:0.25rem">${s.EventTitle||''}</div>
+      <div style="font-size:0.9rem;font-weight:700;color:#555;margin-top:0.25rem;text-transform:uppercase;letter-spacing:1px">${myHouse} House</div>
     </div>
-    ${founderSrc ? `<img src="${founderSrc}" alt="Founder" style="height:60px;border-radius:50%">` : ''}`;
+    ${finalFounder ? `<div class="print-hdr-thumb circular"><img src="${finalFounder}" alt="Founder"><small style="display:block;font-size:8px;font-weight:bold;margin-top:2px;color:#333">FOUNDER</small></div>` : ''}`;
 
 
   const data = finalListData.filter(f => isHouseMatch(f.House, myHouse));
@@ -459,9 +467,10 @@ async function printReport(type) {
     ttl = `${myHouse} House – Participant List`;
     const rows = await Promise.all(data.map(async (f, i) => {
       const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
-      return `<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.EventName}</td><td>${f.Department}</td><td>${qrImg}</td></tr>`;
+      const roll = getStudentRoll(f.StudentName);
+      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.Department}</td><td>${f.EventName}</td><td>${qrImg}</td></tr>`;
     }));
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>Department</th><th>QR Code</th></tr></thead><tbody>
+    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Department</th><th>Event</th><th>QR Code</th></tr></thead><tbody>
       ${rows.join('')}
     </tbody></table>`;
   } else if (type==='game') {
@@ -471,9 +480,11 @@ async function printReport(type) {
       const stu = data.filter(f=>f.EventName===ev);
       const rows = await Promise.all(stu.map(async (s, i) => {
         const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
-        return `<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
+        const roll = getStudentRoll(s.StudentName);
+        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
       }));
-      html += `<h3 style="margin-top:1.2rem">${ev}</h3><table><thead><tr><th>#</th><th>Name</th><th>Dept</th><th>QR Code</th></tr></thead><tbody>
+      html += `<h3 style="margin-top:1.2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem;">${ev}</h3>
+      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Dept</th><th>QR Code</th></tr></thead><tbody>
         ${rows.join('')}
       </tbody></table>`;
     }
@@ -481,9 +492,10 @@ async function printReport(type) {
     ttl = `${myHouse} House – Overall List`;
     const rows = await Promise.all(data.map(async (f, i) => {
       const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
-      return `<tr><td>${i+1}</td><td>${f.StudentName}</td><td>${f.EventName}</td><td>${f.Department}</td><td>${qrImg}</td></tr>`;
+      const roll = getStudentRoll(f.StudentName);
+      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.Department}</td><td>${f.EventName}</td><td>${qrImg}</td></tr>`;
     }));
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Event</th><th>Department</th><th>QR Code</th></tr></thead><tbody>
+    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Department</th><th>Event</th><th>QR Code</th></tr></thead><tbody>
       ${rows.join('')}
     </tbody></table>`;
   }
