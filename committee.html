@@ -15,6 +15,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.4.4/qrcode.min.js"></script>
 </head>
 <body>
+<button class="mobile-menu-btn no-print" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">☰</button>
+<div id="sidebar-backdrop" class="sidebar-backdrop hidden no-print" onclick="toggleMobileSidebar()"></div>
 <div class="app-shell">
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -295,7 +297,7 @@
     <!-- Reports -->
     <section id="sec-reports" class="section-page hidden">
       <div class="topbar"><div class="topbar-title">Reports &amp; Print</div></div>
-      <div class="grid-3">
+      <div class="grid-3 no-print">
         <div class="card text-center" style="cursor:pointer" onclick="openReport('house')">
           <div style="font-size:2rem">🏠</div>
           <h3 class="mt-1">House‑wise</h3>
@@ -358,6 +360,9 @@
 <script src="api.js"></script>
 <script>
 // ── Init ─────────────────────────────────────────────────────────────────────
+function isHouseMatch(h1, h2) {
+  return String(h1 || '').trim().toLowerCase() === String(h2 || '').trim().toLowerCase();
+}
 let user, eventsData=[], housesData=[], studentsData=[], pointsConfig=[], resultsData=[];
 let awardScanned = null;
 let chartInstance = null;
@@ -759,7 +764,7 @@ async function filterResults() {
   const hse = document.getElementById('results-filter-house').value;
   let filtered = resultsData;
   if (evt) filtered = filtered.filter(r => r.EventID === evt);
-  if (hse) filtered = filtered.filter(r => r.House === hse);
+  if (hse) filtered = filtered.filter(r => isHouseMatch(r.House, hse));
   await renderResults(filtered);
 }
 
@@ -880,7 +885,7 @@ async function openReport(type) {
   if (type === 'house') {
     ttl = 'House‑wise Participant List';
     for (const h of housesData) {
-      const stu = finalList.filter(f => f.House === h.HouseName);
+      const stu = finalList.filter(f => isHouseMatch(f.House, h.HouseName));
       const rows = await Promise.all(stu.map(async (s, i) => {
         const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
         return `<tr><td>${i+1}</td><td>${s.StudentName}</td><td>${s.EventName}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
