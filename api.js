@@ -98,22 +98,38 @@ const Session = {
   set(data) {
     try {
       sessionStorage.setItem('sportsUser', JSON.stringify(data));
-    } catch(e) {
-      window.sportsUserSession = data;
-    }
+      localStorage.setItem('sportsUser', JSON.stringify(data));
+    } catch(e) {}
+    try {
+      window.name = JSON.stringify(data);
+    } catch(e) {}
   },
   get() {
+    let data = null;
     try {
-      return JSON.parse(sessionStorage.getItem('sportsUser') || 'null') || window.sportsUserSession || null;
+      data = sessionStorage.getItem('sportsUser') || localStorage.getItem('sportsUser');
+    } catch(e) {}
+    if (!data) {
+      try {
+        if (window.name && window.name.startsWith('{')) {
+          data = window.name;
+        }
+      } catch(e) {}
+    }
+    try {
+      return data ? JSON.parse(data) : null;
     } catch(e) {
-      return window.sportsUserSession || null;
+      return null;
     }
   },
   clear() {
     try {
       sessionStorage.removeItem('sportsUser');
+      localStorage.removeItem('sportsUser');
     } catch(e) {}
-    window.sportsUserSession = null;
+    try {
+      window.name = '';
+    } catch(e) {}
   },
 
   // role = 'committee' | 'house'
