@@ -6,6 +6,14 @@
   <title>Sports Committee Dashboard</title>
   <link rel="stylesheet" href="styles.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#f59e0b"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Sports Day"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -162,14 +170,13 @@
     <section id="sec-points-config" class="section-page hidden">
       <div class="topbar">
         <div class="topbar-title">Points Configuration</div>
-        <button class="btn btn-primary btn-sm" onclick="addPointRow()">+ Add Row</button>
         <button class="btn btn-success btn-sm" onclick="savePointsConfig()">💾 Save All</button>
       </div>
       <div class="card">
         <p class="text-muted mb-2" style="font-size:.85rem">Edit point values for each category and position. Click Save All when done.</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Category</th><th>Position</th><th>Points</th><th></th></tr></thead>
+            <thead><tr><th>Category</th><th>Position</th><th>Points</th></tr></thead>
             <tbody id="pc-body"></tbody>
           </table>
         </div>
@@ -363,6 +370,22 @@
 function isHouseMatch(h1, h2) {
   return String(h1 || '').trim().toLowerCase() === String(h2 || '').trim().toLowerCase();
 }
+const DEFAULT_POINTS_CONFIG = [
+  { Category: 'Individual', Position: '1st', Points: 100 },
+  { Category: 'Individual', Position: '2nd', Points: 75 },
+  { Category: 'Individual', Position: '3rd', Points: 50 },
+  { Category: 'Individual', Position: 'Participation', Points: 20 },
+  { Category: 'Team', Position: '1st', Points: 500 },
+  { Category: 'Team', Position: '2nd', Points: 300 },
+  { Category: 'Team', Position: '3rd', Points: 100 },
+  { Category: 'Team', Position: 'Participation', Points: 50 },
+  { Category: 'HouseDecoration', Position: 'Winner', Points: 15 },
+  { Category: 'HouseDecoration', Position: 'RunnerUp', Points: 10 },
+  { Category: 'MarchPast', Position: 'Winner', Points: 15 },
+  { Category: 'MarchPast', Position: 'RunnerUp', Points: 10 },
+  { Category: 'Discipline', Position: 'Winner', Points: 10 },
+  { Category: 'Discipline', Position: 'RunnerUp', Points: 7 }
+];
 let user, eventsData=[], housesData=[], studentsData=[], pointsConfig=[], resultsData=[];
 let awardScanned = null;
 let chartInstance = null;
@@ -377,10 +400,28 @@ let chartInstance = null;
 })();
 
 async function loadAll() {
-  [eventsData, housesData, studentsData, pointsConfig, resultsData] = await Promise.all([
+  const [evs, hss, stds, pcs, res] = await Promise.all([
     apiGet('getEvents'), apiGet('getHouses'), apiGet('getStudents'),
     apiGet('getPointsConfig'), apiGet('getResults')
   ]);
+  eventsData = evs;
+  housesData = hss;
+  studentsData = stds;
+  resultsData = res;
+
+  // Merge loaded configuration with default 14 rows to guarantee no missing configs
+  pointsConfig = DEFAULT_POINTS_CONFIG.map(def => {
+    const found = (pcs || []).find(p => 
+      String(p.Category).trim().toLowerCase() === def.Category.toLowerCase() &&
+      String(p.Position).trim().toLowerCase() === def.Position.toLowerCase()
+    );
+    return {
+      Category: def.Category,
+      Position: def.Position,
+      Points: found ? Number(found.Points) : def.Points
+    };
+  });
+
   await populateSelects();
   loadSettings();
 }
@@ -461,6 +502,46 @@ function renderRecentAwards() {
   </tbody></table>`;
 }
 
+function findPointsRule(category, position) {
+  const clean = str => String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  const catClean = clean(category);
+  const posClean = clean(position);
+  
+  return pointsConfig.find(r => {
+    const rCat = clean(r.Category);
+    const rPos = clean(r.Position);
+    
+    let catMatch = (rCat === catClean);
+    if (!catMatch) {
+      if ((rCat.includes('indiv') && catClean.includes('indiv')) ||
+          (rCat.includes('team') && catClean.includes('team'))) {
+        catMatch = true;
+      }
+    }
+    if (!catMatch) return false;
+    
+    if (rPos === posClean) return true;
+    if (rPos.includes(posClean) || posClean.includes(rPos)) return true;
+    if (rPos.startsWith('particip') && posClean.startsWith('particip')) return true;
+    
+    // 1st / Winner
+    if ((rPos.includes('1st') || rPos.includes('winner') || rPos.includes('gold')) && 
+        (posClean.includes('1st') || posClean.includes('winner') || posClean.includes('gold'))) return true;
+        
+    // 2nd / Runner
+    if ((rPos.includes('2nd') || rPos.includes('runner') || rPos.includes('silver')) && 
+        (posClean.includes('2nd') || posClean.includes('runner') || posClean.includes('silver')) && 
+        !rPos.includes('secondrunner') && !posClean.includes('secondrunner') &&
+        !rPos.includes('3rd') && !posClean.includes('3rd')) return true;
+        
+    // 3rd / Second Runner
+    if ((rPos.includes('3rd') || rPos.includes('secondrunner') || rPos.includes('bronze')) && 
+        (posClean.includes('3rd') || posClean.includes('secondrunner') || posClean.includes('bronze'))) return true;
+        
+    return false;
+  });
+}
+
 // ── Award Points ───────────────────────────────────────────────────────────────
 document.getElementById('award-position').addEventListener('change', previewPoints);
 document.getElementById('award-event').addEventListener('change', previewPoints);
@@ -470,7 +551,7 @@ function previewPoints() {
   const opt = eventSel.options[eventSel.selectedIndex];
   const cat = opt ? opt.getAttribute('data-type') : '';
   const pos = document.getElementById('award-position').value;
-  const rule = pointsConfig.find(r => r.Category === cat && r.Position === pos);
+  const rule = findPointsRule(cat, pos);
   document.getElementById('award-pts-preview').textContent = rule ? `Points to be awarded: ${rule.Points}` : '';
 }
 
@@ -510,7 +591,7 @@ async function submitAward() {
     [studentName, dept, house] = sv.split('|');
   }
 
-  const rule = pointsConfig.find(r => r.Category === eventType && r.Position === position);
+  const rule = findPointsRule(eventType, position);
   const points = rule ? Number(rule.Points) : 0;
 
   let photoUrl = '';
@@ -536,7 +617,7 @@ async function submitNonGame() {
   const category = document.getElementById('ng-category').value;
   const position = document.getElementById('ng-position').value;
   const house = document.getElementById('ng-house').value;
-  const rule = pointsConfig.find(r => r.Category === category && r.Position === position);
+  const rule = findPointsRule(category, position);
   const points = rule ? Number(rule.Points) : 0;
   await apiPost('awardPoints', { eventId: category, eventName: category, position, studentName: house, dept: '', house, points, photoUrl: '', isTeam: true });
   toast(`✅ ${points} points awarded to ${house} for ${category}`, 'success');
@@ -624,32 +705,27 @@ async function saveHouse() {
 function renderPointsConfig() {
   document.getElementById('pc-body').innerHTML = pointsConfig.map((r,i) => `
     <tr>
-      <td><input class="pc-cat" value="${r.Category}" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-      <td><input class="pc-pos" value="${r.Position}" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-      <td><input class="pc-pts" type="number" value="${r.Points}" style="width:80px;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-      <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>
+      <td style="font-weight:600;padding:0.75rem 1rem;">${r.Category}</td>
+      <td style="color:var(--text-muted);padding:0.75rem 1rem;">${r.Position}</td>
+      <td style="padding:0.75rem 1rem;"><input class="pc-pts" type="number" value="${r.Points}" style="width:100px;"></td>
     </tr>`).join('');
 }
 
-function addPointRow() {
-  const tbody = document.getElementById('pc-body');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td><input class="pc-cat" value="" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-    <td><input class="pc-pos" value="" style="width:100%;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-    <td><input class="pc-pts" type="number" value="0" style="width:80px;background:transparent;border:none;color:inherit;font-family:inherit"></td>
-    <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">✕</button></td>`;
-  tbody.appendChild(tr);
-}
+function addPointRow() {} // No-op, removed from HTML UI
 
 async function savePointsConfig() {
-  const rows = [...document.querySelectorAll('#pc-body tr')].map(tr => ({
-    Category: tr.querySelector('.pc-cat').value,
-    Position: tr.querySelector('.pc-pos').value,
-    Points: tr.querySelector('.pc-pts').value
-  }));
+  const inputs = document.querySelectorAll('#pc-body .pc-pts');
+  const rows = pointsConfig.map((def, idx) => {
+    const val = inputs[idx] ? Number(inputs[idx].value) : def.Points;
+    return {
+      Category: def.Category,
+      Position: def.Position,
+      Points: isNaN(val) ? 0 : val
+    };
+  });
   await apiPost('savePointsConfig', { rows });
   pointsConfig = rows;
-  toast('Points config saved', 'success');
+  toast('Points config saved successfully', 'success');
 }
 
 // ── Committee Users ───────────────────────────────────────────────────────────
@@ -873,6 +949,9 @@ async function openReport(type) {
   const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl || '');
   const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl || '');
 
+  // Preload logo and founder thumbnails before showing report
+  await preloadImages([finalLogo, finalFounder]);
+
   hdr.innerHTML = `
     ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
     <div style="flex:1;text-align:center">
@@ -963,7 +1042,11 @@ function closeModal(e) {
   document.getElementById('modal-overlay').classList.add('hidden');
 }
 
-function logout() { Session.clear(); location.href='index.html'; }
+function logout() {
+  const gasUrl = getGasUrl();
+  Session.clear();
+  location.href = 'index.html' + (gasUrl ? '?gasUrl=' + encodeURIComponent(gasUrl) : '');
+}
 </script>
 </body>
 </html>
