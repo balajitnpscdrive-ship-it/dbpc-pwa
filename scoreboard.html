@@ -1,736 +1,2010 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Live Scoreboard – Sports Day</title>
-  <meta name="description" content="Live house points scoreboard for Sports Day"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <title>Live Widescreen Scoreboard – Sports Day</title>
+  <meta name="description" content="Cinematic live house standings for Sports Day TV"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#f59e0b"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Sports Day"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
   <style>
     :root {
+      --gold: #FFD700;
       --accent: hsl(35,90%,55%);
-      --accent2: hsl(260,80%,65%);
       --bg: hsl(220,15%,6%);
       --text: hsl(220,20%,92%);
       --text-muted: hsl(220,10%,55%);
     }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{
-      font-family:'Inter',sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      min-height:100vh;
-      overflow-x:hidden;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden !important;
+      background-color: #000;
+      background-size: cover;
+      background-position: center;
+      color: white;
+      user-select: none;
+    }
+    
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1;
+      pointer-events: none;
     }
 
-    /* ── Animated background ─────────────────── */
-    #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
-
-    .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
-
-    /* ── Header ──────────────────────────────── */
-    .hdr{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:1.2rem 2rem;
-      background:linear-gradient(180deg,hsla(220,15%,4%,.95) 0%,transparent 100%);
-      gap:1rem;flex-wrap:wrap;
+    /* STARTER SPLASH SCREEN */
+    #starter {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #040201;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      text-align: center;
     }
-    .hdr-logos{display:flex;align-items:center;gap:1rem;}
-    .hdr-logos img{height:64px;border-radius:8px;filter:drop-shadow(0 0 12px var(--accent));}
-    .hdr-logos img.founder{border-radius:50%;border:3px solid var(--accent);}
-    .hdr-title h1{
-      font-family:'Bebas Neue',sans-serif;
-      font-size:clamp(1.5rem,3.5vw,2.6rem);
-      letter-spacing:.08em;
-      background:linear-gradient(135deg,var(--accent),hsl(50,100%,70%));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-      line-height:1;
+    #starter h1 {
+      color: var(--gold);
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      margin: 0;
+      text-shadow: 0 0 30px rgba(255,215,0,0.4);
+      letter-spacing: 4px;
     }
-    .hdr-title p{color:var(--text-muted);font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;margin-top:.2rem;}
-    .hdr-right{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
-    .hdr-right .upd{font-size:.75rem;color:var(--text-muted);}
-
-    .btn{
-      display:inline-flex;align-items:center;gap:.4rem;
-      padding:.45rem 1rem;border:none;border-radius:8px;
-      font-family:'Inter',sans-serif;font-weight:600;font-size:.82rem;
-      cursor:pointer;transition:.2s;text-decoration:none;
+    #starter p {
+      font-size: 1.4rem;
+      margin-top: 20px;
+      letter-spacing: 2px;
+      color: #fff;
+      font-weight: 700;
+      animation: pulseText 1.5s infinite alternate;
     }
-    .btn-ghost{background:hsla(255,100%,100%,.07);color:var(--text);border:1px solid hsla(255,100%,100%,.1);}
-    .btn-ghost:hover{background:hsla(255,100%,100%,.14);}
-    .btn-accent{background:var(--accent);color:#000;}
-    .btn-accent:hover{background:hsl(35,90%,65%);}
-
-    /* Music bar */
-    .music-bar{
-      display:none;align-items:center;gap:.75rem;
-      padding:.5rem 2rem;
-      background:hsla(220,15%,4%,.7);
-      border-bottom:1px solid hsla(255,100%,100%,.06);
-    }
-    .music-bar.show{display:flex;}
-    .music-bar .music-icon{font-size:1.2rem;animation:spin 3s linear infinite;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .music-bar .music-label{font-size:.78rem;color:var(--text-muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .music-bar input[type=range]{
-      width:90px;accent-color:var(--accent);cursor:pointer;
+    @keyframes pulseText {
+      from { opacity: 0.5; } to { opacity: 1; text-shadow: 0 0 10px #fff; }
     }
 
-    /* ── Score section ───────────────────────── */
-    .scores-wrap{padding:1.5rem 2rem 1rem;flex:1;}
-
-    /* RANK BANNER for #1 */
-    .rank-banner{
-      text-align:center;margin-bottom:1.2rem;
-      font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.4rem);
-      letter-spacing:.2em;color:var(--accent);opacity:.6;text-transform:uppercase;
+    /* MAIN CONTAINER */
+    .container {
+      position: relative;
+      z-index: 10;
+      padding: 14px 20px 8px;
+      height: 100vh;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
     }
 
-    .score-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-      gap:1.5rem;
-      margin-bottom:2rem;
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255,215,0,0.15);
+      padding-bottom: 8px;
+    }
+    .logo-img {
+      height: 75px;
+      width: auto;
+      border-radius: 8px;
+      object-fit: contain;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      margin-left: 10px;
+      display: none;
+    }
+    .founder-img {
+      height: 75px;
+      width: 75px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+      object-fit: cover;
+      margin-right: 10px;
+      display: none;
     }
 
-    .house-card{
-      position:relative;border-radius:20px;padding:2rem 1.5rem 1.5rem;
-      text-align:center;overflow:hidden;cursor:default;
-      transition:transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .4s;
-      animation:cardIn .6s cubic-bezier(.34,1.56,.64,1) both;
-    }
-    @keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(.9)}to{opacity:1;transform:none}}
-
-    .house-card:hover{transform:translateY(-8px) scale(1.02);}
-
-    /* glow blob */
-    .house-card .blob{
-      position:absolute;width:180%;height:180%;
-      top:-40%;left:-40%;
-      background:radial-gradient(circle at 50% 50%,var(--hc)33,transparent 65%);
-      animation:blobPulse 3s ease-in-out infinite alternate;
-      pointer-events:none;
-    }
-    @keyframes blobPulse{from{transform:scale(.9);opacity:.18}to{transform:scale(1.1);opacity:.32}}
-
-    /* #1 special glow */
-    .house-card.rank-1{box-shadow:0 0 60px var(--hc-glow, #f59e0b55), 0 20px 60px hsla(0,0%,0%,.5);}
-    .house-card.rank-1 .blob{opacity:.3;}
-
-    /* card border shimmer */
-    .house-card::before{
-      content:'';position:absolute;inset:0;border-radius:20px;
-      background:linear-gradient(135deg,var(--hc)33 0%,transparent 50%,var(--hc)22 100%);
-      z-index:0;
-    }
-    .house-card > *{position:relative;z-index:1;}
-
-    /* Rank badge */
-    .rank-badge{
-      font-family:'Bebas Neue',sans-serif;
-      font-size:clamp(2.5rem,5vw,3.8rem);
-      line-height:1;
-      filter:drop-shadow(0 0 12px var(--hc));
-      margin-bottom:.3rem;
-    }
-    .rank-num{
-      position:absolute;top:.8rem;right:1rem;
-      font-family:'Outfit',sans-serif;font-weight:900;font-size:.75rem;
-      background:var(--hc);color:#000;padding:.2rem .55rem;border-radius:99px;
-      opacity:.9;
+    /* SLIDE STAGE */
+    .slide-stage {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      min-height: 0; /* Important for flex-grow in height-constrained containers */
     }
 
-    /* SVG ring */
-    .ring-wrap{position:relative;width:110px;height:110px;margin:0 auto .8rem;}
-    .ring-wrap svg{transform:rotate(-90deg);}
-    .ring-track{fill:none;stroke:hsla(255,100%,100%,.08);stroke-width:8;}
-    .ring-fill{
-      fill:none;stroke:var(--hc);stroke-width:8;
-      stroke-linecap:round;
-      stroke-dasharray:283;stroke-dashoffset:283;
-      transition:stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1);
-      filter:drop-shadow(0 0 6px var(--hc));
+    /* Slide transition animations */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform: scale(0.97) translateY(12px);
+      transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+      width: 100%;
+      height: 100%;
     }
-    .ring-pts{
-      position:absolute;inset:0;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1) translateY(0);
     }
-    .ring-pts .num{
-      font-family:'Bebas Neue',sans-serif;
-      font-size:clamp(1.6rem,3vw,2.2rem);
-      line-height:1;color:var(--text);
+    .slide.exiting {
+      opacity: 0;
+      transform: scale(1.02) translateY(-10px);
+      transition: opacity 0.55s ease-in, transform 0.55s ease-in;
     }
-    .ring-pts .lbl{font-size:.6rem;letter-spacing:.12em;opacity:.6;text-transform:uppercase;}
 
-    .house-name{
-      font-family:'Outfit',sans-serif;font-weight:900;
-      font-size:clamp(1.1rem,2vw,1.5rem);
-      letter-spacing:.04em;margin-bottom:.3rem;
-      text-shadow:0 0 20px var(--hc);
+    /* Floating Header Pill Label */
+    #slide-flash {
+      position: fixed;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-15px);
+      background: rgba(0,0,0,0.85);
+      border: 1.5px solid rgba(255,215,0,0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 6px 25px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #FFD700;
+      z-index: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s, transform 0.35s;
     }
-    .house-sub{font-size:.75rem;color:var(--text-muted);letter-spacing:.08em;}
+    #slide-flash.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
 
-    /* crown for #1 */
-    .crown{
-      font-size:1.8rem;
-      animation:float 2.5s ease-in-out infinite;
-      display:block;margin-bottom:.2rem;
+    /* Ticker Footer */
+    .footer-bar {
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.7);
+      padding: 8px 20px;
+      border-radius: 50px;
+      text-align: center;
+      font-weight: bold;
+      border: 1px solid var(--gold);
+      margin-top: 6px;
+      font-size: 0.82rem;
+      letter-spacing: 1px;
     }
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
-    /* bar section */
-    .bars-wrap{
-      max-width:980px;margin:0 auto 2rem;
-      padding:1.5rem 2rem;
-      background:hsla(220,14%,12%,.6);
-      border:1px solid hsla(255,100%,100%,.06);
-      border-radius:20px;
-      backdrop-filter:blur(12px);
+    /* BROADCAST LIVE BADGE */
+    #live-badge {
+      position: fixed;
+      top: 105px;
+      right: 30px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,0.65);
+      padding: 5px 12px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-weight: 900;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      color: #fff;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
-    .bars-wrap h3{
-      font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;
-      margin-bottom:1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;
+    .live-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ff3333;
+      box-shadow: 0 0 8px #ff3333;
+      animation: pulseRed 1.5s infinite;
     }
-    .bar-row{margin-bottom:1rem;}
-    .bar-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;font-size:.85rem;font-weight:600;}
-    .bar-track{height:14px;background:hsla(255,100%,100%,.06);border-radius:99px;overflow:hidden;}
-    .bar-fill{
-      height:100%;border-radius:99px;
-      transition:width 1.4s cubic-bezier(.4,0,.2,1);
-      position:relative;overflow:hidden;
+    @keyframes pulseRed {
+      0% { opacity: 0.4; box-shadow: 0 0 0px #ff3333; }
+      50% { opacity: 1; box-shadow: 0 0 10px #ff3333; }
+      100% { opacity: 0.4; box-shadow: 0 0 0px #ff3333; }
     }
-    .bar-fill::after{
-      content:'';position:absolute;inset:0;
-      background:linear-gradient(90deg,transparent,hsla(255,100%,100%,.2),transparent);
-      animation:shimmer 2s linear infinite;
-    }
-    @keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
 
-    /* recent + chart side by side */
-    .bottom-grid{
-      max-width:980px;margin:0 auto 2rem;padding:0 2rem;
-      display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
+    /* FLOAT UP EMBERS */
+    #embers {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
-    @media(max-width:700px){.bottom-grid{grid-template-columns:1fr;}}
+    .ember {
+      position: absolute;
+      bottom: -15px;
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: #FFD700;
+      box-shadow: 0 0 10px 2px #FF8C00;
+      animation: floatUp var(--dur) ease-in infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+      10% { opacity: 0.8; }
+      90% { opacity: 0.8; }
+      100% { transform: translateY(-110vh) scale(0.2) translateX(var(--drift)); opacity: 0; }
+    }
 
-    .panel{
-      background:hsla(220,14%,12%,.6);
-      border:1px solid hsla(255,100%,100%,.06);
-      border-radius:20px;padding:1.25rem;
-      backdrop-filter:blur(12px);
+    /* HARRY POTTER HANGING SHIELDS STYLE */
+    .banner-slide {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      justify-content: flex-start;
+      padding-top: 4px;
     }
-    .panel h3{font-size:.85rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.9rem;}
+    .slide-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3.8vw, 4.2rem);
+      font-weight: 900;
+      margin: 0 0 8px 0;
+      text-shadow: 0 0 35px rgba(180,130,0,0.85), 0 4px 15px rgba(0,0,0,1);
+      letter-spacing: 4px;
+      color: #fff;
+    }
+    .slide-title span { color: var(--gold); }
+    
+    /* WEEKLY BLUE THEME */
+    .banner-slide-weekly .slide-title {
+      color: #00e8ff;
+      text-shadow: 0 0 25px rgba(0,210,255,0.9), 0 4px 15px rgba(0,0,0,1);
+    }
+    .banner-slide-weekly .shield-wrap {
+      filter: drop-shadow(0 18px 25px rgba(0,0,0,0.95)) drop-shadow(0 0 15px rgba(0,190,255,0.4));
+    }
+    .banner-slide-weekly .shield::after { border-color: rgba(0,210,255,0.7) !important; }
+    .banner-slide-weekly .rank-1 .shield::after {
+      border-color: rgba(0,230,255,1) !important;
+      border-width: 3.5px !important;
+      animation: cyanPulse 2s ease-in-out infinite alternate;
+    }
+    .banner-slide-weekly .banner-score, .banner-slide-weekly .rank-1 .banner-score {
+      color: #00eeff;
+      text-shadow: 0 0 15px rgba(0,210,255,0.8);
+    }
+    .banner-slide-weekly .chain {
+      background: repeating-linear-gradient(to bottom,#00607a 0px,#00d4ff 4px,#00a8c8 6px,#003d50 10px,transparent 10px,transparent 14px);
+    }
+    @keyframes cyanPulse {
+      0% { box-shadow: inset 0 0 8px rgba(0,200,255,0.3); }
+      100% { box-shadow: inset 0 0 25px rgba(0,200,255,0.6); }
+    }
 
-    /* recent results */
-    .result-row{
-      display:flex;align-items:center;gap:.75rem;padding:.6rem 0;
-      border-bottom:1px solid hsla(255,100%,100%,.05);
-      animation:slideRight .4s ease both;
+    /* ANNUAL GOLD THEME */
+    .banner-slide-annual .slide-title {
+      color: #FFD700;
+      text-shadow: 0 0 35px rgba(255,160,0,0.9), 0 4px 15px rgba(0,0,0,1);
     }
-    @keyframes slideRight{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:none}}
-    .result-row:last-child{border-bottom:none;}
-    .result-pos{
-      font-size:.7rem;font-weight:700;padding:.2rem .5rem;border-radius:6px;
-      background:hsla(255,100%,100%,.08);white-space:nowrap;
+    .banner-slide-annual .rank-1 .shield::after {
+      animation: goldPulse 2.5s ease-in-out infinite alternate;
     }
-    .result-pos.gold{background:hsla(35,90%,55%,.2);color:hsl(35,90%,65%);}
-    .result-pos.silver{background:hsla(260,80%,65%,.2);color:hsl(260,80%,75%);}
-    .result-pos.bronze{background:hsla(25,70%,50%,.2);color:hsl(25,70%,65%);}
-    .result-info{flex:1;min-width:0;}
-    .result-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .result-event{font-size:.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .result-pts{font-family:'Outfit',sans-serif;font-weight:900;font-size:1rem;white-space:nowrap;}
+    @keyframes goldPulse {
+      0% { border-color: rgba(255,215,0,0.65); }
+      100% { border-color: rgba(255,215,0,1); box-shadow: 0 0 18px rgba(255,215,0,0.35); }
+    }
 
-    /* chart */
-    #chart-wrap{position:relative;height:180px;}
+    .banners-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 16px;
+      width: 100%;
+      flex: 1;
+      padding: 0 14px;
+      align-self: stretch;
+      min-height: 0;
+    }
 
-    /* ── Winner overlay ───────────────────────── */
-    .winner-overlay{
-      position:fixed;inset:0;z-index:3000;
-      background:hsla(220,15%,3%,.85);
-      backdrop-filter:blur(8px);
-      display:flex;align-items:center;justify-content:center;
-      opacity:0;pointer-events:none;
-      transition:opacity .5s;
+    /* Suspended sway physics animation */
+    .bw {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 220px;
+      padding-bottom: 55px;
+      transform-origin: top center;
     }
-    .winner-overlay.show{opacity:1;pointer-events:all;}
-    .winner-card{
-      width:min(480px,94vw);
-      border-radius:24px;overflow:hidden;
-      box-shadow:0 0 100px hsla(35,90%,55%,.45),0 30px 80px hsla(0,0%,0%,.6);
-      animation:cardPop .6s cubic-bezier(.34,1.56,.64,1) both;
+    .bw:nth-child(1) { animation: bannerDrop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.0s, sway 5s ease-in-out infinite alternate 1.2s; }
+    .bw:nth-child(2) { animation: bannerDrop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.2s, sway 5s ease-in-out infinite alternate 1.4s; }
+    .bw:nth-child(3) { animation: bannerDrop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.4s, sway 5s ease-in-out infinite alternate 1.6s; }
+    .bw:nth-child(4) { animation: bannerDrop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.6s, sway 5s ease-in-out infinite alternate 1.8s; }
+    
+    @keyframes sway {
+      0% { transform: rotate(-2deg) translateX(-2px); }
+      100% { transform: rotate(2deg) translateX(2px); }
     }
-    @keyframes cardPop{from{transform:scale(.6) translateY(80px);opacity:0}to{transform:none;opacity:1}}
-    .winner-photo{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;}
-    .winner-body{
-      padding:1.75rem 2rem;
-      background:linear-gradient(135deg,hsla(35,90%,15%,.98),hsla(260,80%,15%,.98));
+    @keyframes bannerDrop {
+      0% { transform: scaleY(0.1) translateY(-100px); opacity: 0; }
+      100% { transform: scaleY(1) translateY(0); opacity: 1; }
     }
-    .winner-badge{
-      display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-      background:var(--accent);color:#000;padding:.25rem .75rem;border-radius:99px;margin-bottom:.6rem;
-    }
-    .winner-name{
-      font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,6vw,3rem);
-      letter-spacing:.06em;line-height:1;margin-bottom:.3rem;
-    }
-    .winner-meta{color:var(--text-muted);font-size:.9rem;margin-bottom:.8rem;}
-    .winner-pts-badge{
-      font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:900;
-      color:var(--accent);
-      text-shadow:0 0 20px var(--accent);
-    }
-    .winner-close{
-      position:absolute;top:1rem;right:1.5rem;
-      background:hsla(255,100%,100%,.1);border:none;color:var(--text);
-      width:36px;height:36px;border-radius:50%;font-size:1.2rem;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      transition:.2s;
-    }
-    .winner-close:hover{background:hsla(255,100%,100%,.2);}
 
-    /* toast */
-    .toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
-    .toast{background:hsla(220,14%,18%,.95);backdrop-filter:blur(14px);border:1px solid hsla(255,100%,100%,.08);border-radius:10px;padding:.7rem 1.1rem;font-size:.88rem;box-shadow:0 8px 30px hsla(220,15%,3%,.6);animation:toastIn .3s ease both;max-width:300px;}
-    .toast.success{border-left:3px solid hsl(140,60%,45%);}
-    .toast.error{border-left:3px solid hsl(0,75%,60%);}
-    .toast.info{border-left:3px solid var(--accent);}
-    @keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
-    @keyframes toastOut{from{opacity:1}to{transform:translateX(100%);opacity:0}}
-
-    #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:2999;}
-
-    @media(max-width:600px){
-      .hdr{padding:.8rem 1rem;}
-      .scores-wrap{padding:1rem;}
-      .score-grid{grid-template-columns:1fr 1fr;gap:1rem;}
-      .bars-wrap,.bottom-grid{padding:0 1rem;}
-      .bars-wrap{padding:1rem;}
+    .chain-wrap {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      padding-top: 0;
+      position: relative;
+      z-index: 2;
+      height: 90px;
+      flex-shrink: 0;
     }
+    .bw.rank-1 .chain-wrap { height: 16px; }
+    .bw.rank-2 .chain-wrap { height: 32px; }
+    .bw.rank-3 .chain-wrap { height: 50px; }
+    .bw.rank-4 .chain-wrap { height: 68px; }
+
+    .bw.rank-1 { max-width: clamp(230px, 21vw, 350px); }
+    .bw.rank-2 { max-width: clamp(195px, 18vw, 290px); }
+    .bw.rank-3 { max-width: clamp(180px, 16vw, 260px); }
+    .bw.rank-4 { max-width: clamp(165px, 14vw, 235px); }
+
+    .bw.rank-1 .shield, .bw.rank-1 .shield-wrap { min-height: clamp(290px, 42vh, 480px); }
+    .bw.rank-2 .shield, .bw.rank-2 .shield-wrap { min-height: clamp(245px, 35vh, 400px); }
+    .bw.rank-3 .shield, .bw.rank-3 .shield-wrap { min-height: clamp(215px, 30vh, 350px); }
+    .bw.rank-4 .shield, .bw.rank-4 .shield-wrap { min-height: clamp(190px, 26vh, 300px); }
+
+    .bw.rank-2 .rank-num { font-size: clamp(3rem, 4vw, 5rem); }
+    .bw.rank-3 .rank-num { font-size: clamp(2.6rem, 3.4vw, 4.4rem); }
+    .bw.rank-4 .rank-num { font-size: clamp(2.3rem, 3vw, 3.8rem); }
+    .bw.rank-2 .banner-name { font-size: clamp(1.1rem, 1.5vw, 1.8rem); }
+    .bw.rank-3 .banner-name { font-size: clamp(1rem, 1.3vw, 1.6rem); }
+    .bw.rank-4 .banner-name { font-size: clamp(0.9rem, 1.1vw, 1.4rem); }
+    .bw.rank-2 .banner-score { font-size: clamp(1.6rem, 2.4vw, 3.1rem); }
+    .bw.rank-3 .banner-score { font-size: clamp(1.4rem, 2.1vw, 2.7rem); }
+    .bw.rank-4 .banner-score { font-size: clamp(1.3rem, 1.8vw, 2.4rem); }
+
+    .chain {
+      width: 7.5px;
+      background: repeating-linear-gradient(to bottom, #b8860b 0px, #ffd700 4px, #f5c518 6px, #8b6508 10px, transparent 10px, transparent 14px);
+      border-radius: 3px;
+      filter: drop-shadow(0 0 3px rgba(200,160,0,0.6));
+    }
+    
+    .banner-gap {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(0.8rem, 1.3vh, 1.2rem);
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #fff;
+      text-transform: uppercase;
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120%;
+      text-align: center;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+      opacity: 0.8;
+      z-index: 10;
+    }
+    .banner-gap.leader { color: #FFD700; opacity: 1; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
+
+    .banner-rod {
+      position: relative;
+      z-index: 5;
+      width: calc(100% + 14px);
+      height: 16px;
+      border-radius: 9px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.9), inset 0 2px 4px rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+    .banner-rod::before, .banner-rod::after {
+      content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; border-radius: 50%;
+      background: inherit;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.4);
+    }
+    .banner-rod::before { left: -7px; }
+    .banner-rod::after { right: -7px; }
+    
+    .rank-1 .banner-rod { background: linear-gradient(180deg,#fffaaa 0%,#f0c000 40%,#8b6508 100%); }
+    .rank-2 .banner-rod { background: linear-gradient(180deg,#ffffff 0%,#c8c8c8 40%,#666 100%); }
+    .rank-3 .banner-rod { background: linear-gradient(180deg,#f5c580 0%,#c07830 40%,#5a2d00 100%); }
+    .rank-4 .banner-rod { background: linear-gradient(180deg,#888 0%,#444 40%,#111 100%); }
+
+    .floating-crown {
+      position: absolute;
+      top: -45px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3.2rem;
+      z-index: 20;
+      animation: crownBob 2s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 15px rgba(255,215,0,0.8));
+    }
+    @keyframes crownBob {
+      0% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+      100% { transform: translateX(-50%) translateY(-8px) scale(1.08) rotate(2deg); filter: drop-shadow(0 0 20px #FFD700); }
+    }
+
+    .shield {
+      position: relative;
+      width: 100%;
+      clip-path: polygon(8% 0%, 92% 0%, 100% 6%, 100% 74%, 50% 100%, 0% 74%, 0% 6%);
+      -webkit-clip-path: polygon(8% 0%, 92% 0%, 100% 6%, 100% 74%, 50% 100%, 0% 74%, 0% 6%);
+      flex: 1;
+      min-height: 290px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 18px 10px 45px;
+      overflow: hidden;
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+    }
+    .shield-wrap {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 290px;
+      filter: drop-shadow(0 18px 25px rgba(0,0,0,0.98)) drop-shadow(0 0 10px rgba(180,140,0,0.45));
+    }
+
+    .shield::before {
+      content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      clip-path: inherit;
+      background:
+        linear-gradient(96deg,
+          rgba(0,0,0,0.7) 0%,
+          rgba(255,255,255,0.08) 18%,
+          rgba(0,0,0,0.35) 38%,
+          rgba(255,255,255,0.12) 58%,
+          rgba(0,0,0,0.55) 78%,
+          rgba(255,255,255,0.06) 90%,
+          rgba(0,0,0,0.7) 100%
+        ),
+        linear-gradient(180deg,
+          rgba(255,255,255,0.18) 0%,
+          rgba(0,0,0,0.0) 40%,
+          rgba(0,0,0,0.75) 100%
+        );
+    }
+    .shield::after {
+      content: ''; position: absolute; z-index: 1; pointer-events: none;
+      top: 6px; left: 6px; right: 6px; bottom: 6px;
+      border: 2.2px solid rgba(255,215,0,0.5);
+      clip-path: polygon(8% 0%, 92% 0%, 100% 6%, 100% 74%, 50% 100%, 0% 74%, 0% 6%);
+    }
+    .rank-1 .shield::after { border-color: rgba(255,215,0,0.85); border-width: 2.8px; }
+
+    /* Shimmer Glareshield Effect */
+    .shield-glare {
+      content: ''; position: absolute; top: 0; left: -180%; width: 80%; height: 100%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%);
+      transform: skewX(-25deg);
+      animation: sweepGlare 7s ease-in-out infinite;
+      z-index: 10; pointer-events: none;
+    }
+    @keyframes sweepGlare {
+      0%, 60% { left: -180%; }
+      100% { left: 250%; }
+    }
+
+    .banner-rank {
+      display: flex;
+      align-items: flex-start;
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      z-index: 2;
+      position: relative;
+      margin-bottom: 2px;
+    }
+    .rank-num {
+      font-size: clamp(3.5rem, 6.8vh, 6.8rem);
+      font-weight: 900;
+      line-height: 0.9;
+      text-shadow: 1px 1px 0 #8b6508, 2px 2px 0 #7a5500, 3px 3px 0 #5c3d00, 4px 4px 6px rgba(0,0,0,0.8), 0 0 18px rgba(255,200,0,0.35);
+    }
+    .rank-1 .rank-num {
+      font-size: clamp(5rem, 9.5vh, 10rem);
+      color: #FFD700;
+      text-shadow: 1px 1px 0 #b8860b, 2px 2px 0 #996600, 3px 3px 0 #7a5000, 4px 4px 0 #5c3a00, 5px 5px 8px rgba(0,0,0,0.9), 0 0 35px rgba(255,220,0,0.65);
+    }
+    .rank-ord {
+      font-size: clamp(1.1rem, 2vh, 2rem);
+      font-weight: 900;
+      margin-top: 5px;
+      margin-left: 2px;
+      text-transform: uppercase;
+      text-shadow: 1px 1px 3px #000;
+    }
+    .rank-1 .rank-ord { font-size: clamp(1.5rem, 2.8vh, 2.7rem); color: #FFD700; }
+
+    .banner-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(1.2rem, 2.3vh, 2.2rem);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 2px 0 #000, 0 4px 8px rgba(0,0,0,0.9);
+      text-align: center;
+      z-index: 2;
+      position: relative;
+      margin-top: 2px;
+    }
+    .rank-1 .banner-name { font-size: clamp(1.6rem, 3.2vh, 3rem); }
+
+    .banner-score {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 4.2vh, 3.7rem);
+      color: #FFD700;
+      z-index: 2;
+      position: relative;
+      margin-top: 3px;
+      line-height: 1;
+      text-shadow: 0 1px 0 #b8860b, 0 2px 0 #996600, 0 3px 0 #7a5000, 0 4px 7px rgba(0,0,0,0.9), 0 0 18px rgba(255,200,0,0.25);
+    }
+    .rank-1 .banner-score { font-size: clamp(2.8rem, 6.2vh, 5.5rem); }
+
+    .banner-pts-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(0.7rem, 1.3vh, 1rem);
+      font-weight: 700;
+      color: rgba(255,215,0,0.65);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      z-index: 2;
+      position: relative;
+    }
+
+    .banner-logo {
+      width: clamp(75px, 12vh, 120px);
+      height: clamp(75px, 12vh, 120px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%,#2a2a2a,#0a0a0a);
+      border: 2.5px solid rgba(255,215,0,0.7);
+      box-shadow: 0 5px 16px rgba(0,0,0,0.92), 0 0 12px rgba(180,140,0,0.4), inset 0 0 8px rgba(0,0,0,0.7);
+      overflow: hidden;
+      z-index: 2;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.8rem, 2.8vw, 3.2rem);
+      font-weight: 900;
+      color: rgba(255,215,0,0.8);
+      margin: 6px auto 5px;
+      flex-shrink: 0;
+    }
+    .banner-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    
+    .rank-1 .banner-logo {
+      width: clamp(100px, 11vw, 150px);
+      height: clamp(100px, 11vw, 150px);
+      border-width: 3.5px;
+      border-color: #FFD700;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.95), 0 0 24px rgba(255,200,0,0.55), inset 0 0 10px rgba(0,0,0,0.6);
+      margin: 8px auto 6px;
+    }
+
+    /* DEPT-WISE STANDINGS SLIDE (RISING BAR CHARTS) */
+    .dept-house-slide {
+      width: 98%;
+      height: 95%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 28px;
+      overflow: hidden;
+      padding: 14px 26px 10px;
+      gap: 8px;
+      position: relative;
+    }
+    .dept-house-slide::before {
+      content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background: repeating-linear-gradient(
+        transparent 0px, transparent 3px,
+        rgba(255,255,255,0.01) 3px, rgba(255,255,255,0.01) 4px
+      );
+    }
+    
+    .dhs-weekly {
+      background: radial-gradient(ellipse at 20% 0%, #001d3a 0%, #03060c 75%);
+      border: 2px solid rgba(0,200,255,0.22);
+      box-shadow: inset 0 0 70px rgba(0,150,255,0.05);
+    }
+    .dhs-weekly .dh-header-bar { border-bottom: 2px solid rgba(0,200,255,0.25); }
+    .dhs-weekly .dh-mode-badge {
+      background: linear-gradient(135deg,#003d6b,#005fa3);
+      border: 1px solid rgba(0,210,255,0.45);
+      color: #60d8ff;
+      box-shadow: 0 0 18px rgba(0,180,255,0.3);
+    }
+    .dhs-weekly .dh-base-line {
+      background: linear-gradient(to right,transparent,rgba(0,200,255,0.5),transparent);
+    }
+    .dhs-weekly .dh-bar-rank { text-shadow: 0 0 8px rgba(0,200,255,0.6), 0 2px 5px rgba(0,0,0,0.9); }
+    .dhs-weekly .dh-score { color: #60d8ff; text-shadow: 0 0 12px rgba(0,200,255,0.6); }
+    .dhs-weekly .dh-house-col.dh-top .dh-score {
+      color: #00f0ff;
+      animation: scoreGlowBlue 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes scoreGlowBlue {
+      0% { text-shadow: 0 0 8px rgba(0,200,255,0.4); }
+      100% { text-shadow: 0 0 25px rgba(0,200,255,1), 0 0 50px rgba(0,120,255,0.5); }
+    }
+    .dhs-weekly .dh-chart-outer::before {
+      background: repeating-linear-gradient(to top, rgba(0,200,255,0.06) 0px, rgba(0,200,255,0.06) 1px, transparent 1px, transparent 25%);
+    }
+
+    .dhs-annual {
+      background: radial-gradient(ellipse at 20% 0%, #1e1100 0%, #060400 75%);
+      border: 2px solid rgba(255,180,0,0.25);
+      box-shadow: inset 0 0 70px rgba(180,100,0,0.05);
+    }
+    .dhs-annual .dh-header-bar { border-bottom: 2px solid rgba(255,180,0,0.3); }
+    .dhs-annual .dh-mode-badge {
+      background: linear-gradient(135deg,#3a2000,#6b3a00);
+      border: 1px solid rgba(255,180,0,0.5);
+      color: #FFD700;
+      box-shadow: 0 0 18px rgba(200,120,0,0.35);
+    }
+    .dhs-annual .dh-base-line {
+      background: linear-gradient(to right,transparent,rgba(255,200,0,0.5),transparent);
+    }
+    .dhs-annual .dh-score { color: #FFD700; text-shadow: 0 0 12px rgba(255,180,0,0.5); }
+    .dhs-annual .dh-house-col.dh-top .dh-score {
+      color: #FFD700;
+      animation: scoreGlowGold 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes scoreGlowGold {
+      0% { text-shadow: 0 0 8px rgba(255,200,0,0.4); }
+      100% { text-shadow: 0 0 25px rgba(255,200,0,1), 0 0 50px rgba(255,120,0,0.4); }
+    }
+    .dhs-annual .dh-chart-outer::before {
+      background: repeating-linear-gradient(to top, rgba(255,180,0,0.06) 0px, rgba(255,180,0,0.06) 1px, transparent 1px, transparent 25%);
+    }
+
+    .dh-header-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; padding-bottom: 8px;
+      position: relative; z-index: 1;
+    }
+    .dh-dept-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem; font-weight: 900; letter-spacing: 3px;
+      text-transform: uppercase; color: #fff;
+      text-shadow: 0 3px 15px rgba(0,0,0,0.9);
+      line-height: 1;
+    }
+    .dh-dept-title em { font-style: normal; font-size: 1.08em; }
+    
+    .dh-mode-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; font-weight: 900;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      padding: 6px 18px; border-radius: 40px;
+      display: flex; align-items: center; gap: 7px;
+      flex-shrink: 0;
+    }
+    .dh-mode-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .dhs-weekly .dh-mode-dot { background: #00d4ff; box-shadow: 0 0 6px #00d4ff; animation: pulseRed 1.5s infinite; }
+    .dhs-annual .dh-mode-dot { background: #FFD700; box-shadow: 0 0 6px #FFD700; }
+
+    .dh-dept-sub {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.88rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.32);
+      text-align: left; position: relative; z-index: 1; flex-shrink: 0;
+    }
+
+    .dh-chart-outer {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+      min-height: 200px;
+    }
+    
+    .dh-house-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      z-index: 2;
+    }
+    .dh-spacer { height: 2.5rem; flex-shrink: 0; }
+    .dh-crown {
+      font-size: 1.8rem; flex-shrink: 0;
+      animation: crownBob 1.5s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 8px rgba(255,215,0,0.75));
+      margin-bottom: 2px;
+    }
+    .dh-score {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900; font-size: clamp(1.3rem, 2vw, 2.5rem);
+      margin-bottom: 3px; flex-shrink: 0;
+    }
+    .dh-nopts {
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      margin-bottom: 3px; flex-shrink: 0;
+    }
+    
+    .dh-bar {
+      width: clamp(65px, 8vw, 98px);
+      border-radius: 12px 12px 0 0;
+      position: relative; overflow: hidden; flex-shrink: 0;
+      transform-origin: bottom center; transform: scaleY(0);
+      transition: transform 1.6s cubic-bezier(0.22,1,0.36,1);
+      box-shadow: 0 -6px 20px rgba(0,0,0,0.5);
+    }
+    .dh-bar.bar-risen { transform: scaleY(1); }
+    
+    .dh-bar::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(to right,transparent,rgba(255,255,255,0.2),transparent);
+      animation: barShimmer 3.5s ease-in-out infinite;
+    }
+    @keyframes barShimmer { 0% { left: -100%; } 100% { left: 200%; } }
+
+    .dh-bar-rank {
+      position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+      font-size: 1.5rem; z-index: 3;
+    }
+    .dh-base-line { width: 100%; height: 2.5px; }
+
+    /* Waving Flags physics */
+    .dh-flag-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      margin-top: 6px; gap: 0;
+    }
+    .dh-flagpole {
+      width: 2.5px; height: 35px;
+      background: linear-gradient(to bottom,#bbb,#555);
+      border-radius: 2px; position: relative;
+    }
+    .dh-flag {
+      position: absolute; top: 2px; left: 2.5px;
+      width: 40px; height: 22px;
+      border-radius: 0 4px 4px 0;
+      transform-origin: left center;
+      animation: waveflag 1.8s ease-in-out infinite alternate;
+      background: var(--hc,#888);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 900; color: rgba(0,0,0,0.65);
+      letter-spacing: 1px;
+      box-shadow: inset 0 0 6px rgba(255,255,255,0.2), 2px 2px 6px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .dh-flag::before {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(90deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0) 8px);
+      animation: flagFabric 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes waveflag {
+      0% { transform: rotateY(0deg) skewY(0deg); }
+      50% { transform: rotateY(-12deg) skewY(-2.5deg); }
+      100% { transform: rotateY(10deg) skewY(2deg); }
+    }
+    @keyframes flagFabric {
+      0% { transform: translateX(-6px) scaleX(1.1); }
+      100% { transform: translateX(6px) scaleX(0.9); }
+    }
+    .dh-house-col:nth-child(1) .dh-flag { animation-delay: 0s; }
+    .dh-house-col:nth-child(2) .dh-flag { animation-delay: 0.3s; }
+    .dh-house-col:nth-child(3) .dh-flag { animation-delay: 0.6s; }
+    .dh-house-col:nth-child(4) .dh-flag { animation-delay: 0.9s; }
+
+    .dh-house-label {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900; font-size: clamp(0.95rem, 1.5vw, 1.8rem);
+      letter-spacing: 2px; text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+      margin-top: 3px;
+    }
+
+    .dh-logo-badge {
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #2a2a2a, #0a0a0a);
+      border: 2.5px solid var(--hc, #888);
+      box-shadow: 0 0 15px var(--hc, #888), 0 3px 10px rgba(0,0,0,0.9), inset 0 0 6px rgba(0,0,0,0.7);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-bottom: 5px;
+      animation: logoBadgePulse 2.5s ease-in-out infinite alternate;
+    }
+    .dh-logo-badge img {
+      width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%;
+    }
+    .dh-logo-badge .dh-logo-fallback {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 900;
+      color: var(--hc, #888);
+      text-shadow: 0 0 8px var(--hc, #888);
+    }
+    .dh-house-col.dh-top .dh-logo-badge {
+      width: 70px; height: 70px;
+      border-width: 3.5px;
+      box-shadow: 0 0 25px var(--hc, #888), 0 0 50px rgba(255,215,0,0.25), 0 5px 15px rgba(0,0,0,0.95), inset 0 0 8px rgba(0,0,0,0.6);
+    }
+    @keyframes logoBadgePulse {
+      0% { box-shadow: 0 0 10px var(--hc,#888), 0 3px 10px rgba(0,0,0,0.9); }
+      100% { box-shadow: 0 0 25px var(--hc,#888), 0 0 45px rgba(255,255,255,0.08), 0 3px 10px rgba(0,0,0,0.9); }
+    }
+
+    /* ACHIEVEMENT CINEMATIC MOVIE POSTER REDESIGN */
+    .ach-poster {
+      position: relative; width: 99%; height: 97%;
+      display: flex; border-radius: 24px; overflow: hidden;
+      background: #040201;
+      box-shadow: 0 0 100px rgba(0,0,0,0.98);
+      border: 1px solid rgba(255,215,0,0.15);
+    }
+    .ach-poster-rays {
+      position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%;
+      background: conic-gradient(from 0deg,transparent 0deg,rgba(255,215,0,0.03) 15deg,transparent 30deg,rgba(255,215,0,0.03) 45deg,transparent 60deg,rgba(255,215,0,0.03) 75deg,transparent 90deg,rgba(255,215,0,0.03) 105deg,transparent 120deg,rgba(255,215,0,0.03) 135deg,transparent 150deg,rgba(255,215,0,0.03) 165deg,transparent 180deg,rgba(255,215,0,0.03) 195deg,transparent 210deg,rgba(255,215,0,0.03) 225deg,transparent 240deg,rgba(255,215,0,0.03) 255deg,transparent 270deg,rgba(255,215,0,0.03) 285deg,transparent 300deg,rgba(255,215,0,0.03) 315deg,transparent 330deg,rgba(255,215,0,0.03) 345deg,transparent 360deg);
+      animation: spinRays 80s linear infinite; z-index: 0; pointer-events: none;
+    }
+    @keyframes spinRays { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
+    .ach-spotlight {
+      position: absolute; inset: 0; z-index: 50; pointer-events: none;
+      background: radial-gradient(circle at 30% 50%,rgba(255,220,120,0.12) 0%,rgba(0,0,0,0.95) 60%);
+      animation: spotFadeOut 1.6s ease-out forwards;
+    }
+    @keyframes spotFadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+    .ach-photo-panel {
+      position: relative; width: 42%; flex-shrink: 0; overflow: hidden;
+      animation: photoSlam 0.65s cubic-bezier(0.22,1,0.36,1) both;
+      animation-delay: 0.85s;
+    }
+    @keyframes photoSlam {
+      0% { transform: translateX(-110%); filter: blur(15px); opacity: 0; }
+      100% { transform: translateX(0); filter: blur(0); opacity: 1; }
+    }
+    .ach-photo-panel > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    
+    .ach-photo-fade {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right,transparent 50%,rgba(0,0,0,0.7) 80%,rgba(4,2,1,1) 100%);
+      z-index: 2;
+    }
+    .ach-photo-panel::before {
+      content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      box-shadow: inset 6px 0 35px var(--ach-clr,#FFD700), inset 0 0 60px rgba(0,0,0,0.4);
+    }
+    
+    .ach-corner-logo {
+      position: absolute; bottom: 25px; right: 20px; z-index: 20;
+      width: clamp(80px, 9vw, 120px); height: clamp(80px, 9vw, 120px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%,#1a1a1a,#050505);
+      border: 3.5px solid var(--ach-clr,#FFD700);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 25px var(--ach-clr,#FFD700), 0 0 50px rgba(0,0,0,0.8), inset 0 0 16px rgba(0,0,0,0.6);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      animation: cornerLogoPulse 2.5s ease-in-out infinite alternate, cornerLogoIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+      animation-delay: 0s, 1.2s;
+    }
+    @keyframes cornerLogoIn {
+      0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes cornerLogoPulse {
+      0% { box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 15px var(--ach-clr,#FFD700), 0 0 35px rgba(0,0,0,0.8); }
+      100% { box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 35px var(--ach-clr,#FFD700), 0 0 65px var(--ach-clr,#FFD700), 0 0 80px rgba(0,0,0,0.8); }
+    }
+    .ach-corner-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+    .ach-corner-logo .ach-corner-fallback {
+      font-family: 'Playfair Display', serif; font-weight: 900;
+      font-size: clamp(2.2rem, 3vw, 4rem); color: var(--ach-clr,#FFD700);
+      text-shadow: 0 0 18px var(--ach-clr,#FFD700);
+    }
+
+    .ach-text-panel {
+      flex: 1; padding: clamp(25px, 4vw, 50px) clamp(25px, 4vw, 60px);
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; z-index: 2; gap: clamp(10px, 1.8vh, 18px);
+    }
+    .ach-text-panel::before {
+      content: ''; position: absolute; left: 0; top: 8%; bottom: 8%; width: 3.5px;
+      background: linear-gradient(to bottom,transparent,var(--ach-clr,#FFD700),transparent);
+      animation: panelGlow 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes panelGlow { 0% { opacity: 0.4; } 100% { opacity: 1; box-shadow: 0 0 15px var(--ach-clr,#FFD700); } }
+
+    .ach-title-row {
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: clamp(8px, 1.2vh, 14px);
+    }
+    .ach-cat-icon { font-size: clamp(1.8rem, 3vw, 3.2rem); line-height: 1; }
+    .ach-title-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.4rem, 2.5vw, 3rem); font-weight: 900;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--ach-clr,#FFD700);
+      text-shadow: 0 0 15px rgba(255,215,0,0.3);
+    }
+
+    .ach-student-name {
+      font-family: 'Outfit', sans-serif; font-weight: 900;
+      font-size: clamp(3rem, 6.5vw, 8rem); line-height: 0.92;
+      color: #fff; text-transform: uppercase;
+      text-shadow: 0 0 30px rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.9);
+      animation: nameGlow 3s ease-in-out infinite alternate;
+      animation-delay: 2.2s;
+    }
+    @keyframes nameGlow {
+      0% { text-shadow: 0 0 15px rgba(255,255,255,0.15), 0 4px 12px rgba(0,0,0,0.9); }
+      100% { text-shadow: 0 0 50px rgba(255,255,255,0.45), 0 0 80px rgba(255,215,0,0.25), 0 4px 12px rgba(0,0,0,0.9); }
+    }
+
+    .ach-badge-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .ach-dept-badge {
+      background: rgba(255,255,255,0.06); border: 1.2px solid rgba(255,255,255,0.15);
+      padding: clamp(5px, 0.7vh, 8px) clamp(12px, 1.8vw, 20px); border-radius: 30px;
+      font-size: clamp(0.9rem, 1.4vw, 1.5rem); font-weight: 700; letter-spacing: 1.5px; color: #fff;
+    }
+    .ach-house-badge {
+      padding: clamp(5px, 0.7vh, 8px) clamp(12px, 1.8vw, 20px); border-radius: 30px;
+      font-size: clamp(0.9rem, 1.4vw, 1.5rem); font-weight: 900; letter-spacing: 1.5px;
+      box-shadow: 0 0 18px var(--ach-clr,#FFD700);
+    }
+
+    .ach-quote-wrap { position: relative; }
+    .ach-quote-mark {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 4vw, 5rem); line-height: 0.6; color: var(--ach-clr,#FFD700); opacity: 0.5;
+      display: block; margin-bottom: 6px;
+    }
+    .ach-quote-text {
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: clamp(1.1rem, 1.8vw, 2rem); color: rgba(255,255,255,0.8); line-height: 1.5;
+      animation: quoteGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes quoteGlow { 0% { text-shadow: none; } 100% { text-shadow: 0 0 20px rgba(255,215,0,0.18); } }
+    
+    .sparkle-in {
+      opacity: 0; transform: translateX(50px) scale(0.96);
+      animation: sparkleTextIn 0.9s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+    @keyframes sparkleTextIn {
+      0% { opacity: 0; transform: translateX(50px) scale(0.96); filter: brightness(3) blur(6px); }
+      100% { opacity: 1; transform: translateX(0) scale(1); filter: brightness(1) blur(0); }
+    }
+    
+    .ach-3d-gif {
+      position: absolute; bottom: -12px; right: 25px;
+      width: clamp(150px, 18vw, 260px); height: clamp(150px, 18vw, 260px);
+      object-fit: contain; z-index: 100; pointer-events: none;
+      filter: drop-shadow(0 18px 25px rgba(0,0,0,0.75));
+      animation: gifPopIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+      animation-delay: 1.5s;
+    }
+    @keyframes gifPopIn {
+      0% { transform: translateY(80px) scale(0.5); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    /* DEPARTMENT TOPPERS SLIDE */
+    .dept-slide {
+      width: 98%; height: 94%;
+      display: flex; flex-direction: column;
+      background: radial-gradient(ellipse at top, #1a1200 0%, #050505 70%);
+      border-radius: 24px;
+      border: 1px solid rgba(255,215,0,0.18);
+      overflow: hidden;
+      padding: 16px 25px;
+      gap: 10px;
+    }
+    .dept-slide-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.1rem; font-weight: 900;
+      color: #FFD700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(255,180,0,0.45);
+      text-align: center;
+      flex-shrink: 0;
+      border-bottom: 2px solid rgba(255,215,0,0.18);
+      padding-bottom: 8px;
+    }
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+    .dept-card {
+      background: rgba(20, 20, 25, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-top: 4px solid var(--dc);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex; flex-direction: column;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.65), inset 0 0 15px rgba(255,255,255,0.04);
+      position: relative; overflow: hidden;
+    }
+    .dept-card::before {
+      content: ''; position: absolute; bottom: -30%; right: -30%; width: 130px; height: 130px;
+      background: var(--dc); filter: blur(50px); opacity: 0.25; z-index: 0; pointer-events: none;
+    }
+    .dept-card > * { position: relative; z-index: 1; }
+    
+    .dept-card-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem; font-weight: 900;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #FFD700;
+      margin-bottom: 4px;
+    }
+    .dept-weekly-label {
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+    .dept-weekly-name {
+      font-size: 1.25rem; font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .dept-topper-list {
+      margin-top: 6px; flex: 1;
+      display: flex; flex-direction: column; gap: 4px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .dept-topper-row {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 6px; padding: 3px 6px;
+    }
+    .dept-topper-medal { font-size: 0.9rem; flex-shrink: 0; }
+    .dept-topper-name {
+      font-size: 0.82rem; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: rgba(255,255,255,0.9);
+    }
+    .dept-topper-pts {
+      font-size: 0.72rem; color: rgba(255,215,0,0.65); margin-left: auto; flex-shrink: 0;
+    }
+
+    /* TOP ACTIVE DEPT & STAR PERFORMERS SLIDE */
+    .info-slide {
+      width: 98%; height: 94%;
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 16px;
+    }
+    
+    .active-dept-card {
+      background:
+        radial-gradient(ellipse at 40% 30%, rgba(255,150,0,0.12) 0%, rgba(0,0,0,0) 70%),
+        linear-gradient(160deg,#120800,#050505);
+      border: 1px solid rgba(255,140,0,0.25);
+      border-radius: 20px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 22px; gap: 8px;
+      position: relative; overflow: hidden;
+    }
+    .active-dept-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3.5px;
+      background: linear-gradient(to right,transparent,#ff8800,#ffd700,#ff8800,transparent);
+      animation: glowPulse 2s ease-in-out infinite alternate;
+    }
+    @keyframes glowPulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .active-dept-fire {
+      font-size: 3.8rem;
+      filter: drop-shadow(0 0 15px #ff8800);
+      animation: trophyBob 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes trophyBob { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+
+    .active-dept-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 3.5px; text-transform: uppercase;
+      color: rgba(255,140,0,0.7);
+    }
+    .active-dept-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem; font-weight: 900;
+      color: #FFD700;
+      text-align: center;
+      text-shadow: 0 0 18px rgba(255,180,0,0.55), 0 3px 8px rgba(0,0,0,0.95);
+      line-height: 1;
+    }
+    .active-dept-sub {
+      font-size: 0.8rem; color: rgba(255,255,255,0.4);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+
+    .teachers-card {
+      background:
+        radial-gradient(ellipse at 60% 30%, rgba(100,60,200,0.1) 0%, rgba(0,0,0,0) 70%),
+        linear-gradient(160deg,#080510,#050505);
+      border: 1px solid rgba(180,130,255,0.18);
+      border-radius: 20px;
+      display: flex; flex-direction: column;
+      padding: 18px 22px; gap: 0;
+      position: relative; overflow: hidden;
+    }
+    .teachers-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3.5px;
+      background: linear-gradient(to right,transparent,#a855f7,#ffd700,#a855f7,transparent);
+      animation: glowPulse 2.5s ease-in-out infinite alternate;
+    }
+    .teachers-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 900;
+      color: #FFD700; letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,215,0,0.12);
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .teacher-row {
+      display: flex; align-items: center;
+      gap: 12px; padding: 7px 8px;
+      border-radius: 10px;
+      transition: background 0.3s;
+      flex: 1;
+      min-height: 0;
+    }
+    .teacher-row:nth-child(odd) { background: rgba(255,255,255,0.02); }
+    .teacher-medal {
+      width: 34px; height: 34px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.8);
+      color: #000;
+      font-weight: 900;
+    }
+    .t-gold { background: radial-gradient(circle at 35% 35%,#fff5a0,#d4af37,#8b6508); }
+    .t-silver { background: radial-gradient(circle at 35% 35%,#ffffff,#c0c0c0,#777); color: #fff; }
+    .t-bronze { background: radial-gradient(circle at 35% 35%,#f5c580,#cd7f32,#5a2d00); color: #fff; }
+    .t-other { background: radial-gradient(circle at 35% 35%,#666,#333,#111); color: #ccc; }
+    
+    .teacher-info { flex: 1; min-width: 0; }
+    .teacher-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem; font-weight: 900;
+      color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .teacher-logs {
+      font-size: 0.72rem; font-weight: 700;
+      color: rgba(255,215,0,0.6);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+    .teacher-bar-wrap {
+      width: 70px; height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px; overflow: hidden;
+      flex-shrink: 0;
+    }
+    .teacher-bar { height: 100%; border-radius: 3px; background: linear-gradient(to right,#a855f7,#ffd700); }
+
+    /* AWPOINT WINNER CINEMATIC POPUP CARD */
+    #paper-popup {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0) perspective(800px) rotateX(45deg);
+      opacity: 0; width: 520px;
+      background: linear-gradient(160deg,#1a1200,#0a0800);
+      border: 2px solid rgba(255,215,0,0.55);
+      color: white; padding: 40px 42px;
+      border-radius: 24px; z-index: 100000; text-align: center;
+      box-shadow: 0 0 80px rgba(255,180,0,0.3), 0 0 200px rgba(0,0,0,0.95);
+    }
+    #paper-popup.show {
+      animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popIn {
+      0% { transform: translate(-50%,-20%) scale(0.5) perspective(800px) rotateX(60deg); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(1) perspective(800px) rotateX(0deg); opacity: 1; }
+    }
+    #pop-pts {
+      animation: ptsPulse 1s ease-in-out infinite alternate;
+      display: inline-block;
+    }
+    @keyframes ptsPulse {
+      0% { text-shadow: 0 0 10px rgba(255,215,0,0.5); transform: scale(1); }
+      100% { text-shadow: 0 0 35px rgba(255,215,0,1), 0 0 70px rgba(255,69,0,0.75); transform: scale(1.08); }
+    }
+    #pop-character {
+      position: absolute; top: -130px; right: -90px;
+      width: 270px; height: 270px; object-fit: contain;
+      z-index: 100001; pointer-events: none;
+      filter: drop-shadow(0 18px 25px rgba(0,0,0,0.9));
+      transform-origin: bottom center;
+      opacity: 0;
+    }
+    #paper-popup.show #pop-character {
+      animation: charPopIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation-delay: 0.4s;
+    }
+    @keyframes charPopIn {
+      0% { transform: translateY(75px) scale(0.5) rotate(15deg); opacity: 0; }
+      100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+    }
+    #pop-house {
+      color: white; padding: 10px 18px; border-radius: 12px; font-weight: 900; font-size: 1.3rem; margin-top: 12px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    #pop-name {
+      display: inline-block;
+      color: #000; font-weight: 900; font-size: 2.3rem;
+      background: var(--gold); padding: 3px 14px; border-radius: 8px;
+      margin: 12px 0; text-transform: uppercase;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    }
+
+    #vol-btn {
+      position: fixed; bottom: 20px; left: 20px; z-index: 1001;
+      font-size: 2rem; cursor: pointer; opacity: 0.5; transition: opacity 0.2s;
+    }
+    #vol-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
-<canvas id="confetti-canvas"></canvas>
-<canvas id="bg-canvas"></canvas>
+  
+  <!-- STARTER SPLASH OVERLAY (AUTOPLAY WORKAROUND) -->
+  <div id="starter" onclick="begin()">
+    <h1 id="starter-college">🏆 SPORTS DAY</h1>
+    <p>🚀 CLICK TO LAUNCH LIVE STAGE 🎵</p>
+  </div>
 
-<div class="page">
+  <!-- FLOATING CURRENT SLIDE BANNER PILL -->
+  <div id="slide-flash"></div>
 
-  <!-- Header -->
-  <div class="hdr">
-    <div class="hdr-logos">
-      <img id="hdr-logo" src="" alt="Logo" onerror="this.style.display='none'"/>
-      <div class="hdr-title">
-        <h1 id="hdr-college">🏆 SPORTS DAY</h1>
-        <p id="hdr-event">Live Scoreboard</p>
-      </div>
-      <img id="hdr-founder" class="founder" src="" alt="Founder" onerror="this.style.display='none'"/>
+  <!-- AMBIENT EFFECT CONTAINER -->
+  <div id="embers"></div>
+  <div id="live-badge"><div class="live-dot"></div> LIVE</div>
+  <div class="overlay"></div>
+
+  <!-- AUDIO SOURCES -->
+  <audio id="bgMusic" loop preload="auto"></audio>
+  <audio id="sfx-chime" src="https://upload.wikimedia.org/wikipedia/commons/f/f6/Glissando_Chimes_Sound_Effect.ogg" preload="auto"></audio>
+
+  <!-- MAIN VIEWPORT LAYOUT -->
+  <div class="container">
+    <div class="header">
+      <img id="disp-logo" class="logo-img" alt="Logo">
+      <h1 id="disp-title" style="font-size: 1.8rem; font-weight: 900; margin: 0; text-shadow: 0 3px 8px #000; font-family:'Playfair Display', serif;">
+        SPORTS <span style="color:var(--gold)">SCOREBOARD</span>
+      </h1>
+      <img id="disp-founder" class="founder-img" alt="Founder">
     </div>
-    <div class="hdr-right">
-      <span class="upd" id="last-updated"></span>
-      <button class="btn btn-ghost" onclick="refresh()">🔄 Refresh</button>
-      <button class="btn btn-ghost" id="music-toggle-btn" onclick="toggleMusic()" style="display:none">▶ Music</button>
-      <button class="btn btn-ghost" onclick="location.href='index.html'">🔐 Login</button>
-    </div>
+
+    <!-- CAROUSEL TRANSITION STAGE -->
+    <div class="slide-stage" id="slide-stage"></div>
+
+    <!-- FOOTER TICKER -->
+    <div class="footer-bar" id="ticker">CONNECTING TO DATABASE...</div>
   </div>
 
-  <!-- Music bar -->
-  <div class="music-bar" id="music-bar">
-    <span class="music-icon">🎵</span>
-    <span class="music-label" id="music-label">Background Music</span>
-    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.5" oninput="setVolume(this.value)" title="Volume"/>
-    <button class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.75rem" onclick="toggleMusic()">⏸</button>
+  <!-- AWARD CELEBRATION POPUP CARD -->
+  <div id="paper-popup">
+    <img id="pop-character" src="https://media.tenor.com/bCbp9zIMcwYAAAAi/confetti-minion.gif" alt="Celebration Character">
+    <div style="font-size: 1.1rem; font-weight: 700; color: #FFD700; letter-spacing: 2px;">🎉 CONGRATULATIONS 🎉</div>
+    <div id="pop-name">...</div>
+    <div id="pop-dept" style="font-size: 1.2rem; font-weight: 700; color: rgba(255,255,255,0.75);">...</div>
+    <div id="pop-pts">0</div>
+    <div id="pop-house">HOUSE</div>
   </div>
 
-  <!-- hidden audio element -->
-  <audio id="bg-music" loop preload="auto"></audio>
+  <!-- MUTE SWITCH BUTTON -->
+  <div id="vol-btn" onclick="toggleMute()">🔇</div>
 
-  <!-- Score cards -->
-  <div class="scores-wrap">
-    <div class="rank-banner" id="rank-banner">🏟️ LIVE STANDINGS</div>
-    <div class="score-grid" id="score-grid"></div>
-  </div>
+  <script src="api.js"></script>
+  <script>
+    // ─────────────────────────────────────────────
+    //  GLOBAL STATE
+    // ─────────────────────────────────────────────
+    let lastGlobalPoints = 0;
+    let currentSlideIndex = 0;
+    let slidesData = [];
+    let isPopupActive = false;
+    let volumeMuted = true;
+    let results = [];
+    let scores = [];
+    let houses = [];
+    let settings = {};
 
-  <!-- Bar chart -->
-  <div class="bars-wrap" id="bars-wrap" style="max-width:980px;margin:0 auto 2rem;padding:1.5rem 2rem;">
-    <h3>📊 Points Breakdown</h3>
-    <div id="bar-rows"></div>
-  </div>
-
-  <!-- Bottom panels -->
-  <div class="bottom-grid">
-    <div class="panel">
-      <h3>🎯 Recent Results</h3>
-      <div id="recent-list"></div>
-    </div>
-    <div class="panel">
-      <h3>📈 Comparison</h3>
-      <div id="chart-wrap"><canvas id="chart-bar"></canvas></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Winner overlay -->
-<div class="winner-overlay" id="winner-overlay">
-  <button class="winner-close" onclick="closeWinner()">✕</button>
-  <div class="winner-card">
-    <img id="winner-photo" class="winner-photo" src="" alt="Winner"
-         onerror="this.style.background='linear-gradient(135deg,#1a1a2e,#16213e)';this.src='';this.style.minHeight='160px'"/>
-    <div class="winner-body">
-      <div class="winner-badge" id="w-badge">🥇 1st Place</div>
-      <div class="winner-name" id="w-name">Player Name</div>
-      <div class="winner-meta" id="w-meta"></div>
-      <div class="winner-pts-badge" id="w-pts"></div>
-    </div>
-  </div>
-</div>
-
-<div class="toast-container" id="toast-container"></div>
-<script src="api.js"></script>
-<script>
-// ─────────────────────────────────────────────
-//  Particle background
-// ─────────────────────────────────────────────
-(function initBg() {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, particles = [];
-  const N = 80;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  function rnd(a,b){ return a + Math.random()*(b-a); }
-
-  function mkParticle() {
-    return {
-      x: rnd(0,W), y: rnd(0,H),
-      r: rnd(1,3.5),
-      vx: rnd(-0.3,0.3), vy: rnd(-0.4,-0.1),
-      alpha: rnd(0.2,0.7),
-      color: Math.random()<.5 ? '245,158,11' : '139,92,246'
-    };
-  }
-  for(let i=0;i<N;i++) particles.push(mkParticle());
-
-  function loop() {
-    ctx.clearRect(0,0,W,H);
-    for(const p of particles){
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
-      ctx.fill();
-      p.x += p.vx; p.y += p.vy; p.alpha -= 0.001;
-      if(p.alpha<=0||p.y<-10) Object.assign(p, mkParticle(), {y:H+10, alpha:rnd(.2,.7)});
-    }
-    requestAnimationFrame(loop);
-  }
-  loop();
-})();
-
-// ─────────────────────────────────────────────
-//  State
-// ─────────────────────────────────────────────
-let chartInstance = null;
-let lastResultKey = null;
-let scores=[], houses=[], results=[];
-let musicUrl = '', musicPlaying = false;
-let prevPoints = {};  // track point changes for animation
-
-// ─────────────────────────────────────────────
-//  Init
-// ─────────────────────────────────────────────
-(async function init() {
-  await refresh();
-  setInterval(refresh, 10_000);
-})();
-
-// ─────────────────────────────────────────────
-//  Refresh
-// ─────────────────────────────────────────────
-async function refresh() {
-  try {
-    const data = await apiGet('getScoreboard');
-    scores  = data.scores  || [];
-    houses  = data.houses  || [];
-    results = await apiGet('getResults');
-
-    // Branding from scoreboard settings
-    const s = data.settings || {};
-    if (s.CollegeName) document.getElementById('hdr-college').textContent = '🏆 ' + s.CollegeName.toUpperCase();
-    if (s.EventTitle)  document.getElementById('hdr-event').textContent   = s.EventTitle;
-    if (s.LogoUrl)     { const el=document.getElementById('hdr-logo');   el.src=getGoogleDriveThumbUrl(s.LogoUrl);   el.style.display='block'; }
-    if (s.FounderUrl)  { const el=document.getElementById('hdr-founder'); el.src=getGoogleDriveThumbUrl(s.FounderUrl); el.style.display='block'; }
-
-    // Music
-    if (s.MusicUrl && s.MusicUrl !== musicUrl) {
-      musicUrl = s.MusicUrl;
-      setupMusic(musicUrl);
+    // ─────────────────────────────────────────────
+    //  Google Drive Helpers
+    // ─────────────────────────────────────────────
+    function getGoogleDriveStreamUrl(url) {
+      if (!url) return '';
+      const dRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+      const dMatch = url.match(dRegex);
+      if (dMatch && dMatch[1]) {
+        return `https://drive.google.com/uc?export=download&id=${dMatch[1]}`;
+      }
+      const idRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+      const idMatch = url.match(idRegex);
+      if (idMatch && idMatch[1]) {
+        return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`;
+      }
+      return url;
     }
 
-    renderCards();
-    renderBars();
-    renderChart();
-    renderRecent();
-    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    function getGoogleDriveFileId(url) {
+      if (!url) return '';
+      const dRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+      const dMatch = url.match(dRegex);
+      if (dMatch && dMatch[1]) return dMatch[1];
+      const idRegex = /[?&]id=([a-zA-Z0-9_-]+)/;
+      const idMatch = url.match(idRegex);
+      if (idMatch && idMatch[1]) return idMatch[1];
+      return '';
+    }
 
-    // Winner announcement
-    const latest = data.lastResult;
-    if (latest && latest.EventID) {
-      const key = latest.EventID + '|' + latest.StudentName + '|' + latest.Points;
-      if (key !== lastResultKey) {
-        lastResultKey = key;
-        setTimeout(() => showWinner(latest), 500);
+    // ─────────────────────────────────────────────
+    //  Aesthetics & Helpers
+    // ─────────────────────────────────────────────
+    function achIcon(title) {
+      const t = String(title || '').toLowerCase();
+      if (/cod|tech|program|hack|software|comput/.test(t)) return '💻';
+      if (/sport|athlet|cricket|football|basket|swim|run|game|relay|race|shotput|jump/.test(t)) return '🏆';
+      if (/lead|captain|head|prefect|president/.test(t)) return '👑';
+      if (/academ|topper|rank|scholar|exam|study/.test(t)) return '📚';
+      if (/art|draw|paint|design|craft/.test(t)) return '🎨';
+      if (/music|sing|choir|instrument|band/.test(t)) return '🎵';
+      if (/scien|lab|research|bio|chem|phy/.test(t)) return '🔬';
+      if (/math|calc|stats/.test(t)) return '📐';
+      return '🏅';
+    }
+
+    function houseColor(name) {
+      const h = houses.find(x => String(x.HouseName || '').trim().toLowerCase() === String(name || '').trim().toLowerCase());
+      return h ? (h.Color || '#888') : '#888';
+    }
+
+    function hv(name) {
+      return '--h-' + String(name || '').toLowerCase().replace(/\s+/g, '-');
+    }
+
+    function tryHexToRgb(hex) {
+      try {
+        const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        return `${r},${g},${b}`;
+      } catch(e){ return '128,128,128'; }
+    }
+
+    function getBlob(b64, type) {
+      try {
+        const bin = atob(b64.split(',')[1]);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return URL.createObjectURL(new Blob([arr], { type: type }));
+      } catch (err) { return null; }
+    }
+
+    // ─────────────────────────────────────────────
+    //  Launch & Setup
+    // ─────────────────────────────────────────────
+    function begin() {
+      document.getElementById('starter').style.display = 'none';
+      const m = document.getElementById('bgMusic');
+      m.muted = false;
+      m.volume = 0.65;
+      volumeMuted = false;
+      document.getElementById('vol-btn').textContent = '🔊';
+
+      const ticker = document.getElementById('ticker');
+      
+      // Auto-trigger background music play
+      function playAudio(retries = 0) {
+        m.play().then(() => {
+          ticker.innerText = 'Syncing... Loading scores...';
+        }).catch(e => {
+          if (retries < 6) {
+            ticker.innerText = `Connecting audio stage (${retries + 1})...`;
+            setTimeout(() => playAudio(retries + 1), 1200);
+          } else {
+            console.warn('Google Drive audio stream block. Retrying default track...');
+            m.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
+            m.load(); m.play().catch(() => {});
+          }
+        });
+      }
+      playAudio();
+
+      // Launch floating embers
+      const emb = document.getElementById('embers');
+      for (let i = 0; i < 30; i++) {
+        const d = document.createElement('div');
+        d.className = 'ember';
+        d.style.left = Math.random() * 100 + '%';
+        d.style.setProperty('--dur', (Math.random() * 6 + 4) + 's');
+        d.style.setProperty('--drift', (Math.random() * 100 - 50) + 'px');
+        d.style.animationDelay = (Math.random() * 8) + 's';
+        emb.appendChild(d);
+      }
+
+      startRotation();
+    }
+
+    function toggleMute() {
+      const m = document.getElementById('bgMusic');
+      m.muted = !m.muted;
+      volumeMuted = m.muted;
+      document.getElementById('vol-btn').textContent = m.muted ? '🔇' : '🔊';
+      if (!m.muted && m.paused) m.play();
+    }
+
+    // ─────────────────────────────────────────────
+    //  Slide Generation (adapted dynamically)
+    // ─────────────────────────────────────────────
+    function flagSlide(housePairs, label, mode) {
+      if (!housePairs || housePairs.length === 0) return '';
+      const themeClass = (mode === 'weekly') ? 'banner-slide-weekly' : 'banner-slide-annual';
+      const leaderScore = housePairs.length > 0 ? housePairs[0][1] : 0;
+      
+      let html = `<div class="banner-slide ${themeClass}">`;
+      html += `<h2 class="slide-title">${label}</h2>`;
+      html += `<div class="banners-row">`;
+      
+      housePairs.forEach((pair, idx) => {
+        const name = pair[0];
+        const score = pair[1];
+        const rank = idx + 1;
+        const isFirst = (rank === 1);
+        const col = houseColor(name);
+        
+        // Render logo
+        const h = houses.find(x => x.HouseName === name);
+        const logoUrl = h && h.LogoUrl ? getGoogleDriveThumbUrl(h.LogoUrl) : '';
+        const logoInner = logoUrl
+          ? `<img src="${logoUrl}" onerror="this.parentElement.innerHTML='<span>${name.charAt(0)}</span>'">`
+          : `<span>${name.charAt(0)}</span>`;
+          
+        const chains = `<div class="chain-wrap"><div class="chain"></div><div class="chain"></div></div>`;
+        const gapHtml = isFirst
+          ? `<div class="banner-gap leader">👑 LEADER</div>`
+          : `<div class="banner-gap">▼ ${leaderScore - score} pts behind</div>`;
+          
+        html += `
+          <div class="bw rank-${rank}">
+            ${isFirst ? '<div class="floating-crown">👑</div>' : ''}
+            ${chains}
+            <div class="banner-rod"></div>
+            <div class="shield-wrap">
+              <div class="shield" style="background-color:var(${hv(name)})">
+                <div class="shield-glare"></div>
+                <div class="banner-rank">
+                  <span class="rank-num">${rank}</span>
+                  <span class="rank-ord">${rank === 1 ? 'ST' : rank === 2 ? 'ND' : rank === 3 ? 'RD' : 'TH'}</span>
+                </div>
+                <div class="banner-name">${name.toUpperCase()}</div>
+                <div class="banner-logo">${logoInner}</div>
+                <div class="banner-score count-up" data-val="${score}">0</div>
+                <div class="banner-pts-label">POINTS</div>
+              </div>
+            </div>
+            ${gapHtml}
+          </div>`;
+      });
+      
+      html += `</div></div>`;
+      return html;
+    }
+
+    function buildEventHouseSlide(eventName, houseScoreMap, mode) {
+      const themeClass = 'dhs-annual';
+      const modeLabel = '🏆 OVERALL';
+      const modeColor = '#FFD700';
+
+      const sorted = houses.map(h => [h.HouseName, houseScoreMap[h.HouseName] || 0])
+                           .sort((a,b) => b[1] - a[1]);
+
+      const maxPts = sorted.reduce((m,h) => Math.max(m, h[1]), 1);
+      const rankIcons = ['🥇','🥈','🥉','🏅'];
+      const BAR_MAX_VH = 32; // tallest bar is capped
+
+      const cols = sorted.map((h, idx) => {
+        const hName = h[0];
+        const hPts = h[1];
+        const hColor = houseColor(hName);
+        
+        const hs = houses.find(x => x.HouseName === hName);
+        const logoUrl = hs && hs.LogoUrl ? getGoogleDriveThumbUrl(hs.LogoUrl) : '';
+        const logoInner = logoUrl
+          ? `<img src="${logoUrl}" onerror="this.style.display='none';this.nextSibling.style.display='flex';"><span class="dh-logo-fallback" style="display:none;">${hName.charAt(0).toUpperCase()}</span>`
+          : `<span class="dh-logo-fallback">${hName.charAt(0).toUpperCase()}</span>`;
+
+        const barH = hPts > 0 ? Math.max(2, Math.round((hPts / maxPts) * BAR_MAX_VH)) : 0;
+        const isTop = (idx === 0 && hPts > 0);
+        const scoreEl = hPts > 0
+          ? `<div class="dh-score count-up" data-val="${hPts}">0</div>`
+          : `<div class="dh-nopts">&mdash;</div>`;
+
+        const darken = (hex) => {
+          try {
+            const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+            return `rgb(${Math.max(0,r-55)},${Math.max(0,g-55)},${Math.max(0,b-55)})`;
+          } catch(e){ return hex; }
+        };
+        const lighten = (hex) => {
+          try {
+            const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+            return `rgb(${Math.min(255,r+65)},${Math.min(255,g+65)},${Math.min(255,b+65)})`;
+          } catch(e){ return hex; }
+        };
+
+        return `
+          <div class="dh-house-col ${isTop ? 'dh-top' : ''}" style="--hc:${hColor};">
+            ${isTop ? '<div class="dh-crown">👑</div>' : '<div class="dh-spacer"></div>'}
+            ${scoreEl}
+            <div class="dh-logo-badge" style="--hc:${hColor};">
+              ${logoInner}
+            </div>
+            ${hPts > 0
+              ? `<div class="dh-bar" style="height:${barH}vh; background:linear-gradient(to top,${darken(hColor)} 0%,${hColor} 55%,${lighten(hColor)} 100%);">
+                   <div class="dh-bar-rank">${rankIcons[idx]||''}</div>
+                 </div>`
+              : '<div style="height:18px;"></div>'}
+            <div class="dh-base-line"></div>
+            <div class="dh-flag-wrap">
+              <div class="dh-flagpole">
+                <div class="dh-flag" style="--hc:${hColor};">${hName.charAt(0).toUpperCase()}</div>
+              </div>
+            </div>
+            <div class="dh-house-label" style="color:${hColor};">${hName.toUpperCase()}</div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="dept-house-slide ${themeClass}">
+          <div class="dh-header-bar">
+            <div class="dh-dept-title">🎽 <em style="color:${modeColor};">${eventName}</em></div>
+            <div class="dh-mode-badge"><div class="dh-mode-dot"></div>${modeLabel}</div>
+          </div>
+          <div class="dh-dept-sub">House Standings</div>
+          <div class="dh-chart-outer">${cols}</div>
+        </div>`;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Data calculations & bindings
+    // ─────────────────────────────────────────────
+    async function updateData() {
+      try {
+        const scoreboardData = await apiGet('getScoreboard');
+        scores = scoreboardData.scores || [];
+        houses = scoreboardData.houses || [];
+        settings = scoreboardData.settings || {};
+        
+        // Fetch raw results list
+        results = await apiGet('getResults');
+        
+        // Bind settings and logos in header
+        if (settings.CollegeName && settings.EventTitle) {
+          document.getElementById('disp-title').innerHTML = `${settings.CollegeName.toUpperCase()} <span style="color:var(--gold)">${settings.EventTitle.toUpperCase()}</span>`;
+          document.getElementById('starter-college').textContent = settings.CollegeName.toUpperCase();
+        }
+        if (settings.LogoUrl) {
+          const lImg = document.getElementById('disp-logo');
+          lImg.src = getGoogleDriveThumbUrl(settings.LogoUrl);
+          lImg.style.display = 'block';
+        }
+        if (settings.FounderUrl) {
+          const fImg = document.getElementById('disp-founder');
+          fImg.src = getGoogleDriveThumbUrl(settings.FounderUrl);
+          fImg.style.display = 'block';
+        }
+
+        // Auto play / update music source
+        const bgM = document.getElementById('bgMusic');
+        if (settings.MusicUrl) {
+          const streamUrl = getGoogleDriveStreamUrl(settings.MusicUrl);
+          if (bgM.src !== streamUrl) {
+            bgM.src = streamUrl;
+            bgM.load();
+            if (!volumeMuted) bgM.play().catch(() => {});
+          }
+        }
+
+        // Calculate and inject house color custom CSS properties dynamically
+        let sc = document.getElementById('dyn-css');
+        if (!sc) {
+          sc = document.createElement('style');
+          sc.id = 'dyn-css';
+          document.head.appendChild(sc);
+        }
+        let cssStr = ':root { ';
+        houses.forEach(h => {
+          cssStr += `--h-${h.HouseName.toLowerCase().replace(/\s+/g, '-')}:${h.Color || '#888'}; `;
+        });
+        sc.innerText = cssStr + ' }';
+
+        // Calculate custom metric tallies
+        const sortedScores = [...scores].sort((a,b) => Number(b.Points) - Number(a.Points));
+        const yearlyHouses = sortedScores.map(s => [s.House, Number(s.Points)]);
+        const weeklyHouses = [...yearlyHouses]; // Match overall in Sports Day context
+
+        // 1. Build Slide Carousel array
+        const newSlides = [];
+        
+        // Standard Standings Banner Slides
+        newSlides.push({ time: 11000, label: '🏆 Overall Standings', html: flagSlide(yearlyHouses, '🏆 OVERALL STANDINGS', 'annual') });
+
+        // 2. Event Breakdown rising charts
+        const eventHousePoints = {};
+        results.forEach(r => {
+          const eventName = r.EventName || 'General';
+          const h = r.House;
+          const pts = Number(r.Points) || 0;
+          
+          if (!eventHousePoints[eventName]) eventHousePoints[eventName] = {};
+          eventHousePoints[eventName][h] = (eventHousePoints[eventName][h] || 0) + pts;
+        });
+
+        Object.keys(eventHousePoints).forEach(eventName => {
+          const aMap = eventHousePoints[eventName] || {};
+          const hasPoints = Object.values(aMap).some(v => v > 0);
+          if (hasPoints) {
+            newSlides.push({ time: 11000, label: `🎽 ${eventName}`, html: buildEventHouseSlide(eventName, aMap, 'annual') });
+          }
+        });
+
+        // 3. Gold Medals Achievement Poster slides
+        results.forEach(r => {
+          const isGold = r.Position === '1st' || r.Position === 'Winner';
+          const isIndiv = !(r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName));
+          if (isGold && isIndiv && r.StudentName && r.PhotoUrl) {
+            const hColor = houseColor(r.House);
+            const thumbUrl = getGoogleDriveThumbUrl(r.PhotoUrl);
+            const icon = achIcon(r.EventName);
+            const cleanHouse = String(r.House).toUpperCase();
+            
+            newSlides.push({
+              time: 15000,
+              label: `${icon} ${r.EventName}`,
+              isAchievement: true,
+              html: `
+                <div class="ach-poster" style="--ach-clr:${hColor};">
+                  <div class="ach-spotlight"></div>
+                  <div class="ach-poster-rays"></div>
+                  <div class="ach-photo-panel">
+                    <img src="${thumbUrl}" onerror="this.src='';this.style.background='linear-gradient(135deg,#1a1a2e,#16213e)';" alt="${r.StudentName}">
+                    <div class="ach-photo-fade"></div>
+                    <div class="ach-corner-logo" style="--ach-clr:${hColor};">
+                      <span class="ach-corner-fallback">${r.House.charAt(0).toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <div class="ach-text-panel">
+                    <div class="ach-title-row sparkle-in" style="animation-delay:1.0s;">
+                      <span class="ach-cat-icon">${icon}</span>
+                      <span class="ach-title-text">${r.EventName} Champion</span>
+                    </div>
+                    <div class="ach-student-name sparkle-in" style="animation-delay:1.8s;">${String(r.StudentName).toUpperCase()}</div>
+                    <div class="ach-badge-row sparkle-in" style="animation-delay:3.0s;">
+                      <span class="ach-dept-badge">🎓 ${r.Department || 'Sports'}</span>
+                      <span class="ach-house-badge" style="background:${hColor};color:#000;">${cleanHouse} HOUSE</span>
+                    </div>
+                    <div class="ach-quote-wrap sparkle-in" style="animation-delay:3.5s;">
+                      <span class="ach-quote-mark">“</span>
+                      <span class="ach-quote-text">Victory is sweetest when shared. Contributed a massive +${r.Points} points for ${r.House} house in the ${r.EventName} event!</span>
+                    </div>
+                  </div>
+                  <img class="ach-3d-gif" src="https://media.tenor.com/bCbp9zIMcwYAAAAi/confetti-minion.gif" alt="celebration">
+                </div>`
+            });
+          }
+        });
+
+        // 4. Department Toppers slide
+        const deptStudents = {};
+        results.forEach(r => {
+          if (!r.StudentName) return;
+          const dept = r.Department || 'General';
+          const name = r.StudentName;
+          const pts = Number(r.Points) || 0;
+          if (!deptStudents[dept]) deptStudents[dept] = {};
+          deptStudents[dept][name] = (deptStudents[dept][name] || 0) + pts;
+        });
+
+        const toppersList = Object.entries(deptStudents).map(([dept, students]) => {
+          const sorted = Object.entries(students).sort((a,b) => b[1]-a[1]);
+          return { dept, top3: sorted.slice(0, 3) };
+        });
+
+        const medals = ['🥇','🥈','🥉'];
+        const topColors = ['#d4af37','#c0c0c0','#cd7f32'];
+        for (let di = 0; di < toppersList.length; di += 3) {
+          const chunk = toppersList.slice(di, di + 3);
+          const cards = chunk.map((d, ci) => {
+            const wk = results.find(w => w.Department === d.dept && (w.Position === '1st' || w.Position === 'Winner'));
+            const col = topColors[ci] || '#666';
+            const topperRows = d.top3.map((s, idx) => `
+              <div class="dept-topper-row">
+                <span class="dept-topper-medal">${medals[idx]||''}</span>
+                <span class="dept-topper-name">${s[0]}</span>
+                <span class="dept-topper-pts"><span class="count-up" data-val="${s[1]}">0</span> pts</span>
+              </div>`).join('');
+
+            return `
+              <div class="dept-card" style="--dc:${col}">
+                <div class="dept-card-name">${d.dept}</div>
+                <div class="dept-weekly-label">Recent Winner</div>
+                <div class="dept-weekly-name">${wk ? wk.StudentName : '—'}</div>
+                <div class="dept-topper-list">
+                  <div style="font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,215,0,0.5);margin-bottom:4px;">Top Scorers</div>
+                  ${topperRows}
+                </div>
+              </div>`;
+          }).join('');
+
+          newSlides.push({
+            time: 12000,
+            label: '🎓 Department Toppers',
+            html: `<div class="dept-slide"><div class="dept-slide-title">⭐ Department Toppers</div><div class="dept-grid">${cards}</div></div>`
+          });
+        }
+
+        // 5. Active Department & Star Performers (Top 5 students)
+        const studentTotals = {};
+        results.forEach(r => {
+          if (!r.StudentName) return;
+          studentTotals[r.StudentName] = (studentTotals[r.StudentName] || 0) + (Number(r.Points) || 0);
+        });
+        const starPerformers = Object.entries(studentTotals).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+        const deptTotals = {};
+        results.forEach(r => {
+          const dept = r.Department || 'General';
+          deptTotals[dept] = (deptTotals[dept] || 0) + (Number(r.Points) || 0);
+        });
+        const activeDept = Object.entries(deptTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+        const maxPtsVal = starPerformers[0] ? starPerformers[0][1] : 1;
+        const medalClasses = ['t-gold','t-silver','t-bronze','t-other','t-other'];
+        const ords = ['1','2','3','4','5'];
+        const tHtml = starPerformers.map((t, idx) => {
+          const pct = Math.round((t[1] / maxPtsVal) * 100);
+          const mc = medalClasses[idx] || 'other';
+          const rEmoji = medals[idx] || '🏅';
+          
+          return `
+            <div class="teacher-row">
+              <div class="teacher-medal ${mc}">${rEmoji}</div>
+              <div class="teacher-info">
+                <div class="teacher-name">${t[0]}</div>
+                <div class="teacher-logs">${t[1]} TOTAL POINTS</div>
+              </div>
+              <div class="teacher-bar-wrap"><div class="teacher-bar" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+
+        newSlides.push({
+          time: 11000,
+          label: '⚡ Star Performers',
+          html: `
+            <div class="info-slide">
+              <div class="active-dept-card">
+                <div class="active-dept-fire">🔥</div>
+                <div class="active-dept-label">Most Active Department</div>
+                <div class="active-dept-name">${activeDept}</div>
+                <div class="active-dept-sub">Standings Peak</div>
+              </div>
+              <div class="teachers-card">
+                <div class="teachers-title">🏆 Top Performing Students</div>
+                ${tHtml}
+              </div>
+            </div>`
+        });
+
+        if (newSlides.length === 0) {
+          newSlides.push({ time: 5000, html: '<h1>SPORTS DAY</h1><p>Waiting for live scores config...</p>' });
+        }
+        
+        slidesData = newSlides;
+        
+        // Trigger congratulations overlay if total points increased (Live event update!)
+        const totalGlobalPoints = scores.reduce((sum, s) => sum + (Number(s.Points) || 0), 0);
+        const lastResult = scoreboardData.lastResult;
+        if (lastGlobalPoints !== 0 && totalGlobalPoints > lastGlobalPoints && lastResult) {
+          showPopup(lastResult);
+        }
+        lastGlobalPoints = totalGlobalPoints;
+
+        document.getElementById('ticker').innerText = `GLOBAL: ${totalGlobalPoints} pts | Last sync: ${new Date().toLocaleTimeString()} | Live TV Scoreboard`;
+
+      } catch(e) {
+        console.error('refresh error', e);
+        document.getElementById('ticker').innerText = 'Data connection issue. Retrying...';
       }
     }
-  } catch(e) { console.error('refresh error', e); }
-}
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
-function houseColor(name) {
-  const h = houses.find(h => String(h.HouseName || '').trim().toLowerCase() === String(name || '').trim().toLowerCase());
-  return h ? (h.Color || '#f59e0b') : '#f59e0b';
-}
-
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
-}
-
-// ─────────────────────────────────────────────
-//  Score Cards with SVG rings
-// ─────────────────────────────────────────────
-function renderCards() {
-  const sorted = [...scores].sort((a,b) => Number(b.Points)-Number(a.Points));
-  const maxPts = Math.max(...sorted.map(s => Number(s.Points)), 1);
-  const rankEmoji = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-  const rankCrown = ['👑','🥈','🥉'];
-
-  document.getElementById('score-grid').innerHTML = sorted.map((s, i) => {
-    const col   = houseColor(s.House);
-    const pts   = Number(s.Points);
-    const pct   = pts / maxPts;
-    const dash  = 283;
-    const offset = dash - (dash * pct);
-    const rgb   = tryHexToRgb(col);
-    return `
-    <div class="house-card rank-${i+1}" style="
-        --hc:${col}; --hc-glow:${col}55;
-        background:linear-gradient(145deg,${col}18 0%,${col}06 100%);
-        border:2px solid ${col}${i===0?'55':'33'};
-        animation-delay:${i*0.1}s"
-      id="card-${s.House.replace(/\s/g,'_')}">
-      <div class="blob"></div>
-      <div class="rank-num">#${i+1}</div>
-      ${i===0 ? `<span class="crown">👑</span>` : `<div class="rank-badge">${rankEmoji[i]||i+1}</div>`}
-      <div class="ring-wrap">
-        <svg width="110" height="110" viewBox="0 0 110 110">
-          <circle class="ring-track" cx="55" cy="55" r="45"/>
-          <circle class="ring-fill" cx="55" cy="55" r="45"
-            id="ring-${s.House.replace(/\s/g,'_')}"
-            style="stroke:${col};stroke-dashoffset:${offset}"/>
-        </svg>
-        <div class="ring-pts">
-          <span class="num" id="pts-num-${s.House.replace(/\s/g,'_')}">${pts.toLocaleString()}</span>
-          <span class="lbl">PTS</span>
-        </div>
-      </div>
-      <div class="house-name" style="color:${col}">${s.House}</div>
-      <div class="house-sub">${i===0?'🏆 LEADER':'#' + (i+1) + ' Place'}</div>
-    </div>`;
-  }).join('');
-
-  // Animate ring offset after render
-  requestAnimationFrame(() => {
-    sorted.forEach(s => {
-      const pts   = Number(s.Points);
-      const maxPts = Math.max(...sorted.map(x => Number(x.Points)), 1);
-      const pct   = pts / maxPts;
-      const el    = document.getElementById('ring-' + s.House.replace(/\s/g,'_'));
-      if(el) el.style.strokeDashoffset = String(283 - 283*pct);
-    });
-  });
-}
-
-function tryHexToRgb(hex) {
-  try { return hexToRgb(hex); } catch(e){ return '245,158,11'; }
-}
-
-// ─────────────────────────────────────────────
-//  Bar chart (custom HTML, not Chart.js)
-// ─────────────────────────────────────────────
-function renderBars() {
-  const sorted = [...scores].sort((a,b) => Number(b.Points)-Number(a.Points));
-  const max = Math.max(...sorted.map(s => Number(s.Points)), 1);
-  document.getElementById('bar-rows').innerHTML = sorted.map((s,i) => {
-    const col = houseColor(s.House);
-    const pct = (Number(s.Points)/max*100).toFixed(1);
-    return `
-    <div class="bar-row">
-      <div class="bar-label">
-        <span style="color:${col};font-weight:700">${s.House}</span>
-        <span style="color:${col}">${Number(s.Points).toLocaleString()} pts</span>
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:0%;background:linear-gradient(90deg,${col}99,${col})" data-w="${pct}"></div>
-      </div>
-    </div>`;
-  }).join('');
-  // Animate bars
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.bar-fill').forEach(el => {
-      el.style.width = el.dataset.w + '%';
-    });
-  });
-}
-
-// ─────────────────────────────────────────────
-//  Chart.js comparison
-// ─────────────────────────────────────────────
-function renderChart() {
-  const sorted = [...scores].sort((a,b) => Number(b.Points)-Number(a.Points));
-  const ctx = document.getElementById('chart-bar').getContext('2d');
-  if (chartInstance) chartInstance.destroy();
-  chartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: sorted.map(s => s.House),
-      datasets: [{
-        data: sorted.map(s => Number(s.Points)),
-        backgroundColor: sorted.map(s => houseColor(s.House) + '88'),
-        borderColor:     sorted.map(s => houseColor(s.House)),
-        borderWidth: 2, borderRadius: 8, borderSkipped: false
-      }]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
-      scales:{
-        x:{ ticks:{color:'#9ca3af',font:{family:'Inter'}}, grid:{color:'rgba(255,255,255,.04)'} },
-        y:{ ticks:{color:'#9ca3af'}, grid:{color:'rgba(255,255,255,.04)'}, beginAtZero:true }
-      },
-      animation:{ duration:1000, easing:'easeOutQuart' }
+    // ─────────────────────────────────────────────
+    //  Slides Carousel Loop
+    // ─────────────────────────────────────────────
+    let slideFlashTimer = null;
+    function flashSlideLabel(label) {
+      const el = document.getElementById('slide-flash');
+      if (!el || !label) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = label;
+      const txt = (tmp.textContent || tmp.innerText || '').trim();
+      el.innerText = txt;
+      el.classList.add('show');
+      clearTimeout(slideFlashTimer);
+      slideFlashTimer = setTimeout(() => el.classList.remove('show'), 2400);
     }
-  });
-}
 
-// ─────────────────────────────────────────────
-//  Recent results
-// ─────────────────────────────────────────────
-function renderRecent() {
-  const recent = [...(results||[])].reverse().slice(0, 8);
-  const posClass = { '1st':'gold','2nd':'silver','3rd':'bronze' };
-  document.getElementById('recent-list').innerHTML = recent.length
-    ? recent.map((r,i) => `
-      <div class="result-row" style="animation-delay:${i*0.06}s">
-        <span class="result-pos ${posClass[r.Position]||''}">${r.Position}</span>
-        <div class="result-info">
-          <div class="result-name">${r.StudentName}</div>
-          <div class="result-event">${r.EventName} · <span style="color:${houseColor(r.House)}">${r.House}</span></div>
-        </div>
-        <span class="result-pts" style="color:${houseColor(r.House)}">+${r.Points}</span>
-      </div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:1rem 0">No results yet</p>';
-}
+    async function startRotation() {
+      const stage = document.getElementById('slide-stage');
+      while (true) {
+        if (slidesData.length > 0 && !isPopupActive) {
+          if (currentSlideIndex >= slidesData.length) currentSlideIndex = 0;
+          
+          const incoming = document.createElement('div');
+          incoming.className = 'slide';
+          incoming.innerHTML = slidesData[currentSlideIndex].html;
+          stage.appendChild(incoming);
+          
+          const outgoing = stage.querySelector('.slide.active');
+          if (outgoing) {
+            outgoing.classList.add('exiting');
+            outgoing.classList.remove('active');
+          }
+          
+          await new Promise(r => setTimeout(r, 60));
+          incoming.classList.add('active');
 
-// ─────────────────────────────────────────────
-//  Winner overlay
-// ─────────────────────────────────────────────
-function showWinner(r) {
-  const col = houseColor(r.House);
-  const posLabel = { '1st':'🥇 1st Place', '2nd':'🥈 2nd Place', '3rd':'🥉 3rd Place' };
-  document.getElementById('w-badge').textContent = posLabel[r.Position] || r.Position;
-  document.getElementById('w-badge').style.background = col;
-  document.getElementById('w-name').textContent  = r.StudentName;
-  document.getElementById('w-meta').textContent  = `${r.EventName}  ·  ${r.House}${r.Department ? '  ·  ' + r.Department : ''}`;
-  document.getElementById('w-pts').textContent   = '+' + r.Points + ' Points';
-  document.getElementById('winner-photo').src    = getGoogleDriveThumbUrl(r.PhotoUrl || '');
-  document.getElementById('winner-overlay').classList.add('show');
-  fireConfetti();
-  setTimeout(closeWinner, 9000);
-}
-function closeWinner() { document.getElementById('winner-overlay').classList.remove('show'); }
+          // Odometer count-up animation for numbers
+          incoming.querySelectorAll('.count-up').forEach(el => {
+            const target = parseInt(el.getAttribute('data-val'), 10) || 0;
+            const dur = 1800;
+            let start = null;
+            function step(ts) {
+              if (!start) start = ts;
+              const prog = Math.min((ts - start) / dur, 1);
+              const ease = 1 - Math.pow(1 - prog, 3); // easeOutCubic
+              el.innerText = Math.floor(ease * target).toLocaleString();
+              if (prog < 1) window.requestAnimationFrame(step);
+            }
+            window.requestAnimationFrame(step);
+          });
 
-// ─────────────────────────────────────────────
-//  Background music
-// ─────────────────────────────────────────────
-function setupMusic(url) {
-  const audio = document.getElementById('bg-music');
-  audio.src = url;
-  audio.volume = 0.5;
-  document.getElementById('music-toggle-btn').style.display = 'flex';
-  document.getElementById('music-bar').classList.add('show');
+          // Rising bar chart animation trigger
+          setTimeout(() => {
+            incoming.querySelectorAll('.dh-bar').forEach(bar => {
+              bar.classList.add('bar-risen');
+            });
+          }, 200);
 
-  // Autoplay on first user interaction
-  const tryPlay = () => {
-    audio.play().then(() => {
-      musicPlaying = true;
-      updateMusicBtn();
-      document.removeEventListener('click', tryPlay);
-      document.removeEventListener('keydown', tryPlay);
-    }).catch(() => {});
-  };
-  // Try immediately, fall back to interaction
-  audio.play().then(() => { musicPlaying = true; updateMusicBtn(); }).catch(() => {
-    document.addEventListener('click', tryPlay);
-    document.addEventListener('keydown', tryPlay);
-    toast('🎵 Click anywhere to start music', 'info');
-  });
-}
+          flashSlideLabel(slidesData[currentSlideIndex].label || '');
+          
+          if (slidesData[currentSlideIndex].isAchievement) {
+            setTimeout(() => {
+              if (window.confetti) {
+                confetti({ particleCount: 200, spread: 130, origin: { y: 0.35 } });
+              }
+            }, 900);
+          }
 
-function toggleMusic() {
-  const audio = document.getElementById('bg-music');
-  if (!audio.src || !musicUrl) { toast('No music uploaded yet', 'error'); return; }
-  if (musicPlaying) { audio.pause(); musicPlaying = false; }
-  else              { audio.play(); musicPlaying = true; }
-  updateMusicBtn();
-}
+          if (outgoing) {
+            const _out = outgoing;
+            setTimeout(() => { if (_out.parentNode) _out.parentNode.removeChild(_out); }, 750);
+          }
+          
+          await new Promise(r => setTimeout(r, slidesData[currentSlideIndex].time));
+          currentSlideIndex++;
+        } else {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
 
-function updateMusicBtn() {
-  const btn = document.getElementById('music-toggle-btn');
-  btn.textContent = musicPlaying ? '⏸ Music' : '▶ Music';
-  const barBtn = document.querySelector('.music-bar .btn-ghost');
-  if(barBtn) barBtn.textContent = musicPlaying ? '⏸' : '▶';
-}
+    // ─────────────────────────────────────────────
+    //  Congratulations Full-screen Overlay
+    // ─────────────────────────────────────────────
+    function showPopup(r) {
+      if (!r) return;
+      isPopupActive = true;
+      const p = document.getElementById('paper-popup');
+      try {
+        const sfx = document.getElementById('sfx-chime');
+        if (sfx) { sfx.currentTime = 0; sfx.play().catch(() => {}); }
+        const m = document.getElementById('bgMusic');
+        if (m) m.volume = 0.25;
+      } catch(e) {}
 
-function setVolume(v) {
-  document.getElementById('bg-music').volume = parseFloat(v);
-}
+      document.getElementById('pop-name').innerText = r.StudentName || r.House + ' Team';
+      document.getElementById('pop-dept').innerText = r.Department || '';
+      document.getElementById('pop-pts').innerText = `+${r.Points}`;
+      
+      const h = document.getElementById('pop-house');
+      h.innerText = `${String(r.House).toUpperCase()} HOUSE`;
+      h.style.backgroundColor = houseColor(r.House);
 
-// ─────────────────────────────────────────────
-//  Confetti
-// ─────────────────────────────────────────────
-function fireConfetti() {
-  if (!window.confetti) return;
-  const end = Date.now() + 3500;
-  const colors = ['#f59e0b','#a78bfa','#34d399','#f87171','#60a5fa','#fbbf24'];
-  (function frame() {
-    confetti({ particleCount:6, angle:60, spread:60, origin:{x:0}, colors });
-    confetti({ particleCount:6, angle:120, spread:60, origin:{x:1}, colors });
-    if(Date.now()<end) requestAnimationFrame(frame);
-  })();
-}
+      p.classList.add('show');
+      
+      // Shower confetti
+      if (window.confetti) {
+        confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 } });
+      }
 
-// ─────────────────────────────────────────────
-//  Toast
-// ─────────────────────────────────────────────
-function toast(msg, type='info') {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => { t.style.animation='toastOut .3s ease both'; t.addEventListener('animationend',()=>t.remove()); }, 3500);
-}
-</script>
+      setTimeout(() => {
+        p.classList.remove('show');
+        isPopupActive = false;
+        try {
+          const m = document.getElementById('bgMusic');
+          if (m) m.volume = 0.65;
+        } catch(e) {}
+      }, 7500);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Init
+    // ─────────────────────────────────────────────
+    (async function init() {
+      await updateData();
+      setInterval(updateData, 8000);
+    })();
+  </script>
 </body>
 </html>
