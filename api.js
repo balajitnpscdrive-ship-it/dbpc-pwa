@@ -45,7 +45,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz1u0n8GMn_UQ29Iva17OWH6J1mWLUFS7jX0w3WeGcZEcXjWbc-3Dr-DwNlqKVJHsnwzw/exec";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycby8FwfW9fY-MTRRzWSBGulShWVdsK0FnyPKdJnYkaS1Nu_LbYdSJXFw-YgphDrum4fCdg/exec";
 
 function getGasUrl() {
   let u = '';
