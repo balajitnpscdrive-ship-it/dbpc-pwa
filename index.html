@@ -7,6 +7,14 @@
   <meta name="description" content="Sports Day Management System – Login"/>
   <link rel="stylesheet" href="styles.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#f59e0b"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Sports Day"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
 </head>
 <body>
 <div class="login-bg">
@@ -73,7 +81,16 @@
       return;
     }
 
-    // 2. Synchronous Redirect Loop Prevention
+    // 2. Save query-param URL if provided
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramUrl = urlParams.get('gasUrl') || urlParams.get('url');
+      if (paramUrl && paramUrl.startsWith('https://')) {
+        localStorage.setItem('GAS_URL', paramUrl);
+      }
+    } catch(e) {}
+
+    // 3. Synchronous Redirect Loop Prevention
     const u = Session.get();
     let lastRedirect = 0;
     try {
@@ -100,13 +117,16 @@
       try {
         sessionStorage.removeItem('lastRedirect');
         localStorage.removeItem('lastRedirect');
-        history.replaceState(null, '', window.location.pathname);
+        const cleanParams = new URLSearchParams(window.location.search);
+        cleanParams.delete('from');
+        const searchStr = cleanParams.toString();
+        history.replaceState(null, '', window.location.pathname + (searchStr ? '?' + searchStr : ''));
       } catch(e) {}
     } else if (u && !u.loginRole) {
       Session.clear();
     }
 
-    // 3. Load GAS Web App URL
+    // 4. Load GAS Web App URL
     let url = '';
     try { url = localStorage.getItem('GAS_URL') || ''; } catch(e) {}
     if (url) { document.getElementById('gas-url-input').value = url; }
@@ -162,7 +182,7 @@
 
       const res = await apiPost('login', { role: currentRole, email, password: pass });
       if (res.ok) {
-        const sessionData = { ...res, loginRole: currentRole };
+        const sessionData = { ...res, loginRole: currentRole, gasUrl: getGasUrl() };
         Session.set(sessionData);
         toast('Welcome, ' + (res.name || res.houseName) + '!', 'success');
         setTimeout(() => redirect(currentRole, res), 600);
@@ -181,10 +201,16 @@
 
   function redirect(role, data) {
     data = data || {};
+    const gasUrl = getGasUrl();
+    const sessionStr = JSON.stringify(Session.get() || { ...data, loginRole: role, gasUrl });
+    let query = `?session=${encodeURIComponent(sessionStr)}`;
+    if (gasUrl) {
+      query += `&gasUrl=${encodeURIComponent(gasUrl)}`;
+    }
     if (role === 'committee') {
-      location.href = 'committee.html';
+      location.href = 'committee.html' + query;
     } else if (role === 'house' || data.houseName) {
-      location.href = 'house.html';
+      location.href = 'house.html' + query;
     }
   }
 </script>
