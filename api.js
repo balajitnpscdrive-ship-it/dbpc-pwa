@@ -2,31 +2,70 @@
 // api.js – Shared API & Utility Layer | Sports Day Management
 // ============================================================
 
-// 1. Unregister active service workers to clean up old PWA cache overrides on the same domain
+// 1. Service Worker & PWA Handling
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+  // Purge any active service worker from other apps (e.g. Lab Management) hosted on the same domain scope,
+  // but let our own sw.js PWA service worker run.
+  navigator.serviceWorker.getRegistrations().then(async function(registrations) {
     if (registrations && registrations.length) {
-      for (var i = 0; i < registrations.length; i++) {
-        registrations[i].unregister().then(function(success) {
-          if (success) {
-            console.log('[SW] Service Worker unregistered successfully. Reloading page...');
-            location.reload();
+      const alreadyCleaned = sessionStorage.getItem('sw_cleaned_loop_guard');
+      if (!alreadyCleaned) {
+        sessionStorage.setItem('sw_cleaned_loop_guard', 'true');
+        let unregisteredAny = false;
+        for (let i = 0; i < registrations.length; i++) {
+          const scriptUrl = registrations[i].active ? registrations[i].active.scriptURL : '';
+          if (scriptUrl && !scriptUrl.endsWith('/sw.js')) {
+            await registrations[i].unregister();
+            unregisteredAny = true;
+            console.log('[SW] Unregistered foreign service worker:', scriptUrl);
           }
-        });
+        }
+        if (unregisteredAny) {
+          if ('caches' in window) {
+            try {
+              const keys = await caches.keys();
+              for (let key of keys) {
+                await caches.delete(key);
+              }
+            } catch(e) {}
+          }
+          console.log('[SW] Reloading page to clear cache interceptors...');
+          location.reload();
+          return;
+        }
       }
     }
+    
+    // Register our Sports Day PWA service worker
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[SW] Registered successfully:', reg.scope))
+      .catch(err => console.warn('[SW] Registration failed:', err));
   }).catch(function(err) {
     console.warn('[SW] Failed to get registrations:', err);
   });
 }
 
-const DEFAULT_GAS_URL = "";
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz1u0n8GMn_UQ29Iva17OWH6J1mWLUFS7jX0w3WeGcZEcXjWbc-3Dr-DwNlqKVJHsnwzw/exec";
 
 function getGasUrl() {
   let u = '';
   try {
-    u = localStorage.getItem('GAS_URL');
+    const urlParams = new URLSearchParams(window.location.search);
+    u = urlParams.get('gasUrl') || urlParams.get('url');
   } catch(e) {}
+  if (!u) {
+    try {
+      u = localStorage.getItem('GAS_URL');
+    } catch(e) {}
+  }
+  if (!u) {
+    try {
+      const s = Session.get();
+      if (s && s.gasUrl) {
+        u = s.gasUrl;
+      }
+    } catch(e) {}
+  }
   const url = u || DEFAULT_GAS_URL;
   if (!url || !url.startsWith('https://')) {
     throw new Error('Apps Script Web App URL is not set or invalid. Please save your correct Web App URL at the bottom of the login page.');
@@ -136,9 +175,25 @@ const Session = {
   get() {
     let data = null;
     try {
-      data = sessionStorage.getItem('sportsUser') || localStorage.getItem('sportsUser');
-      if (data) console.log('[Session] Read from storage:', data);
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionParam = urlParams.get('session');
+      if (sessionParam) {
+        data = decodeURIComponent(sessionParam);
+        console.log('[Session] Read from URL param:', data);
+        // Cache it in storage if available
+        try {
+          sessionStorage.setItem('sportsUser', data);
+          localStorage.setItem('sportsUser', data);
+        } catch(e) {}
+      }
     } catch(e) {}
+
+    if (!data) {
+      try {
+        data = sessionStorage.getItem('sportsUser') || localStorage.getItem('sportsUser');
+        if (data) console.log('[Session] Read from storage:', data);
+      } catch(e) {}
+    }
     if (!data) {
       try {
         if (window.name && window.name.startsWith('{')) {
@@ -169,14 +224,24 @@ const Session = {
     console.log('[Session] Require role:', role, 'Current session:', u);
     if (!u) {
       console.warn('[Session] Verification failed: No active session. Redirecting to login.');
-      location.href = 'index.html?from=' + role;
+      const gasUrl = getGasUrl();
+      let redirectUrl = 'index.html?from=' + role;
+      if (gasUrl) {
+        redirectUrl += '&gasUrl=' + encodeURIComponent(gasUrl);
+      }
+      location.href = redirectUrl;
       return null;
     }
     const storedRole = u.loginRole || (u.houseName ? 'house' : 'committee');
     console.log('[Session] Stored role:', storedRole, 'Required role:', role);
     if (role && storedRole !== role) {
       console.warn('[Session] Verification failed: Role mismatch. Redirecting to login.');
-      location.href = 'index.html?from=' + role;
+      const gasUrl = getGasUrl();
+      let redirectUrl = 'index.html?from=' + role;
+      if (gasUrl) {
+        redirectUrl += '&gasUrl=' + encodeURIComponent(gasUrl);
+      }
+      location.href = redirectUrl;
       return null;
     }
     console.log('[Session] Verification succeeded');
@@ -330,26 +395,43 @@ async function getSettings() {
   return _settings;
 }
 
-// ── Print Helper ──────────────────────────────────────────────────────────────
+// ── Image Preloading & Print Helpers ──────────────────────────────────────────
+function preloadImages(urls) {
+  return Promise.all(urls.map(url => {
+    if (!url) return Promise.resolve(null);
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => resolve(null);
+      img.src = url;
+      setTimeout(() => resolve(null), 5000); // 5 seconds max timeout
+    });
+  }));
+}
+
 async function printWithHeader(title) {
   const s = await getSettings();
-  const [logoSrc, founderSrc] = await Promise.all([
-    imgToDataUrl(s.LogoUrl || ''),
-    imgToDataUrl(s.FounderUrl || '')
-  ]);
+  
+  const logoUrl = getGoogleDriveThumbUrl(s.LogoUrl || '');
+  const founderUrl = getGoogleDriveThumbUrl(s.FounderUrl || '');
+  
+  // Preload logo and founder images to ensure they show up in print
+  await preloadImages([logoUrl, founderUrl]);
+  
   const header = document.getElementById('print-header');
   if (header) {
-    const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl);
-    const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl);
     header.innerHTML = `
-      ${finalLogo ? `<img src="${finalLogo}" style="height:60px" alt="Logo">` : ''}
+      ${logoUrl ? `<div class="print-hdr-thumb"><img src="${logoUrl}" alt="Logo"></div>` : ''}
       <div style="flex:1;text-align:center">
-        <div style="font-size:1.1rem;font-weight:700;color:#000">${s.CollegeName || ''}</div>
-        <div style="font-size:.85rem;color:#555">${s.EventTitle || ''}</div>
-        <div style="font-size:.95rem;font-weight:600;margin-top:.2rem">${title}</div>
+        <div style="font-size:1.3rem;font-weight:800;color:#000;text-transform:uppercase;letter-spacing:1px;font-family:'Outfit',sans-serif">${s.CollegeName || ''}</div>
+        <div style="font-size:0.95rem;font-weight:600;color:#333;margin-top:0.25rem">${s.EventTitle || ''}</div>
+        <div style="font-size:1.05rem;font-weight:700;color:#000;margin-top:0.3rem;text-transform:uppercase">${title}</div>
       </div>
-      ${finalFounder ? `<img src="${finalFounder}" style="height:60px;border-radius:50%" alt="Founder">` : ''}
+      ${founderUrl ? `<div class="print-hdr-thumb circular"><img src="${founderUrl}" alt="Founder"><small style="display:block;font-size:8px;font-weight:bold;margin-top:2px;color:#333">FOUNDER</small></div>` : ''}
     `;
   }
-  window.print();
+  
+  setTimeout(() => {
+    window.print();
+  }, 150);
 }
