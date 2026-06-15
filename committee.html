@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Sports Committee Dashboard</title>
   <link rel="stylesheet" href="styles.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&family=Cinzel:wght@600;700;800&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet"/>
   
   <!-- PWA Support -->
   <link rel="manifest" href="manifest.json"/>
@@ -44,6 +44,7 @@
       <div class="nav-item" data-section="results">           <span class="icon">📋</span> All Results</div>
       <div class="nav-item" data-section="branding">          <span class="icon">🎨</span> Branding</div>
       <div class="nav-item" data-section="reports">           <span class="icon">🖨️</span> Reports</div>
+      <div class="nav-item" data-section="certificates">      <span class="icon">📜</span> Certificates</div>
     </nav>
     <div style="margin-top:auto;padding:1rem">
       <button class="btn btn-secondary btn-sm w-full" onclick="logout()">Logout</button>
@@ -240,7 +241,7 @@
         <div class="print-header" id="print-header"></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Department</th><th>House</th><th>Points</th><th>Photo</th><th>QR Code</th></tr></thead>
+            <thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Department</th><th>House</th><th>Points</th><th>Photo</th><th>Remarks</th></tr></thead>
             <tbody id="results-body"></tbody>
           </table>
         </div>
@@ -273,6 +274,10 @@
           <div class="form-group">
             <label>Sports Committee In‑Charge Name</label>
             <input type="text" id="s-incharge"/>
+          </div>
+          <div class="form-group">
+            <label>Sports Committee Secretary Name</label>
+            <input type="text" id="s-secretary"/>
           </div>
           <button class="btn btn-primary w-full mt-1" onclick="saveSettings()">💾 Save Settings</button>
         </div>
@@ -335,6 +340,16 @@
           <h3 class="mt-1">Score Summary</h3>
           <p class="text-muted" style="font-size:.85rem">House points summary</p>
         </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('event_results')">
+          <div style="font-size:2rem">🥇</div>
+          <h3 class="mt-1">Event-wise Results</h3>
+          <p class="text-muted" style="font-size:.85rem">Winners listed by event</p>
+        </div>
+        <div class="card text-center" style="cursor:pointer" onclick="openReport('house_results')">
+          <div style="font-size:2rem">🏠🏆</div>
+          <h3 class="mt-1">House-wise Results</h3>
+          <p class="text-muted" style="font-size:.85rem">Event wins grouped by house</p>
+        </div>
       </div>
       <div id="report-output" class="card mt-3 hidden">
         <div class="print-header" id="report-print-header"></div>
@@ -349,6 +364,41 @@
           <div><div class="sig-line" id="rep-sig-principal">Principal</div></div>
         </div>
       </div>
+    </section>
+
+    <!-- Certificates Section -->
+    <section id="sec-certificates" class="section-page hidden">
+      <div class="topbar">
+        <div class="topbar-title">Certificates Generator</div>
+        <div class="flex gap-1 no-print">
+          <select id="cert-filter-event" onchange="filterCertificates()"><option value="">All Events</option></select>
+          <select id="cert-filter-house" onchange="filterCertificates()"><option value="">All Houses</option></select>
+          <button class="btn btn-primary btn-sm" onclick="printAllCertificates()">🖨️ Print All (Bulk)</button>
+        </div>
+      </div>
+      <div class="card no-print mb-3">
+        <h3 class="mb-2">Winner List</h3>
+        <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Position</th>
+                <th>Winner / House</th>
+                <th>House</th>
+                <th>Dept</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="cert-list-body">
+              <tr><td colspan="6" class="text-muted text-center">Loading winners...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Certificate Print Area -->
+      <div id="cert-print-area" class="cert-preview-container"></div>
     </section>
   </main>
 </div>
@@ -430,7 +480,20 @@ async function populateSelects() {
   // Award – events
   const ae = document.getElementById('award-event');
   ae.innerHTML = '<option value="">Select event…</option>';
-  eventsData.forEach(e => { ae.innerHTML += `<option value="${e.EventID}" data-type="${e.Type}" data-cat="${e.Category}">${e.EventName}</option>`; });
+  const indivEvents = eventsData.filter(e => e.Type !== 'Team');
+  const teamEvents = eventsData.filter(e => e.Type === 'Team');
+  if (indivEvents.length > 0) {
+    let grp = `<optgroup label="🏃 Individual Events">`;
+    indivEvents.forEach(e => { grp += `<option value="${e.EventID}" data-type="${e.Type}" data-cat="${e.Category}">${e.EventName}</option>`; });
+    grp += `</optgroup>`;
+    ae.innerHTML += grp;
+  }
+  if (teamEvents.length > 0) {
+    let grp = `<optgroup label="🤝 Team Events">`;
+    teamEvents.forEach(e => { grp += `<option value="${e.EventID}" data-type="${e.Type}" data-cat="${e.Category}">${e.EventName}</option>`; });
+    grp += `</optgroup>`;
+    ae.innerHTML += grp;
+  }
 
   // Award – students
   const as = document.getElementById('award-student');
@@ -452,6 +515,19 @@ async function populateSelects() {
   eventsData.forEach(e => { rfe.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
   const rfh = document.getElementById('results-filter-house');
   housesData.forEach(h => { rfh.innerHTML += `<option>${h.HouseName}</option>`; });
+
+  // Certificates filters
+  const cfe = document.getElementById('cert-filter-event');
+  if (cfe) {
+    cfe.innerHTML = '<option value="">All Events</option>';
+    eventsData.forEach(e => { cfe.innerHTML += `<option value="${e.EventID}">${e.EventName}</option>`; });
+  }
+  const cfh = document.getElementById('cert-filter-house');
+  if (cfh) {
+    cfh.innerHTML = '<option value="">All Houses</option>';
+    housesData.forEach(h => { cfh.innerHTML += `<option>${h.HouseName}</option>`; });
+  }
+  filterCertificates();
 
   renderEventsTable();
   renderHousesTable();
@@ -544,7 +620,33 @@ function findPointsRule(category, position) {
 
 // ── Award Points ───────────────────────────────────────────────────────────────
 document.getElementById('award-position').addEventListener('change', previewPoints);
-document.getElementById('award-event').addEventListener('change', previewPoints);
+document.getElementById('award-event').addEventListener('change', () => {
+  const eventSel = document.getElementById('award-event');
+  const opt = eventSel.options[eventSel.selectedIndex];
+  
+  const studentRow = document.getElementById('award-student-row');
+  const studentLabel = studentRow.querySelector('label');
+  const studentSelect = document.getElementById('award-student');
+  const qrButton = document.querySelector('[onclick="toggleAwardQR()"]');
+  const qrRow = qrButton ? qrButton.closest('.form-group') : null;
+  
+  if (opt && opt.getAttribute('data-type') === 'Team') {
+    studentLabel.textContent = 'Winning House';
+    studentSelect.innerHTML = '<option value="">Select house…</option>' + 
+      housesData.map(h => `<option value="${h.HouseName}">${h.HouseName}</option>`).join('');
+    if (qrRow) qrRow.style.display = 'none';
+  } else {
+    studentLabel.textContent = 'Student (select or scan QR)';
+    studentSelect.innerHTML = '<option value="">Select student…</option>' + 
+      studentsData.map(s => `<option value="${s.Name}|${s.Department}|${s.House}">${s.Name} (${s.House})</option>`).join('');
+    if (qrRow) qrRow.style.display = 'block';
+  }
+  
+  awardScanned = null;
+  const scannedDiv = document.getElementById('award-scanned');
+  if (scannedDiv) scannedDiv.classList.add('hidden');
+  previewPoints();
+});
 
 function previewPoints() {
   const eventSel = document.getElementById('award-event');
@@ -583,12 +685,20 @@ async function submitAward() {
   const position = document.getElementById('award-position').value;
 
   let studentName, dept, house;
-  if (awardScanned) {
-    studentName = awardScanned.name; dept = awardScanned.dept; house = awardScanned.house;
+  if (eventType === 'Team') {
+    const houseVal = document.getElementById('award-student').value;
+    if (!houseVal) { toast('Select winning house', 'error'); return; }
+    studentName = houseVal;
+    dept = '';
+    house = houseVal;
   } else {
-    const sv = document.getElementById('award-student').value;
-    if (!sv) { toast('Select a student or scan QR', 'error'); return; }
-    [studentName, dept, house] = sv.split('|');
+    if (awardScanned) {
+      studentName = awardScanned.name; dept = awardScanned.dept; house = awardScanned.house;
+    } else {
+      const sv = document.getElementById('award-student').value;
+      if (!sv) { toast('Select a student or scan QR', 'error'); return; }
+      [studentName, dept, house] = sv.split('|');
+    }
   }
 
   const rule = findPointsRule(eventType, position);
@@ -826,12 +936,10 @@ async function uploadStudents() {
 // ── Results ───────────────────────────────────────────────────────────────────
 async function renderResults(data) {
   const d = data || resultsData;
-  const rows = await Promise.all(d.map(async r => {
-    const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
-    const qrImg = (isTeamResult || !r.StudentName) ? '' : await studentQRImg(r.StudentName, r.Department, r.House, 50);
+  const rows = d.map(r => {
     return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td>${r.StudentName}</td><td>${r.Department}</td><td>${r.House}</td><td>${r.Points}</td>
-    <td>${r.PhotoUrl ? `<img src="${getGoogleDriveThumbUrl(r.PhotoUrl)}" style="height:36px;border-radius:4px">` : '-'}</td><td>${qrImg}</td></tr>`;
-  }));
+    <td>${r.PhotoUrl ? `<img src="${getGoogleDriveThumbUrl(r.PhotoUrl)}" style="height:36px;border-radius:4px">` : '-'}</td><td></td></tr>`;
+  });
   document.getElementById('results-body').innerHTML = rows.join('');
 }
 
@@ -844,7 +952,20 @@ async function filterResults() {
   await renderResults(filtered);
 }
 
-function printResults() { printWithHeader('Results Report'); }
+function printResults() {
+  const evtSel = document.getElementById('results-filter-event');
+  const evtOpt = evtSel.options[evtSel.selectedIndex];
+  const evtName = evtOpt && evtOpt.value ? evtOpt.textContent : 'All Events';
+  
+  const hseSel = document.getElementById('results-filter-house');
+  const hseName = hseSel && hseSel.value ? hseSel.value + ' House' : 'All Houses';
+  
+  let title = 'Results Report';
+  if (evtName !== 'All Events' || hseName !== 'All Houses') {
+    title += ` (${evtName} - ${hseName})`;
+  }
+  printWithHeader(title);
+}
 
 // ── Branding / Settings ───────────────────────────────────────────────────────
 async function loadSettings() {
@@ -853,6 +974,7 @@ async function loadSettings() {
   document.getElementById('s-event-title').value   = s.EventTitle  || '';
   document.getElementById('s-principal').value     = s.PrincipalName || '';
   document.getElementById('s-incharge').value      = s.CommitteeInChargeName || '';
+  document.getElementById('s-secretary').value     = s.SecretaryName || '';
   if (s.LogoUrl)    { document.getElementById('preview-logo').src = getGoogleDriveThumbUrl(s.LogoUrl); document.getElementById('preview-logo').style.display='block'; }
   if (s.FounderUrl) { document.getElementById('preview-founder').src = getGoogleDriveThumbUrl(s.FounderUrl); document.getElementById('preview-founder').style.display='block'; }
   const sbLogo = document.getElementById('sb-logo');
@@ -862,7 +984,13 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  const fields = { CollegeName: 's-college-name', EventTitle: 's-event-title', PrincipalName: 's-principal', CommitteeInChargeName: 's-incharge' };
+  const fields = { 
+    CollegeName: 's-college-name', 
+    EventTitle: 's-event-title', 
+    PrincipalName: 's-principal', 
+    CommitteeInChargeName: 's-incharge',
+    SecretaryName: 's-secretary'
+  };
   for (const [key, elId] of Object.entries(fields)) {
     await apiPost('saveSetting', { Key: key, Value: document.getElementById(elId).value });
   }
@@ -953,12 +1081,12 @@ async function openReport(type) {
   await preloadImages([finalLogo, finalFounder]);
 
   hdr.innerHTML = `
-    ${finalLogo ? `<div class="print-hdr-thumb"><img src="${finalLogo}" alt="Logo"></div>` : ''}
+    ${finalLogo ? `<div class="print-hdr-thumb circular-logo"><img src="${finalLogo}" alt="Logo"></div>` : ''}
     <div style="flex:1;text-align:center">
       <div style="font-size:1.4rem;font-weight:800;color:#000;text-transform:uppercase;letter-spacing:1px;font-family:'Outfit',sans-serif">${s.CollegeName||''}</div>
       <div style="font-size:0.95rem;font-weight:600;color:#333;margin-top:0.25rem">${s.EventTitle||''}</div>
     </div>
-    ${finalFounder ? `<div class="print-hdr-thumb circular"><img src="${finalFounder}" alt="Founder"><small style="display:block;font-size:8px;font-weight:bold;margin-top:2px;color:#333">FOUNDER</small></div>` : ''}`;
+    ${finalFounder ? `<div style="display:flex;flex-direction:column;align-items:center;"><div class="print-hdr-thumb circular"><img src="${finalFounder}" alt="Founder"></div><small style="font-size:8px;font-weight:bold;margin-top:2px;color:#333;text-transform:uppercase;">FOUNDER</small></div>` : ''}`;
 
 
   document.getElementById('rep-sig-incharge').textContent = s.CommitteeInChargeName || 'Sports Incharge';
@@ -973,66 +1101,281 @@ async function openReport(type) {
     ttl = 'House‑wise Participant List';
     for (const h of housesData) {
       const stu = finalList.filter(f => isHouseMatch(f.House, h.HouseName));
-      const rows = await Promise.all(stu.map(async (s, i) => {
-        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+      const rows = stu.map((s, i) => {
         const roll = getStudentRoll(s.StudentName);
-        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.EventName}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
-      }));
+        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.EventName}</td><td>${s.Department}</td><td></td></tr>`;
+      });
       html += `<h3 style="margin-top:1.5rem;color:${h.Color};border-bottom: 1px solid #ddd;padding-bottom: 0.3rem;">${h.HouseName}</h3>
-      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Event</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Event</th><th>Department</th><th>Remarks</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
     }
   } else if (type === 'game') {
     ttl = 'Game‑wise Participant List';
     for (const ev of eventsData) {
       const stu = finalList.filter(f => f.EventID === ev.EventID);
-      const rows = await Promise.all(stu.map(async (s, i) => {
-        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+      const rows = stu.map((s, i) => {
         const roll = getStudentRoll(s.StudentName);
-        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.House}</td><td>${s.Department}</td><td>${qrImg}</td></tr>`;
-      }));
+        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.House}</td><td>${s.Department}</td><td></td></tr>`;
+      });
       html += `<h3 style="margin-top:1.5rem;border-bottom: 1px solid #ddd;padding-bottom: 0.3rem;">${ev.EventName}</h3>
-      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>House</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>House</th><th>Department</th><th>Remarks</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
     }
   } else if (type === 'dept') {
     ttl = 'Department‑wise Participant List';
     const depts = [...new Set(finalList.map(f => f.Department))];
     for (const d of depts) {
       const stu = finalList.filter(f => f.Department === d);
-      const rows = await Promise.all(stu.map(async (s, i) => {
-        const qrImg = await studentQRImg(s.StudentName, s.Department, s.House, 50);
+      const rows = stu.map((s, i) => {
         const roll = getStudentRoll(s.StudentName);
-        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.House}</td><td>${s.EventName}</td><td>${qrImg}</td></tr>`;
-      }));
+        return `<tr><td>${i+1}</td><td><strong>${s.StudentName}</strong></td><td>${roll}</td><td>${s.House}</td><td>${s.EventName}</td><td></td></tr>`;
+      });
       html += `<h3 style="margin-top:1.5rem;border-bottom: 1px solid #ddd;padding-bottom: 0.3rem;">${d||'Unknown'}</h3>
-      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>House</th><th>Event</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+      <table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>House</th><th>Event</th><th>Remarks</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
     }
   } else if (type === 'overall') {
     ttl = 'Overall Results';
-    const rows = await Promise.all(resultsData.map(async r => {
+    const rows = resultsData.map(r => {
       const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
-      const qrImg = (isTeamResult || !r.StudentName) ? '' : await studentQRImg(r.StudentName, r.Department, r.House, 50);
       const roll = isTeamResult ? '-' : getStudentRoll(r.StudentName);
-      return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td><strong>${r.StudentName}</strong></td><td>${roll}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td><td>${qrImg}</td></tr>`;
-    }));
-    html = `<table><thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Roll No</th><th>House</th><th>Dept</th><th>Points</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+      return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td><strong>${r.StudentName}</strong></td><td>${roll}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td><td></td></tr>`;
+    });
+    html = `<table><thead><tr><th>Event</th><th>Position</th><th>Student</th><th>Roll No</th><th>House</th><th>Dept</th><th>Points</th><th>Remarks</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   } else if (type === 'finallist') {
     ttl = 'Final Participant List';
-    const rows = await Promise.all(finalList.map(async (f, i) => {
-      const qrImg = await studentQRImg(f.StudentName, f.Department, f.House, 50);
+    const rows = finalList.map((f, i) => {
       const roll = getStudentRoll(f.StudentName);
-      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.EventName}</td><td>${f.House}</td><td>${f.Department}</td><td>${qrImg}</td></tr>`;
-    }));
-    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Event</th><th>House</th><th>Department</th><th>QR Code</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+      return `<tr><td>${i+1}</td><td><strong>${f.StudentName}</strong></td><td>${roll}</td><td>${f.EventName}</td><td>${f.House}</td><td>${f.Department}</td><td></td></tr>`;
+    });
+    html = `<table><thead><tr><th>#</th><th>Name</th><th>Roll No</th><th>Event</th><th>House</th><th>Department</th><th>Remarks</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
   } else if (type === 'scores') {
     ttl = 'House Score Summary';
     const sorted = [...scores].sort((a,b)=>Number(b.Points)-Number(a.Points));
     html = `<table><thead><tr><th>Rank</th><th>House</th><th>Points</th></tr></thead><tbody>${sorted.map((s,i)=>`<tr><td>${i+1}</td><td>${s.House}</td><td><strong>${s.Points}</strong></td></tr>`).join('')}</tbody></table>`;
+  } else if (type === 'event_results') {
+    ttl = 'Event‑wise Results';
+    const grouped = {};
+    resultsData.forEach(r => {
+      const ev = r.EventName || 'General';
+      if (!grouped[ev]) grouped[ev] = [];
+      grouped[ev].push(r);
+    });
+    for (const ev of Object.keys(grouped)) {
+      const list = grouped[ev];
+      const sorted = list.sort((a, b) => {
+        const posA = String(a.Position).toLowerCase();
+        const posB = String(b.Position).toLowerCase();
+        if (posA.includes('1st') || posA.includes('winner')) return -1;
+        if (posB.includes('1st') || posB.includes('winner')) return 1;
+        if (posA.includes('2nd') || posA.includes('runner')) return -1;
+        if (posB.includes('2nd') || posB.includes('runner')) return 1;
+        return 0;
+      });
+      const rows = sorted.map(r => {
+        const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
+        const roll = isTeamResult ? '-' : getStudentRoll(r.StudentName);
+        return `<tr><td>${r.Position}</td><td><strong>${r.StudentName}</strong></td><td>${roll}</td><td>${r.House}</td><td>${r.Department}</td><td>${r.Points}</td><td></td></tr>`;
+      }).join('');
+      html += `<h3 style="margin-top:1.5rem;border-bottom: 1px solid #ddd;padding-bottom: 0.3rem;">🎽 ${ev}</h3>
+      <table><thead><tr><th>Position</th><th>Student / House</th><th>Roll No</th><th>House</th><th>Department</th><th>Points</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+  } else if (type === 'house_results') {
+    ttl = 'House‑wise Results';
+    const grouped = {};
+    resultsData.forEach(r => {
+      const h = r.House || 'General';
+      if (!grouped[h]) grouped[h] = [];
+      grouped[h].push(r);
+    });
+    for (const h of Object.keys(grouped)) {
+      const list = grouped[h];
+      const rows = list.map(r => {
+        const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
+        const roll = isTeamResult ? '-' : getStudentRoll(r.StudentName);
+        return `<tr><td>${r.EventName}</td><td>${r.Position}</td><td><strong>${r.StudentName}</strong></td><td>${roll}</td><td>${r.Department}</td><td>${r.Points}</td><td></td></tr>`;
+      }).join('');
+      html += `<h3 style="margin-top:1.5rem;border-bottom: 1px solid #ddd;padding-bottom: 0.3rem;">🏠 ${h}</h3>
+      <table><thead><tr><th>Event</th><th>Position</th><th>Student / House</th><th>Roll No</th><th>Department</th><th>Points</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
   }
 
   title.textContent = ttl;
   content.innerHTML = html;
   output.classList.remove('hidden');
   output.scrollIntoView({ behavior:'smooth' });
+}
+
+// ── Certificates ──────────────────────────────────────────────────────────────
+function filterCertificates() {
+  const evt = document.getElementById('cert-filter-event').value;
+  const hse = document.getElementById('cert-filter-house').value;
+  let filtered = resultsData;
+  if (evt) filtered = filtered.filter(r => r.EventID === evt);
+  if (hse) filtered = filtered.filter(r => isHouseMatch(r.House, hse));
+  renderCertificatesList(filtered);
+}
+
+function renderCertificatesList(list) {
+  const body = document.getElementById('cert-list-body');
+  if (!body) return;
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No winners found</td></tr>';
+    return;
+  }
+  const rows = list.map((r, i) => {
+    const winJson = JSON.stringify(r).replace(/"/g, '&quot;');
+    return `<tr>
+      <td>${r.EventName}</td>
+      <td><span class="badge badge-gold">${r.Position}</span></td>
+      <td><strong>${r.StudentName}</strong></td>
+      <td>${r.House}</td>
+      <td>${r.Department || '-'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="printSingleCertificate(${winJson})">🖨️ Print</button>
+      </td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = rows;
+}
+
+async function renderCertificateHTML(r, s) {
+  const [logoSrc, founderSrc, studentSrc] = await Promise.all([
+    imgToDataUrl(s.LogoUrl || ''),
+    imgToDataUrl(s.FounderUrl || ''),
+    r.PhotoUrl ? imgToDataUrl(r.PhotoUrl) : Promise.resolve('')
+  ]);
+
+  const finalLogo = logoSrc || getGoogleDriveThumbUrl(s.LogoUrl || '');
+  const finalFounder = founderSrc || getGoogleDriveThumbUrl(s.FounderUrl || '');
+  const finalStudent = studentSrc || (r.PhotoUrl ? getGoogleDriveThumbUrl(r.PhotoUrl) : '');
+
+  const isTeamResult = r.IsTeam === true || r.IsTeam === 'true' || ['HouseDecoration','MarchPast','Discipline'].includes(r.EventName);
+  const roll = isTeamResult ? '' : getStudentRoll(r.StudentName);
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  let posText = r.Position;
+  if (r.Position === '1st') posText = 'First Place';
+  else if (r.Position === '2nd') posText = 'Second Place';
+  else if (r.Position === '3rd') posText = 'Third Place';
+  else if (r.Position === 'Winner') posText = 'Winner';
+  else if (r.Position === 'RunnerUp') posText = 'Runner Up';
+
+  const prestigiousWording = "In recognition of outstanding athletic performance, dedication, and exemplary sportsmanship displayed during the Annual Sports Meet.";
+
+  return `
+    <div class="cert-page-break">
+      <div class="cert-card">
+        <div class="cert-watermark" style="background-image: url('${finalLogo}')"></div>
+        
+        <!-- Header -->
+        <div class="cert-header">
+          ${finalLogo ? `<div class="print-hdr-thumb circular-logo" style="border: 2px solid #c9a054 !important;"><img src="${finalLogo}" alt="Logo"></div>` : '<div style="width:70px"></div>'}
+          <div class="cert-header-title">
+            <h4>Certificate of Achievement</h4>
+            <h2>${s.CollegeName || 'COLLEGE NAME'}</h2>
+            <h5>${s.EventTitle || 'ANNUAL SPORTS DAY'}</h5>
+          </div>
+          ${finalFounder ? `<div style="display:flex;flex-direction:column;align-items:center;"><div class="print-hdr-thumb circular" style="border: 2px solid #c9a054 !important;"><img src="${finalFounder}" alt="Founder"></div><small style="font-size:7px;font-weight:bold;margin-top:2px;color:#333;text-transform:uppercase;">FOUNDER</small></div>` : '<div style="width:70px"></div>'}
+        </div>
+        
+        <!-- Body -->
+        <div class="cert-body">
+          <div class="cert-award-text">Certificate of Merit</div>
+          <div class="cert-certify">This is proudly presented to</div>
+          <div class="cert-recipient-name">${r.StudentName}</div>
+          
+          <div class="cert-recipient-meta">
+            ${isTeamResult 
+              ? `representing <strong>${r.House} House</strong> in recognition of securing`
+              : `of <strong>${r.Department} Department</strong> representing <strong>${r.House} House</strong>, in recognition of securing`
+            }
+          </div>
+          
+          <div class="cert-position-banner">${posText}</div>
+          
+          <div class="cert-recipient-meta">
+            in the event <strong>${r.EventName}</strong> with a score of <strong>${r.Points} Points</strong>.
+          </div>
+        </div>
+
+        <!-- Student Photo & Wording -->
+        <div class="cert-middle-section">
+          ${finalStudent ? `
+            <div class="cert-photo-frame">
+              <img src="${finalStudent}" alt="Winner Photo">
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="cert-prestigious-wording">
+          ${prestigiousWording}
+        </div>
+
+        <!-- Footer -->
+        <div class="cert-footer">
+          <div class="cert-sig-block">
+            <div class="cert-sig-name-cursive">${s.SecretaryName || ''}</div>
+            <div class="cert-sig-line">Secretary</div>
+          </div>
+          
+          <div class="cert-date-block">
+            <div class="cert-date-value">${dateStr}</div>
+            <div class="cert-date-label">Date</div>
+          </div>
+          
+          <div class="cert-sig-block">
+            <div class="cert-sig-name-cursive">${s.PrincipalName || ''}</div>
+            <div class="cert-sig-line">Principal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function printSingleCertificate(winner) {
+  const s = await getSettings();
+  toast('Preparing certificate...', 'info');
+  
+  document.body.classList.add('printing-certificates');
+  const printArea = document.getElementById('cert-print-area');
+  printArea.innerHTML = await renderCertificateHTML(winner, s);
+  
+  setTimeout(() => {
+    window.print();
+    document.body.classList.remove('printing-certificates');
+    printArea.innerHTML = '';
+  }, 500);
+}
+
+async function printAllCertificates() {
+  const evt = document.getElementById('cert-filter-event').value;
+  const hse = document.getElementById('cert-filter-house').value;
+  let filtered = resultsData;
+  if (evt) filtered = filtered.filter(r => r.EventID === evt);
+  if (hse) filtered = filtered.filter(r => isHouseMatch(r.House, hse));
+  
+  if (!filtered.length) {
+    toast('No winners found to print certificates.', 'error');
+    return;
+  }
+  
+  const s = await getSettings();
+  toast(`Preparing ${filtered.length} certificates...`, 'info');
+  
+  document.body.classList.add('printing-certificates');
+  const printArea = document.getElementById('cert-print-area');
+  printArea.innerHTML = '';
+  
+  let html = '';
+  for (const winner of filtered) {
+    html += await renderCertificateHTML(winner, s);
+  }
+  printArea.innerHTML = html;
+  
+  setTimeout(() => {
+    window.print();
+    document.body.classList.remove('printing-certificates');
+    printArea.innerHTML = '';
+  }, 1000);
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
