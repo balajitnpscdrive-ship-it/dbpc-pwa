@@ -1,7 +1,7 @@
 /* ====================================================
    Sports Day Management  –  Global Styles
    ==================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&family=Cinzel:wght@600;700;800&family=Great+Vibes&family=Pinyon+Script&display=swap');
 
 :root {
   --bg:          hsl(220, 15%, 8%);
@@ -294,20 +294,38 @@ tbody tr:hover { background: hsla(255,100%,100%,.03); }
   flex-shrink: 0;
 }
 .print-hdr-thumb.circular {
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid var(--accent, #f59e0b);
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  border: 2px solid var(--accent, #f59e0b) !important;
+}
+.print-hdr-thumb.circular img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+.print-hdr-thumb.circular-logo {
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  border: 2px solid var(--accent, #f59e0b) !important;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+.print-hdr-thumb.circular-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  padding: 4px !important;
 }
 .print-hdr-thumb img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-}
-.print-hdr-thumb.circular img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
 }
 .print-sig { display: flex; justify-content: space-between; margin-top: 4rem; }
 .print-sig div { text-align: center; }
@@ -386,4 +404,616 @@ tbody tr:hover { background: hsla(255,100%,100%,.03); }
   .main-content { margin-left: 0; padding: 4.5rem 1rem 1rem 1rem; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .score-cards { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── PWA Live Scoreboard Enhancements ─────────────── */
+.slides-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 520px;
+}
+.slide-section {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transform: scale(0.97) translateY(10px);
+  display: flex;
+  flex-direction: column;
+}
+.slide-section.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1) translateY(0);
+  position: relative;
+}
+
+/* 3D Podium Layout */
+.podium-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 3.5rem;
+  min-height: 340px;
+}
+.podium-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 180px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: podiumFadeIn 0.6s ease forwards;
+}
+.podium-step.pos-1 { animation-delay: 0.1s; }
+.podium-step.pos-2 { animation-delay: 0.3s; }
+.podium-step.pos-3 { animation-delay: 0.5s; }
+
+@keyframes podiumFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.podium-block {
+  width: 100%;
+  position: relative;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-bottom: none;
+}
+.podium-step.pos-1 .podium-block {
+  height: 170px;
+  background: linear-gradient(180deg, hsl(45, 90%, 45%), hsl(45, 90%, 25%));
+  border-color: hsl(45, 90%, 55%) 55;
+}
+.podium-step.pos-2 .podium-block {
+  height: 125px;
+  background: linear-gradient(180deg, hsl(220, 10%, 60%), hsl(220, 10%, 35%));
+  border-color: hsl(220, 10%, 75%) 55;
+}
+.podium-step.pos-3 .podium-block {
+  height: 95px;
+  background: linear-gradient(180deg, hsl(25, 75%, 45%), hsl(25, 75%, 25%));
+  border-color: hsl(25, 75%, 55%) 55;
+}
+
+.podium-block .num {
+  font-family: 'Outfit', sans-serif;
+  font-size: 5.5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.18);
+  line-height: 1;
+}
+
+.podium-user {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.podium-photo-wrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid var(--hc, #ccc);
+  box-shadow: 0 0 25px var(--hc-glow, rgba(255,255,255,0.2));
+  overflow: hidden;
+  margin: 0 auto 0.6rem;
+  background: #111;
+  position: relative;
+}
+.podium-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.podium-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+  white-space: nowrap;
+}
+.podium-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Event selection panel */
+.podium-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  padding: 0.6rem 1.5rem;
+  border-radius: 99px;
+  margin: 0 auto 1.5rem;
+  width: fit-content;
+}
+.podium-controls label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.podium-controls select {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Achievements Grid */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.achieve-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease, border-color 0.3s;
+}
+.achieve-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.12);
+}
+.achieve-icon {
+  font-size: 3.2rem;
+  filter: drop-shadow(0 0 12px var(--accent));
+  line-height: 1;
+}
+.achieve-details {
+  flex: 1;
+  min-width: 0;
+}
+.achieve-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.achieve-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.achieve-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* Achievement card picture (e.g. Star Performer) */
+.achieve-pic-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #111;
+}
+.achieve-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+}
+
+@media(max-width: 768px) {
+  .podium-container {
+    gap: 0.8rem;
+    min-height: 280px;
+    margin-top: 2rem;
+  }
+  .podium-step {
+    width: 110px;
+  }
+  .podium-photo-wrap {
+    width: 60px;
+    height: 60px;
+  }
+  .podium-name {
+    font-size: 0.85rem;
+  }
+  .podium-meta {
+    font-size: 0.7rem;
+  }
+  .podium-step.pos-1 .podium-block { height: 120px; }
+  .podium-step.pos-2 .podium-block { height: 90px; }
+  .podium-step.pos-3 .podium-block { height: 70px; }
+  .podium-block .num { font-size: 3.5rem; }
+  .slides-wrapper { min-height: 480px; }
+}
+
+/* ====================================================
+   HD Certificate Generator styles
+   ==================================================== */
+.cert-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.cert-card {
+  width: 100%;
+  max-width: 650px;
+  aspect-ratio: 1 / 1.414; /* A4 Portrait Ratio */
+  background: #fdfcf7; /* Premium parchment color */
+  border: 12px double #c9a054; /* Beautiful Gold double border */
+  color: #1a1a1a;
+  padding: 3rem 2rem;
+  box-sizing: border-box;
+  position: relative;
+  box-shadow: var(--shadow);
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* On-screen certificate preview layout wrapper */
+#cert-print-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.cert-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 50%;
+  opacity: 0.04;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  z-index: 2;
+}
+
+.cert-header-title {
+  flex: 1;
+  padding: 0 1rem;
+}
+
+.cert-header-title h4 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #8b6508;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.cert-header-title h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111;
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+}
+
+.cert-header-title h5 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cert-body {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  z-index: 2;
+}
+
+.cert-award-text {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8b6508;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.cert-certify {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cert-recipient-name {
+  font-family: 'Great Vibes', cursive;
+  font-size: 2.8rem;
+  color: #8b6508;
+  margin: 0.25rem 0;
+  line-height: 1.1;
+  text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+}
+
+.cert-recipient-meta {
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.6;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+.cert-recipient-meta strong {
+  color: #000;
+}
+
+.cert-position-banner {
+  font-family: 'Cinzel', serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #b8860b;
+  margin: 0.4rem 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.05);
+}
+
+.cert-middle-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.cert-photo-frame {
+  width: 90px;
+  height: 115px;
+  border: 3px double #c9a054;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fdfdfd;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.cert-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cert-prestigious-wording {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: #555;
+  max-width: 80%;
+  margin: 0.5rem auto 0;
+  line-height: 1.5;
+  border-top: 1px solid rgba(201, 160, 84, 0.2);
+  padding-top: 0.6rem;
+}
+
+.cert-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 1.2rem;
+  z-index: 2;
+}
+
+.cert-sig-block {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cert-sig-name-cursive {
+  font-family: 'Pinyon Script', cursive;
+  font-size: 1.8rem;
+  color: #2c3e50;
+  line-height: 1;
+  height: 35px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  user-select: none;
+}
+
+.cert-sig-line {
+  width: 100%;
+  border-top: 1px solid #777;
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #444;
+  letter-spacing: 1px;
+}
+
+.cert-date-block {
+  text-align: center;
+}
+
+.cert-date-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #333;
+  height: 35px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.cert-date-label {
+  border-top: 1px solid #777;
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #444;
+  letter-spacing: 1px;
+}
+
+/* Print Overrides for Certificate full-page formatting */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0mm;
+  }
+
+  body.printing-certificates {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  body.printing-certificates .sidebar,
+  body.printing-certificates .topbar,
+  body.printing-certificates .no-print,
+  body.printing-certificates .btn,
+  body.printing-certificates .toast-container,
+  body.printing-certificates #modal-overlay {
+    display: none !important;
+  }
+  
+  body.printing-certificates .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  body.printing-certificates #sec-certificates {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  body.printing-certificates .card {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+  }
+
+  .cert-page-break {
+    page-break-after: always;
+    page-break-inside: avoid;
+    display: block !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    box-sizing: border-box !important;
+    padding: 15mm !important;
+    background: #fff !important;
+    position: relative !important;
+  }
+
+  .cert-page-break .cert-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    border: 15px double #c9a054 !important;
+    box-shadow: none !important;
+    background: #fffdf6 !important;
+    padding: 30mm 15mm 20mm 15mm !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cert-page-break .cert-watermark {
+    display: block !important;
+    opacity: 0.05 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cert-page-break .cert-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .cert-page-break .cert-body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .cert-page-break .cert-middle-section {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .cert-page-break .cert-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    width: 100% !important;
+  }
 }
